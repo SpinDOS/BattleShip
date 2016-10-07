@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
@@ -34,6 +34,9 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject>BattleShip.Program</StartupObject>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Data" />
@@ -53,17 +56,30 @@
     <Reference Include="PresentationFramework" />
   </ItemGroup>
   <ItemGroup>
-    <ApplicationDefinition Include="App.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </ApplicationDefinition>
+    <Compile Include="BusinessLogic\Field.cs" />
+    <Compile Include="BusinessLogic\MyRandomPlayerSimulator.cs" />
+    <Compile Include="BusinessLogic\Game.cs" />
     <Compile Include="BusinessLogic\Player.cs" />
+    <Compile Include="BusinessLogic\PVEGame.cs" />
+    <Compile Include="DataLogic\IEnemyConnection.cs" />
+    <Compile Include="GameLifeCircle.cs" />
+    <Compile Include="Program.cs" />
+    <Compile Include="Shared\EventArgs.cs" />
+    <Compile Include="Shared\IGameInterface.cs" />
     <Compile Include="UserLogic\ButtonStylesResourceDictionary.cs" />
     <Compile Include="UserLogic\ButtonWithSquareStatus.cs" />
     <Compile Include="BusinessLogic\Ship.cs" />
-    <Compile Include="BusinessLogic\Square.cs" />
-    <Compile Include="BusinessLogic\SquareStatus.cs" />
+    <Compile Include="Shared\Square.cs" />
+    <Compile Include="Shared\SquareStatus.cs" />
     <Compile Include="BusinessLogic\Utils.cs" />
+    <Page Include="UserLogic\ConnectingWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="UserLogic\GameWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="UserLogic\GraphicBattleField.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -72,19 +88,21 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="UserLogic\MainWindow.xaml">
+    <Page Include="UserLogic\CreatingWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Compile Include="App.xaml.cs">
-      <DependentUpon>App.xaml</DependentUpon>
-      <SubType>Code</SubType>
+    <Compile Include="UserLogic\ConnectingWindow.xaml.cs">
+      <DependentUpon>ConnectingWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UserLogic\GameWindow.xaml.cs">
+      <DependentUpon>GameWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="UserLogic\GraphicBattleField.xaml.cs">
       <DependentUpon>GraphicBattleField.xaml</DependentUpon>
     </Compile>
-    <Compile Include="UserLogic\MainWindow.xaml.cs">
-      <DependentUpon>MainWindow.xaml</DependentUpon>
+    <Compile Include="UserLogic\CreatingWindow.xaml.cs">
+      <DependentUpon>CreatingWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
   </ItemGroup>

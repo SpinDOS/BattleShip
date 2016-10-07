@@ -1,6 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
-using BattleShip.BusinessLogic;
+using BattleShip.Shared;
 
 namespace BattleShip.UserLogic
 {

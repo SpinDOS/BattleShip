@@ -2,18 +2,21 @@ using System;
 using System.Collections.Generic;
 using System.Windows;
 using BattleShip.BusinessLogic;
+using BattleShip.Shared;
 
 namespace BattleShip.UserLogic
 {
     /// <summary>
-    /// Interaction logic for MainWindow.xaml
+    /// Interaction logic for CreatingWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class CreatingWindow : Window
     {
-        public MainWindow()
+        public CreatingWindow()
         {
             InitializeComponent();
         }
+
+        public event EventHandler<StartGameEventArgs> StartGameEvent;
 
         private void Field_Square_Clicked(object sender, SquareEventArgs e)
         {
@@ -27,7 +30,7 @@ namespace BattleShip.UserLogic
 
         private void btnRandom_Click(object sender, RoutedEventArgs e)
         {
-            IEnumerable<Square> squares = Utils.RandomizeSquares();
+            IEnumerable<Square> squares = Field.RandomizeSquares().ShipSquares;
             for (byte i = 0; i < 10; i++)
                 for (byte j = 0; j < 10; j++)
                     GraphicField[i, j].SquareStatus = SquareStatus.Empty;
@@ -36,25 +39,24 @@ namespace BattleShip.UserLogic
         }
         private void btnStart_Click(object sender, RoutedEventArgs e)
         {
-            Player player = null;
+            Field field = null;
             try
             {
-                player = new Player(GetActiveSquares());
+                field = Field.Validate(GetActiveSquares());
             }
-            catch (ArgumentException)
+            catch (AggregateException)
             {
                 string message = "You must place these ships: " + Environment.NewLine +
                                  '\u2022' + " one 4-square ship" + Environment.NewLine +
                                  '\u2022' + " two 3-square ships" + Environment.NewLine +
                                  '\u2022' + " three 2-square ships" + Environment.NewLine +
-                                 '\u2022' + " four 1-square ships" + Environment.NewLine + 
+                                 '\u2022' + " four 1-square ships" + Environment.NewLine +
                                  "Thay must not stay close to each other";
                 MessageBox.Show(message, "Can not create field", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
-            MessageBox.Show("Ok");
-
-            //throw new NotImplementedException();
+            StartGameEvent?.Invoke(this, new StartGameEventArgs(
+                radioButtonPVP.IsChecked??false, field));
         }
 
         private IEnumerable<Square> GetActiveSquares()

@@ -1,7 +1,7 @@
 using System;
 using System.Windows;
 using System.Windows.Controls;
-using BattleShip.BusinessLogic;
+using BattleShip.Shared;
 
 namespace BattleShip.UserLogic
 {
@@ -41,19 +41,5 @@ namespace BattleShip.UserLogic
 
 
         public ButtonWithSquareStatus this[string btnName] => (ButtonWithSquareStatus)this.FindName(btnName);
-    }
-
-    public class SquareEventArgs : RoutedEventArgs
-    {
-        public Square Square { get; }
-        public SquareEventArgs(Square square)
-        {
-            Square = square;
-        }
-        public SquareEventArgs(Square square, RoutedEventArgs e) : base(e.RoutedEvent, e.OriginalSource)
-        {
-            Source = this;
-            Square = square;
-        }
     }
 }
