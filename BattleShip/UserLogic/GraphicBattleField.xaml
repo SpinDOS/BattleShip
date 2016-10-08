@@ -45,7 +45,7 @@
             <Label>I</Label>
             <Label>J</Label>
         </UniformGrid>
-        <UniformGrid Grid.Row="1" Grid.Column="1" Rows="10" Columns="10" Margin="5,5,10,0" Button.Click="Button_Click">
+        <UniformGrid x:Name="Buttons" Grid.Row="1" Grid.Column="1" Rows="10" Columns="10" Margin="5,5,10,0" Button.Click="Button_Click">
             <local:ButtonWithSquareStatus x:Name="Btn_00" x:FieldModifier="private"/>
             <local:ButtonWithSquareStatus x:Name="Btn_01" x:FieldModifier="private"/>
             <local:ButtonWithSquareStatus x:Name="Btn_02" x:FieldModifier="private"/>

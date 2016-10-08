@@ -7,14 +7,14 @@ using BattleShip.Shared;
 
 namespace BattleShip.BusinessLogic
 {
-    internal enum Direction
+    public enum Direction
     {
         Up = 0, // necessary for random
         Down,
         Left, 
         Right,
     }
-    internal static class Utils
+    public static class Utils
     {
         public static bool IsSquareNearShip(this Ship ship, Square square) =>
             !ship.IsShipContainsSquare(square)

@@ -3,13 +3,24 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using BattleShip.DataLogic;
+using BattleShip.Shared;
 
 namespace BattleShip.BusinessLogic
 {
-    public sealed class MyRandomPlayerSimulator : Player
+    public sealed class MyRandomPlayerSimulator : SimulatedPlayer
     {
-        public MyRandomPlayerSimulator() : base(Field.RandomizeSquares())
+        public MyRandomPlayerSimulator() : base(Field.RandomizeSquares()) { }
+
+        public override Square GetMyNextShot() // Remake it
         {
+            Random rnd = new Random();
+            while (true)
+            {
+                Square square = new Square((byte) rnd.Next(0,10), (byte) rnd.Next(0, 10));
+                if (Enemy[square.X, square.Y] == SquareStatus.Empty)
+                    return square;
+            }
         }
     }
 }

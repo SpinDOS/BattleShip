@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using BattleShip.BusinessLogic;
+using BattleShip.DataLogic;
 using BattleShip.Shared;
 using BattleShip.UserLogic;
 
@@ -28,7 +30,11 @@ namespace BattleShip
         {
             //Player player = 
             createWindow.Hide();
-            throw new NotImplementedException();
+            var window = new GameWindow();
+            var p = new PVEPlayer(e.Field, new PVEConnection(new MyRandomPlayerSimulator()), window);
+            Task.Run(() => p.Start());
+            window.ShowDialog();
+            createWindow.Close();
         }
     }
 }

@@ -55,4 +55,14 @@ namespace BattleShip.Shared
             Field = field;
         }
     }
+
+    public class OnlyBoolEventArgs : EventArgs
+    {
+        public bool Value { get; }
+
+        public OnlyBoolEventArgs(bool value)
+        {
+            Value = value;
+        }
+    }
 }

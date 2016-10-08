@@ -5,8 +5,13 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:BattleShip.UserLogic"
         mc:Ignorable="d"
-        Title="GameWindow" Height="300" Width="300">
+        Title="GameWindow" Height="300" Width="655.7" Closing="Window_Closing">
     <Grid>
-        
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition></ColumnDefinition>
+            <ColumnDefinition></ColumnDefinition>
+        </Grid.ColumnDefinitions>
+        <local:GraphicBattleField x:Name="EnemyField" Grid.Column="0" Square_Clicked="EnemyField_Square_Clicked"></local:GraphicBattleField>
+        <local:GraphicBattleField x:Name="YourField" Grid.Column="1"></local:GraphicBattleField>
     </Grid>
 </Window>
