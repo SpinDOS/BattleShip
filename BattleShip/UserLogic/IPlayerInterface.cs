@@ -8,7 +8,8 @@ namespace BattleShip.UserLogic
     {
         void Start(Field field);
         Square GetMyShot();
-        void MarkSquareWithStatus(Square square, SquareStatus status, bool yourField);
+        void MarkSquareWithStatus(Square square, SquareStatus status, bool myField);
+        void ShowGameEnd(bool win);
         event EventHandler InterfaceClose;
     }
 }

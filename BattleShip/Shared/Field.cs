@@ -125,7 +125,9 @@ namespace BattleShip.BusinessLogic
         }
 
         private static Ship RandomShip(int length)
-        {
+        {            /* TODO 
+             * Переделать рандомизацию - сейчас невозможно расположить корабли вдоль бортика
+            */
             if (length < 1 || length > 4)
                 throw new ArgumentOutOfRangeException(nameof(length));
             Random rnd = new Random();

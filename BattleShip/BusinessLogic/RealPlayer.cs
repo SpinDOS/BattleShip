@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using BattleShip.DataLogic;
@@ -17,44 +18,54 @@ namespace BattleShip.BusinessLogic
         protected RealPlayer(Field field, IEnemyConnection enemyConnection, IPlayerInterface playerInterface)
             : base(field)
         {
-            UI = playerInterface;
-            EnemyConnection = enemyConnection;
-            playerInterface.Start(field);
             if (enemyConnection == null)
                 throw new ArgumentNullException(nameof(enemyConnection));
+            if (playerInterface == null)
+                throw new ArgumentNullException(nameof(playerInterface));
+            UI = playerInterface;
+            EnemyConnection = enemyConnection;
+            //UI.InterfaceClose += (sender, args) => { throw new NotImplementedException(); };
         }
 
-        public virtual void Start()
+        public void Start()
         {
-            bool youshot = true;
-            while (true)
+            MyTurn = true; // поменять
+            while (!IsGameEnded)
             {
-                if (youshot)
+                if (MyTurn)
                 {
                     Square square = GetMyNextShot();
                     SquareStatus status = EnemyConnection.ShotEnemy(square);
-                    this.SetStatusOfMyShot(square, status);
-                    youshot = status != SquareStatus.Miss;
+                    SetStatusOfMyShot(square, status);
                 }
                 else
                 {
                     Square square = EnemyConnection.GetShotFromEnemy();
                     SquareStatus status = this.ShotFromEnemy(square);
                     EnemyConnection.SendStatusOfEnemysShot(square, status);
-                    youshot = status == SquareStatus.Miss;
                 }
             }
         }
 
-        public override Square GetMyNextShot()
+        public override void EnemyDisconnected(bool active)
         {
-            return UI.GetMyShot();
+            base.EnemyDisconnected(active); // Отобразить на форме
         }
 
-        protected override void MarkSquareWithStatus(Square square, SquareStatus status, bool myField)
+        protected override void EndGame(bool win)
+        {
+            base.EndGame(win); // Отобразить на форме
+        }
+
+        protected sealed override void MarkSquareWithStatus(Square square, SquareStatus status, bool myField)
         {
             base.MarkSquareWithStatus(square, status, myField);
             UI.MarkSquareWithStatus(square, status, myField);
+        }
+
+        protected sealed override Square GenerateNextShot()
+        {
+            return UI.GetMyShot();
         }
     }
 

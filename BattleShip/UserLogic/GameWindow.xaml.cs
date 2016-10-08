@@ -21,21 +21,27 @@ namespace BattleShip.UserLogic
     /// <summary>
     /// Interaction logic for GameWindow.xaml
     /// </summary>
-    public partial class GameWindow : Window, IPlayerInterface
+    public partial class GameWindow : Window, IPVPInterface
     {
         volatile TaskCompletionSource<Square> tcs = new TaskCompletionSource<Square>(); 
         public event EventHandler InterfaceClose;
         public GameWindow()
         {
             InitializeComponent();
-            this.YourField.Buttons.IsEnabled = false;
+            this.MyField.Buttons.IsEnabled = false;
         }
 
         void IPlayerInterface.Start(Field field)
         {
             foreach (var square in field.ShipSquares)
-                YourField[square].SquareStatus = SquareStatus.Full;
+                MyField[square].SquareStatus = SquareStatus.Full;
             //((Window)this).Show();
+        }
+
+        public void ShowGameEnd(bool win)
+        {
+            Dispatcher.Invoke(() => EnemyField.Buttons.IsEnabled = true);
+            
         }
 
         public Square GetMyShot()
@@ -50,12 +56,12 @@ namespace BattleShip.UserLogic
             return square;
         }
 
-        public void MarkSquareWithStatus(Square square, SquareStatus status, bool yourField)
+        public void MarkSquareWithStatus(Square square, SquareStatus status, bool myField)
         {
             Dispatcher.Invoke(() =>
             {
-                if (yourField)
-                    YourField[square].SquareStatus = status;
+                if (myField)
+                    MyField[square].SquareStatus = status;
                 else
                 {
                     EnemyField[square].SquareStatus = status;
@@ -63,6 +69,13 @@ namespace BattleShip.UserLogic
                         BlockWithMessage("You missed. Enemy's turn to shoots");
                 }
             });
+        }
+
+        public void EnemyDisconnected()
+        {
+            Dispatcher.Invoke(() => this.IsEnabled = false);
+            MessageBox.Show("Enemy disconnected", "Enemy disconnected",
+                MessageBoxButton.OK, MessageBoxImage.Error);
         }
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)

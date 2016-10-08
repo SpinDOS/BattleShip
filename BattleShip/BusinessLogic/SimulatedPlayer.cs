@@ -15,19 +15,14 @@ namespace BattleShip.BusinessLogic
             base.EnemyDisconnected(active);
         }
 
+        protected sealed override void EndGame(bool win)
+        {
+            base.EndGame(win);
+        }
+
         protected sealed override void MarkSquareWithStatus(Square square, SquareStatus status, bool myField)
         {
             base.MarkSquareWithStatus(square, status, myField);
-        }
-
-        public sealed override void SetStatusOfMyShot(Square square, SquareStatus result)
-        {
-            base.SetStatusOfMyShot(square, result);
-        }
-
-        public sealed override SquareStatus ShotFromEnemy(Square square)
-        {
-            return base.ShotFromEnemy(square);
         }
     }
 }

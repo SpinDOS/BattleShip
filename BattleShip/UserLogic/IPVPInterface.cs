@@ -8,6 +8,6 @@ namespace BattleShip.UserLogic
 {
     public interface IPVPInterface : IPlayerInterface
     {
-
+        void EnemyDisconnected();
     }
 }

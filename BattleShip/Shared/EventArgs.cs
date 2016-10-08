@@ -11,7 +11,7 @@ namespace BattleShip.Shared
 
     public class MessageEventArgs : RoutedEventArgs
     {
-        public string Message { get; }
+        public string Message { get; } // переделать в массив байтов - пусть форма сама решает, как обработать
 
         public MessageEventArgs(string message)
         {
@@ -53,16 +53,6 @@ namespace BattleShip.Shared
                 throw new ArgumentNullException(nameof(field));
             VsHuman = vsHuman;
             Field = field;
-        }
-    }
-
-    public class OnlyBoolEventArgs : EventArgs
-    {
-        public bool Value { get; }
-
-        public OnlyBoolEventArgs(bool value)
-        {
-            Value = value;
         }
     }
 }

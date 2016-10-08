@@ -56,6 +56,7 @@
     <Reference Include="PresentationFramework" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BusinessLogic\SimplePlayerSimulator.cs" />
     <Compile Include="BusinessLogic\SimulatedPlayer.cs" />
     <Compile Include="Shared\Field.cs" />
     <Compile Include="BusinessLogic\MyRandomPlayerSimulator.cs" />
@@ -88,7 +89,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="UserLogic\ButtonStyles.xaml">
+    <Page Include="UserLogic\ButtonStylesResourceDictionary.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

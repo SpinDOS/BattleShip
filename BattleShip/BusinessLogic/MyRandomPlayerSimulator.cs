@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using BattleShip.DataLogic;
 using BattleShip.Shared;
@@ -12,8 +13,9 @@ namespace BattleShip.BusinessLogic
     {
         public MyRandomPlayerSimulator() : base(Field.RandomizeSquares()) { }
 
-        public override Square GetMyNextShot() // Remake it
+        protected override Square GenerateNextShot()
         {
+            Thread.Sleep(500);
             Random rnd = new Random();
             while (true)
             {
