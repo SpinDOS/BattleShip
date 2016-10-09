@@ -11,7 +11,7 @@ using BattleShip.UserLogic;
 
 namespace BattleShip
 {
-    class GameLifeCircle
+    sealed class GameLifeCircle
     {
         CreatingWindow createWindow = new CreatingWindow();
 
@@ -28,7 +28,6 @@ namespace BattleShip
 
         private void StartGame(object sender, StartGameEventArgs e)
         {
-            //Player player = 
             createWindow.Hide();
             var window = new GameWindow();
             var p = new PVEPlayer(e.Field, new PVEConnection(new MyRandomPlayerSimulator()), window);

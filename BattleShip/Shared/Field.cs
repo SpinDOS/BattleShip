@@ -82,39 +82,28 @@ namespace BattleShip.BusinessLogic
         {
             List<Ship> ships = new List<Ship>(10);
             ships.Add(RandomShip(4));
-            for (int i = 0; i < 2; i++)
+            for (int i = 0; i < 2; i++) // 2 of 3squared ships
             {
                 Ship ship;
                 do
-                {
                     ship = RandomShip(3);
-                } while (ships.Any(s => s.IsSquareNearShip(ship.Start) || //while ships contains
-                        s.IsShipContainsSquare(ship.Start) || //ship (s) that crosses ship(ship)
-                        s.IsSquareNearShip(ship.End) ||
-                        s.IsShipContainsSquare(ship.End)));
+                while (ships.Any(s => s.IsNearShip(ship))); // while some of added ships crosses new ship
                 ships.Add(ship);
             }
-            for (int i = 0; i < 3; i++)
+            for (int i = 0; i < 3; i++) // 3 of 2squared ships
             {
                 Ship ship;
                 do
-                {
                     ship = RandomShip(2);
-                } while (ships.Any(s => s.IsSquareNearShip(ship.Start) || //while ships contains
-                        s.IsShipContainsSquare(ship.Start) || //ship (s) that crosses ship(ship)
-                        s.IsSquareNearShip(ship.End) ||
-                        s.IsShipContainsSquare(ship.End)));
+                while (ships.Any(s => s.IsNearShip(ship))); // while some of added ships crosses new ship
                 ships.Add(ship);
             }
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < 4; i++) // 4 of 1squared ships
             {
-                Random rnd = new Random();
                 Ship ship;
                 do
-                {
-                    ship = new Ship(new Square((byte)rnd.Next(0, 10), (byte)rnd.Next(0, 10)));
-                } while (ships.Any(s => s.IsSquareNearShip(ship.Start) || //while ships contains
-                        s.IsShipContainsSquare(ship.Start))); //ship (s) that crosses ship(ship)
+                    ship = RandomShip(1);
+                while (ships.Any(s => s.IsNearShip(ship))); // while some of added ships crosses new ship
                 ships.Add(ship);
             }
 
@@ -125,34 +114,45 @@ namespace BattleShip.BusinessLogic
         }
 
         private static Ship RandomShip(int length)
-        {            /* TODO 
-             * Переделать рандомизацию - сейчас невозможно расположить корабли вдоль бортика
-            */
-            if (length < 1 || length > 4)
-                throw new ArgumentOutOfRangeException(nameof(length));
+        {
             Random rnd = new Random();
-            Square start = new Square((byte)rnd.Next(length - 1, 10 - length + 1),
-                (byte)rnd.Next(length - 1, 10 - length + 1));
-            Square end;
-            Direction dir = (Direction)rnd.Next(4);
-            switch (dir)
+            byte x = (byte) rnd.Next(10), y = (byte) rnd.Next(10);
+            if (--length == 0) // 1square ship
+                return new Ship(new Square(x, y)); 
+            byte min_x = x, max_x = x, min_y = y, max_y = y;
+            int direction = rnd.Next(4); // 0 = up, 1 = down, 2 = left, 3 = right
+            switch (direction)
             {
-                case Direction.Up:
-                    end = new Square((byte)(start.X - (length - 1)), start.Y);
-                    break;
-                case Direction.Down:
-                    end = new Square((byte)(start.X + (length - 1)), start.Y);
-                    break;
-                case Direction.Left:
-                    end = new Square(start.X, (byte)(start.Y - (length - 1)));
-                    break;
-                case Direction.Right:
-                    end = new Square(start.X, (byte)(start.Y + (length - 1)));
-                    break;
-                default:
-                    throw new AggregateException("Direction enum has been changed");
+                case 0:
+                    while (min_x > 0 && max_x - min_x < length) // build up until end
+                        --min_x;
+                    if (max_x - min_x == length)
+                        break;
+                    else
+                        goto case 1; // build down until length is reached
+                case 1:
+                    while (max_x < 9 && max_x - min_x < length) // build down until end
+                        ++max_x;
+                    if (max_x - min_x == length)
+                        break;
+                    else
+                        goto case 0; // build up until length is reached
+                case 2:
+                    while (min_y > 0 && max_y - min_y < length) // build left until end
+                        --min_y;
+                    if (max_y - min_y == length)
+                        break;
+                    else
+                        goto case 3; // build right until length is reached
+                case 3:
+                    while (max_y < 9 && max_y - min_y < length) // build right until end
+                        ++max_y;
+                    if (max_y - min_y == length)
+                        break;
+                    else
+                        goto case 2; // build left until length is reached
             }
-            return new Ship(start, end);
+            return new Ship(new Square(min_x, min_y), new Square(max_x, max_y));
         }
     }
 }
