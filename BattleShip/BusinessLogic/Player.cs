@@ -10,9 +10,9 @@ namespace BattleShip.BusinessLogic
 {
     public abstract class Player
     {
-        private static AggregateException _gameendedException= new AggregateException("Game ended");
-
-        private volatile bool _isGameEnd = false;
+        protected static AggregateException _gameendedException = new AggregateException("Game ended");
+        protected static AggregateException _notInitializerException =
+            new AggregateException("You must initialize the object with SetMeFirst(bool)");
 
         protected SquareStatus[,] Enemy = new SquareStatus[10, 10];
         protected SquareStatus[,] Me = new SquareStatus[10, 10];
@@ -20,12 +20,9 @@ namespace BattleShip.BusinessLogic
         public byte MyShipsAlive { get; protected set; } = 10;
         public byte EnemyShipsAlive { get; protected set; } = 10;
 
-        public bool IsGameEnded {
-            get { return _isGameEnd; }
-            protected set { _isGameEnd = value; }
-        }
+        public bool IsGameEnded { get; protected set; } = false;
 
-        public bool MyTurn { get; protected set; } // сделать приватным
+        public bool? MyTurn { get; protected set; } = null;
 
         protected Player(Field field)
         {
@@ -35,12 +32,21 @@ namespace BattleShip.BusinessLogic
                 Me[square.X, square.Y] = SquareStatus.Full;
         }
 
+        public void SetMeFirst(bool first)
+        {
+            if (MyTurn != null)
+                throw new AggregateException("You can use it only on initialization");
+            MyTurn = first;
+        }
+
 
         public Square GetMyNextShot()
         {
             if (IsGameEnded)
                 throw _gameendedException;
-            if (!MyTurn)
+            if (MyTurn == null)
+                throw _notInitializerException;
+            if (!MyTurn.Value)
                 throw new AggregateException("It's not my turn to shot");
             Square square = GenerateNextShot();
             MyTurn = false;
@@ -60,7 +66,9 @@ namespace BattleShip.BusinessLogic
         {
             if (IsGameEnded)
                 throw _gameendedException;
-            if (MyTurn)
+            if (MyTurn == null)
+                throw _notInitializerException;
+            if (MyTurn.Value)
                 throw new AggregateException("I must shot now!");
             if (result == SquareStatus.Empty || result == SquareStatus.Full)
                 throw new ArgumentException(nameof(result) + " must be Miss or Hurt or Dead");
@@ -78,7 +86,9 @@ namespace BattleShip.BusinessLogic
         {
             if (IsGameEnded)
                 throw _gameendedException;
-            if (MyTurn)
+            if (MyTurn == null)
+                throw _notInitializerException;
+            if (MyTurn.Value)
                 throw new AggregateException("I must shot now!");
             SquareStatus current = Me[square.X, square.Y];
             if (current != SquareStatus.Empty && current != SquareStatus.Full)
@@ -136,7 +146,7 @@ namespace BattleShip.BusinessLogic
                     SquareStatus status = field[i, j] == SquareStatus.Hurt
                         ? SquareStatus.Dead
                         : SquareStatus.Miss;
-                    MarkSquareWithStatus(new Square((byte) i, (byte) j), status, myShip);
+                    MarkSquareWithStatus(new Square((byte)i, (byte)j), status, myShip);
                 }
 
             if (myShip && --MyShipsAlive == 0)
@@ -150,7 +160,7 @@ namespace BattleShip.BusinessLogic
             SquareStatus[,] field = myShip ? Me : Enemy;
             Square start = square, end = square;
             byte i = square.X, j = square.Y;
-            SquareStatus[] notEmpty = new[] {SquareStatus.Full, SquareStatus.Hurt,};
+            SquareStatus[] notEmpty = new[] { SquareStatus.Full, SquareStatus.Hurt, };
             if ((square.X > 0 && notEmpty.Any(s => s == field[square.X - 1, square.Y])) ||
                 (square.X < 9 && notEmpty.Any(s => s == field[square.X + 1, square.Y]))) // vertical
             {

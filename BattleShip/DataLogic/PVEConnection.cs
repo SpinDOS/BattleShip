@@ -35,5 +35,10 @@ namespace BattleShip.DataLogic
         {
             _playerSimulator.EnemyDisconnected(true);
         }
+
+        public void SetEnemyShotFirst(bool enemyFirst)
+        {
+            _playerSimulator.SetMeFirst(enemyFirst);
+        }
     }
 }

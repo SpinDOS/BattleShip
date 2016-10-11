@@ -29,10 +29,13 @@ namespace BattleShip.BusinessLogic
 
         public void Start()
         {
-            MyTurn = true; // поменять
+            if (IsGameEnded)
+                throw _gameendedException;
+            if (MyTurn == null)
+                throw _notInitializerException;
             while (!IsGameEnded)
             {
-                if (MyTurn)
+                if (MyTurn.Value)
                 {
                     Square square = GetMyNextShot();
                     SquareStatus status = EnemyConnection.ShotEnemy(square);

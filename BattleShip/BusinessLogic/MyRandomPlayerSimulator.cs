@@ -15,7 +15,7 @@ namespace BattleShip.BusinessLogic
 
         protected override Square GenerateNextShot()
         {
-            Thread.Sleep(500);
+            Thread.Sleep(800);
             Random rnd = new Random();
             while (true)
             {
