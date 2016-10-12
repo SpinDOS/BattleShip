@@ -81,9 +81,6 @@ namespace BattleShip.BusinessLogic
 
             public SquareStatus ShotEnemy(Square square)
             { return me.ShotFromEnemy(square); }
-
-            public void Disconnect()
-            { me.EnemyDisconnected(true); }
         }
 
     }

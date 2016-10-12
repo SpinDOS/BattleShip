@@ -56,6 +56,9 @@
     <Reference Include="PresentationFramework" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BusinessLogic\BattleField.cs" />
+    <Compile Include="BusinessLogic\EnemyBattleField.cs" />
+    <Compile Include="BusinessLogic\MyBattleField.cs" />
     <Compile Include="BusinessLogic\SimplePlayerSimulator.cs" />
     <Compile Include="BusinessLogic\SimulatedPlayer.cs" />
     <Compile Include="Shared\Field.cs" />
