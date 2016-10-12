@@ -30,9 +30,8 @@ namespace BattleShip
         {
             createWindow.Hide();
             var window = new GameWindow();
-            var p = new PVEPlayer(e.Field, new PVEConnection(new MyRandomPlayerSimulator()), window);
-            Task.Run(() => p.Start());
-            window.ShowDialog();
+            var p = new PVEPlayer(e.Field, new MyRandomPlayerSimulator().GetConnectionToMe(), window);
+            //window.ShowDialog();
             createWindow.Close();
         }
     }

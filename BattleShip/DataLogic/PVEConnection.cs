@@ -8,37 +8,38 @@ using BattleShip.Shared;
 
 namespace BattleShip.DataLogic
 {
-    class PVEConnection : IEnemyConnection
-    {
-        private readonly SimulatedPlayer _playerSimulator = null;
-        public PVEConnection(SimulatedPlayer playerSimulator)
-        {
-            if (playerSimulator == null)
-                throw new ArgumentNullException(nameof(playerSimulator));
-            _playerSimulator = playerSimulator;
-        }
-        public Square GetShotFromEnemy()
-        {
-            return _playerSimulator.GetMyNextShot();
-        }
+    //class PVEConnection : IEnemyConnection
+    //{
+    //    private readonly SimulatedPlayer _playerSimulator = null;
+    //    public PVEConnection(SimulatedPlayer playerSimulator)
+    //    {
+    //        if (playerSimulator == null)
+    //            throw new ArgumentNullException(nameof(playerSimulator));
+    //        _playerSimulator = playerSimulator;
+    //    }
+    //    public Square GetShotFromEnemy()
+    //    {
+    //        return _playerSimulator.GetMyNextShot();
+    //    }
 
-        public void SendStatusOfEnemysShot(Square square, SquareStatus result)
-        {
-            _playerSimulator.SetStatusOfMyShot(square, result);
-        }
-        public SquareStatus ShotEnemy(Square square)
-        {
-            return _playerSimulator.ShotFromEnemy(square);
-        }
+    //    public void SendStatusOfEnemysShot(Square square, SquareStatus result)
+    //    {
+    //        //_playerSimulator.SetStatusOfMyShot(square, result);
+    //    }
+    //    public SquareStatus ShotEnemy(Square square)
+    //    {
+    //        //return _playerSimulator.ShotFromEnemy(square);
+    //        return SquareStatus.Dead;
+    //    }
 
-        public void Disconnect(bool active)
-        {
-            _playerSimulator.EnemyDisconnected(true);
-        }
+    //    public void Disconnect(bool active)
+    //    {
+    //        _playerSimulator.EnemyDisconnected(true);
+    //    }
 
-        public void SetEnemyShotFirst(bool enemyFirst)
-        {
-            _playerSimulator.SetMeFirst(enemyFirst);
-        }
-    }
+    //    public void SetEnemyShotFirst(bool enemyFirst)
+    //    {
+    //        //((Player) _playerSimulator).SetMeShotFirst(enemyFirst);
+    //    }
+    //}
 }

@@ -20,7 +20,7 @@ namespace BattleShip.BusinessLogic
             while (true)
             {
                 Square square = new Square((byte) rnd.Next(0,10), (byte) rnd.Next(0, 10));
-                if (Enemy[square.X, square.Y] == SquareStatus.Empty)
+                if (base[square, false] == SquareStatus.Empty)
                     return square;
             }
         }

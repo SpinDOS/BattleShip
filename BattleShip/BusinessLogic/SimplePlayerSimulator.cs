@@ -17,7 +17,7 @@ namespace BattleShip.BusinessLogic
             Thread.Sleep(500);
             for (byte i = 0; i < 10; i++)
                 for (byte j = 0; j < 10; j++)
-                    if (Enemy[i, j] == SquareStatus.Empty)
+                    if (base[i, j, false] == SquareStatus.Empty)
                         return new Square(i, j);
             throw new AggregateException("No empty enemy squares");
         }

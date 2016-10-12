@@ -10,89 +10,89 @@ namespace BattleShip.BusinessLogic
 {
     public abstract class Player
     {
-        protected static AggregateException _gameendedException = new AggregateException("Game ended");
-        protected static AggregateException _notInitializerException =
-            new AggregateException("You must initialize the object with SetMeFirst(bool)");
+        #region Properties
 
-        protected SquareStatus[,] Enemy = new SquareStatus[10, 10];
-        protected SquareStatus[,] Me = new SquareStatus[10, 10];
+        protected static AggregateException GameEndedException = new AggregateException("Game ended");
+        protected static AggregateException NotInitializedException =
+            new AggregateException("You must initialize the object with SetMeShotFirst(bool)");
 
-        public byte MyShipsAlive { get; protected set; } = 10;
-        public byte EnemyShipsAlive { get; protected set; } = 10;
+        private SquareStatus[,] _enemyField = new SquareStatus[10, 10];
+        private SquareStatus[,] _myField = new SquareStatus[10, 10];
 
-        public bool IsGameEnded { get; protected set; } = false;
+        public SquareStatus this[Square square, bool myField] =>
+            myField ? _myField[square.X, square.Y] : _enemyField[square.X, square.Y];
 
-        public bool? MyTurn { get; protected set; } = null;
+        public SquareStatus this[byte x, byte y, bool myField] => this[new Square(x, y), myField];
+
+        public byte MyShipsAlive { get; private set; } = 10;
+        public byte EnemyShipsAlive { get; private set; } = 10;
+
+        public bool IsGameEnded { get; private set; } = false;
+
+        public bool MyTurn { get; private set; }
+
+        protected bool Initialized { get; private set; } = false;
+
+        #endregion
+
+        #region Initialization
 
         protected Player(Field field)
         {
             if (field == null)
                 throw new ArgumentNullException(nameof(field));
             foreach (var square in field.ShipSquares)
-                Me[square.X, square.Y] = SquareStatus.Full;
+                _myField[square.X, square.Y] = SquareStatus.Full;
         }
 
-        public void SetMeFirst(bool first)
+        protected void SetMeShotFirst(bool first)
         {
-            if (MyTurn != null)
+            if (Initialized)
                 throw new AggregateException("You can use it only on initialization");
             MyTurn = first;
+            Initialized = true;
         }
 
+        #endregion
 
-        public Square GetMyNextShot()
+        #region Shot logic
+
+        protected void SetStatusOfMyShot(Square square, SquareStatus result)
         {
             if (IsGameEnded)
-                throw _gameendedException;
-            if (MyTurn == null)
-                throw _notInitializerException;
-            if (!MyTurn.Value)
-                throw new AggregateException("It's not my turn to shot");
-            Square square = GenerateNextShot();
-            MyTurn = false;
-            return square;
-        }
-
-        protected abstract Square GenerateNextShot();
-
-        protected virtual void GotStatusOfMyShot(Square square, SquareStatus result)
-        {
-            MarkSquareWithStatus(square, result, false);
-            if (result != SquareStatus.Miss)
-                MyTurn = true;
-        }
-
-        public void SetStatusOfMyShot(Square square, SquareStatus result)
-        {
-            if (IsGameEnded)
-                throw _gameendedException;
-            if (MyTurn == null)
-                throw _notInitializerException;
-            if (MyTurn.Value)
-                throw new AggregateException("I must shot now!");
+                throw GameEndedException;
+            if (!Initialized)
+                throw NotInitializedException;
+            if (!MyTurn)
+                throw new AggregateException("I couldnot shot now!");
             if (result == SquareStatus.Empty || result == SquareStatus.Full)
                 throw new ArgumentException(nameof(result) + " must be Miss or Hurt or Dead");
 
             if (result == SquareStatus.Dead)
             {
-                Enemy[square.X, square.Y] = SquareStatus.Hurt; // for marking squares
+                _enemyField[square.X, square.Y] = SquareStatus.Hurt; // for marking squares
                 Ship ship = FindShipBySquare(square, false);
                 MarkShipAsDead(ship, false);
             }
-            GotStatusOfMyShot(square, result);
+
+            MarkSquareWithStatus(square, result, false);
+
+            MyTurn = result != SquareStatus.Miss;
         }
 
-        public SquareStatus ShotFromEnemy(Square square)
+        protected SquareStatus ShotFromEnemy(Square square)
         {
             if (IsGameEnded)
-                throw _gameendedException;
-            if (MyTurn == null)
-                throw _notInitializerException;
-            if (MyTurn.Value)
-                throw new AggregateException("I must shot now!");
-            SquareStatus current = Me[square.X, square.Y];
+                throw GameEndedException;
+            if (!Initialized)
+                throw NotInitializedException;
+            if (MyTurn)
+                throw new AggregateException("I cannot receive shot now!");
+
+            SquareStatus current = _myField[square.X, square.Y];
             if (current != SquareStatus.Empty && current != SquareStatus.Full)
                 throw new AggregateException("Enemy has already shot at the square");
+
             SquareStatus newStatus = current == SquareStatus.Empty
                 ? SquareStatus.Miss
                 : SquareStatus.Hurt;
@@ -112,33 +112,43 @@ namespace BattleShip.BusinessLogic
             return SquareStatus.Dead;
         }
 
-        protected virtual void EndGame(bool win)
+        #endregion
+
+        #region EndGame
+
+        protected virtual void EndGame(bool b)
         {
             if (IsGameEnded)
-                throw _gameendedException;
+                throw GameEndedException;
             MyTurn = false;
             IsGameEnded = true;
         }
 
-        protected virtual void MarkSquareWithStatus(Square square, SquareStatus status, bool myField)
-        {
-            SquareStatus[,] field = myField ? Me : Enemy;
-            field[square.X, square.Y] = status;
-        }
+        
 
         public virtual void EnemyDisconnected(bool active)
         {
             EndGame(true);
         }
 
-        private void MarkShipAsDead(Ship ship, bool myShip)
+        #endregion
+
+        #region Changing square status
+
+        protected virtual void MarkSquareWithStatus(Square square, SquareStatus status, bool myField)
+        {
+            SquareStatus[,] field = myField ? _myField : _enemyField;
+            field[square.X, square.Y] = status;
+        }
+
+        protected virtual void MarkShipAsDead(Ship ship, bool myShip)
         {
             int min_x = ship.Start.X == 0 ? 0 : ship.Start.X - 1;
             int max_x = ship.End.X == 9 ? 9 : ship.End.X + 1;
             int min_y = ship.Start.Y == 0 ? 0 : ship.Start.Y - 1;
             int max_y = ship.End.Y == 9 ? 9 : ship.End.Y + 1;
 
-            SquareStatus[,] field = myShip ? Me : Enemy;
+            SquareStatus[,] field = myShip ? _myField : _enemyField;
 
             for (int i = min_x; i <= max_x; i++)
                 for (int j = min_y; j <= max_y; j++)
@@ -157,7 +167,7 @@ namespace BattleShip.BusinessLogic
 
         private Ship FindShipBySquare(Square square, bool myShip)
         {
-            SquareStatus[,] field = myShip ? Me : Enemy;
+            SquareStatus[,] field = myShip ? _myField : _enemyField;
             Square start = square, end = square;
             byte i = square.X, j = square.Y;
             SquareStatus[] notEmpty = new[] { SquareStatus.Full, SquareStatus.Hurt, };
@@ -194,7 +204,9 @@ namespace BattleShip.BusinessLogic
 
         private bool IsMyShipIsDead(Ship ship)
         {
-            return ship.InnerSquares().All(square => Me[square.X, square.Y] != SquareStatus.Full);
+            return ship.InnerSquares().All(square => _myField[square.X, square.Y] != SquareStatus.Full);
         }
+
+        #endregion
     }
 }

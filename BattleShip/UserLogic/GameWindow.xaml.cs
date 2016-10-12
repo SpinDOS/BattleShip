@@ -66,7 +66,7 @@ namespace BattleShip.UserLogic
                 {
                     EnemyField[square].SquareStatus = status;
                     if (status == SquareStatus.Miss)
-                        BlockWithMessage("You missed. Enemy's turn to shoots");
+                        BlockWithMessage("You missed. _enemyField's turn to shoots");
                 }
             });
         }
@@ -74,7 +74,7 @@ namespace BattleShip.UserLogic
         public void EnemyDisconnected()
         {
             Dispatcher.Invoke(() => this.IsEnabled = false);
-            MessageBox.Show("Enemy disconnected", "Enemy disconnected",
+            MessageBox.Show("_enemyField disconnected", "_enemyField disconnected",
                 MessageBoxButton.OK, MessageBoxImage.Error);
         }
 
