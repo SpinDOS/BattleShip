@@ -3,9 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
-using System.Windows;
 using BattleShip.DataLogic;
 using BattleShip.Shared;
 using BattleShip.UserLogic;
@@ -17,24 +15,37 @@ namespace BattleShip.BusinessLogic
         protected IPlayerInterface UI;
         protected IEnemyConnection EnemyConnection;
 
-        protected RealPlayer(Field field, IEnemyConnection enemyConnection)
+        protected RealPlayer(Field field, IEnemyConnection enemyConnection, IPlayerInterface playerInterface)
             : base(field)
         {
             if (enemyConnection == null)
                 throw new ArgumentNullException(nameof(enemyConnection));
+            if (playerInterface == null)
+                throw new ArgumentNullException(nameof(playerInterface));
+            UI = playerInterface;
             EnemyConnection = enemyConnection;
             //UI.InterfaceClose += (sender, args) => { throw new NotImplementedException(); };
-            new GameWindow().Show();
-            fdfs();
         }
 
-        public async void fdfs()
+        public void Start()
         {
-            await Task.Delay(1000);
-            MessageBox.Show("fdsf");
+            MyTurn = true; // поменять
+            while (!IsGameEnded)
+            {
+                if (MyTurn)
+                {
+                    Square square = GetMyNextShot();
+                    SquareStatus status = EnemyConnection.ShotEnemy(square);
+                    SetStatusOfMyShot(square, status);
+                }
+                else
+                {
+                    Square square = EnemyConnection.GetShotFromEnemy();
+                    SquareStatus status = this.ShotFromEnemy(square);
+                    EnemyConnection.SendStatusOfEnemysShot(square, status);
+                }
+            }
         }
-
-
 
         public override void EnemyDisconnected(bool active)
         {
@@ -52,6 +63,10 @@ namespace BattleShip.BusinessLogic
             UI.MarkSquareWithStatus(square, status, myField);
         }
 
+        protected sealed override Square GenerateNextShot()
+        {
+            return UI.GetMyShot();
+        }
     }
 
 }

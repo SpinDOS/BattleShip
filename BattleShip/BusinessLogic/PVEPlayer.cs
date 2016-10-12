@@ -11,13 +11,8 @@ namespace BattleShip.BusinessLogic
 {
     class PVEPlayer : RealPlayer
     {
-        public PVEPlayer(Field field, IEnemyConnection enemyConnection, IPlayerInterface userInterface)
-            : base(field, enemyConnection)
-        {
-            bool meFirst = new Random().Next(2) == 1;
-            SetMeShotFirst(meFirst);
-            enemyConnection.SetEnemyShotFirst(!meFirst);
-        }
+        public PVEPlayer(Field field, IEnemyConnection enemyConnection, IPlayerInterface userInterface) 
+            : base(field, enemyConnection, userInterface) { }
 
         public override void EnemyDisconnected(bool active)
         {
