@@ -27,12 +27,16 @@ namespace BattleShip.BusinessLogic
             //UI.InterfaceClose += (sender, args) => { throw new NotImplementedException(); };
         }
 
+        protected abstract bool DecideWhoShotFirst();
+
         public void Start()
         {
-            MyTurn = true; // поменять
+            bool meFirst = DecideWhoShotFirst();
+            SetMeShotFirst(meFirst);
+            EnemyConnection.SetEnemyShotFirst(!meFirst);
             while (!IsGameEnded)
             {
-                if (MyTurn)
+                if (MyTurn.Value)
                 {
                     Square square = GetMyNextShot();
                     SquareStatus status = EnemyConnection.ShotEnemy(square);
@@ -45,27 +49,6 @@ namespace BattleShip.BusinessLogic
                     EnemyConnection.SendStatusOfEnemysShot(square, status);
                 }
             }
-        }
-
-        public override void EnemyDisconnected(bool active)
-        {
-            base.EnemyDisconnected(active); // Отобразить на форме
-        }
-
-        protected override void EndGame(bool win)
-        {
-            base.EndGame(win); // Отобразить на форме
-        }
-
-        protected sealed override void MarkSquareWithStatus(Square square, SquareStatus status, bool myField)
-        {
-            base.MarkSquareWithStatus(square, status, myField);
-            UI.MarkSquareWithStatus(square, status, myField);
-        }
-
-        protected sealed override Square GenerateNextShot()
-        {
-            return UI.GetMyShot();
         }
     }
 

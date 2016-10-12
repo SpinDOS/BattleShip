@@ -13,28 +13,9 @@ namespace BattleShip.BusinessLogic
         private readonly ConnectionToMe connectionToMe = null;
 
         protected SimulatedPlayer(Field field) : base(field)
-        { connectionToMe = new ConnectionToMe(this); }
+        {connectionToMe = new ConnectionToMe(this); }
 
         public IEnemyConnection GetConnectionToMe() => connectionToMe;
-
-        protected new void SetMeShotFirst(bool meFirst)
-        {
-            base.SetMeShotFirst(meFirst);
-        }
-
-        protected Square GetMyNextShot()
-        {
-            if (IsGameEnded)
-                throw GameEndedException;
-            if (!Initialized)
-                throw NotInitializedException;
-            if (!MyTurn)
-                throw new AggregateException("I cannot shot now!");
-            Square square = GenerateNextShot();
-            return square;
-        }
-
-        protected abstract Square GenerateNextShot();
 
         //public void Start()
         //{

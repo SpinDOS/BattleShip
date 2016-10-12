@@ -15,12 +15,12 @@ namespace BattleShip.BusinessLogic
 
         protected override Square GenerateNextShot()
         {
-            Thread.Sleep(500);
+            Thread.Sleep(800);
             Random rnd = new Random();
             while (true)
             {
                 Square square = new Square((byte) rnd.Next(0,10), (byte) rnd.Next(0, 10));
-                if (base[square, false] == SquareStatus.Empty)
+                if (EnemyField[square] == SquareStatus.Empty)
                     return square;
             }
         }

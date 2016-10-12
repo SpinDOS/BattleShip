@@ -41,6 +41,18 @@ namespace BattleShip.Shared
         }
     }
 
+    public class ShotEventArgs : EventArgs
+    {
+        public Square Square { get; }
+        public SquareStatus SquareStatus { get; }
+
+        public ShotEventArgs(Square square, SquareStatus squareStatus)
+        {
+            Square = square;
+            SquareStatus = squareStatus;
+        }
+    }
+
 
     public class StartGameEventArgs : EventArgs
     {

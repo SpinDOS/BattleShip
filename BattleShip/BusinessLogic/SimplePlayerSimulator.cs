@@ -14,10 +14,10 @@ namespace BattleShip.BusinessLogic
 
         protected override Square GenerateNextShot()
         {
-            Thread.Sleep(500);
+            Thread.Sleep(800);
             for (byte i = 0; i < 10; i++)
                 for (byte j = 0; j < 10; j++)
-                    if (base[i, j, false] == SquareStatus.Empty)
+                    if (EnemyField[new Square(i, j)] == SquareStatus.Empty)
                         return new Square(i, j);
             throw new AggregateException("No empty enemy squares");
         }
