@@ -36,10 +36,8 @@ namespace BattleShip.UserLogic
 
         private void btnRandom_Click(object sender, RoutedEventArgs e)
         {
+            btnClear_Click(null, null);
             IEnumerable<Square> squares = ClearField.RandomizeSquares().ShipSquares;
-            for (byte i = 0; i < 10; i++)
-                for (byte j = 0; j < 10; j++)
-                    GraphicField[i, j].SquareStatus = SquareStatus.Empty;
             foreach (var square in squares)
                 GraphicField[square].SquareStatus = SquareStatus.Full;
         }

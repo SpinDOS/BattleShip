@@ -40,6 +40,8 @@ namespace BattleShip.BusinessLogic
                 throw new AggregateException("I cannot set status Full");
             if (squareStatus == SquareStatus.Hurt && this[square] != SquareStatus.Full)
                 throw new AggregateException("This square does not contain ship");
+            if (squareStatus != SquareStatus.Miss && this[square] == SquareStatus.Empty)
+                throw new AggregateException("This square is empty");
             base.SetStatusOfSquare(square, squareStatus);
         }
 

@@ -15,7 +15,11 @@ namespace BattleShip.BusinessLogic
             : base(clearField, enemyConnection, userInterface) { }
 
         protected sealed override bool DecideWhoShotFirst()
-        { return new Random().Next(2) == 1; }
+        {
+            bool meFirst = new Random().Next(2) == 1;
+            EnemyConnection.SetEnemyShotFirst(!meFirst);
+            return meFirst;
+        }
 
     }
 }

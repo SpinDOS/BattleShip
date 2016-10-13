@@ -29,7 +29,7 @@ namespace BattleShip
         private void StartGame(object sender, StartGameEventArgs e)
         {
             createWindow.Hide();
-            var enemyConnection = new MyRandomPlayerSimulator().GetConnectionToMe();
+            var enemyConnection = new LogicalPlayerSimulator().GetConnectionToMe();
             var window = new GameWindow();
             var p = new PVEPlayer(e.ClearField, enemyConnection, window);
             p.Start();

@@ -25,6 +25,7 @@ namespace BattleShip.UserLogic
     {
         volatile TaskCompletionSource<Square> tcs = new TaskCompletionSource<Square>();
         public event EventHandler InterfaceClose;
+        private bool EndGame = false;
 
         public GameWindow()
         {
@@ -65,19 +66,24 @@ namespace BattleShip.UserLogic
                 throw new ArgumentNullException(nameof(info));
             EnemyField.Dispatcher.Invoke(() => EnemyField.IsEnabled = !blockInterface);
             Infomation.Dispatcher.Invoke(() => Infomation.Content = info);
+            if (!EndGame)
+                ProgressBar.Dispatcher.Invoke(() => ProgressBar.Visibility =
+                    blockInterface ? Visibility.Visible : Visibility.Collapsed);
         }
 
         public void ShowGameEnd(bool win)
         {
+            EndGame = true;
             string message = "You " + (win ? "win!)" : "lost!(");
             ShowInfo(message, true);
+            ProgressBar.Dispatcher.Invoke(() =>ProgressBar.Visibility = Visibility.Collapsed);
             MessageBox.Show(message, "End game", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            if (MessageBox.Show("Are you sure?", "Are your sure?",
+            if (!EndGame && MessageBox.Show("Are you sure?", "Are your sure?",
                 MessageBoxButton.OKCancel, MessageBoxImage.Question) == MessageBoxResult.Cancel)
                 e.Cancel = true;
             else

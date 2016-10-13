@@ -3,32 +3,34 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using BattleShip.DataLogic;
+using BattleShip.Shared;
+using BattleShip.UserLogic;
 
 namespace BattleShip.BusinessLogic
 {
-    class PVPPlayer /*: PlayerWithUI*/
+    public class PVPPlayer : RealPlayer
     {
-        public void Start()
+        public PVPPlayer(ClearField clearField, IEnemyConnectionWithPeople enemyConnection,
+            IPVPInterface userInterface)
+            : base(clearField, enemyConnection, userInterface)
         {
-            bool isEnd = false;
-            while (!isEnd)
+            //this.GameEnded += 
+        }
+
+        protected sealed override bool DecideWhoShotFirst()
+        {
+            IEnemyConnectionWithPeople enemyCon = EnemyConnection as IEnemyConnectionWithPeople;
+            Random rnd = new Random();
+            bool me = true;
+            while (true)
             {
-                // if(ты стреляешь)
-                // {
-                //     var square = GetSquareToShotFromForm();
-                //     squarestatus status = EnemyConnection.GetStatusOfMyShot();
-                //     if (status = ты не попал)
-                //          тыстреляешь = false;
-                // }
-                // else
-                // {
-                //      square = EnemyConnection.GetShotFromEnemy();
-                //      squarestatus status = GetStatusOfEnemyShot();
-                //      if (status == он не попал)
-                //          тыстреляешь = true;
-
-
+                me = rnd.Next(2) == 0;
+                enemyCon.SetEnemyShotFirst(!me);
+                if (me == enemyCon.GetMeShotFirst())
+                    break;
             }
+            return me;
         }
     }
 }

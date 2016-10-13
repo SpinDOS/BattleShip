@@ -14,6 +14,8 @@ namespace BattleShip.BusinessLogic
 
         public event EventHandler<ShotEventArgs> MyShot;
         public event EventHandler<ShotEventArgs> EnemysShot;
+        public event EventHandler<ShotEventArgs> MySquareStatusChanged;
+        public event EventHandler<ShotEventArgs> EnemySquareStatusChanged;
         public event EventHandler<Ship> MyShipDead;
         public event EventHandler<Ship> EnemyShipDead;
         public event EventHandler<bool> GameEnded;
@@ -26,7 +28,8 @@ namespace BattleShip.BusinessLogic
 
         private volatile bool _isGameEnded = false;
 
-        public bool IsGameEnded {
+        public bool IsGameEnded
+        {
             get { return _isGameEnded; }
             private set { _isGameEnded = value; }
         }
@@ -43,35 +46,35 @@ namespace BattleShip.BusinessLogic
         {
             MyField = new MyBattleField(clearField);
             EnemyField = new BattleField();
-            MyShot += (sender, args) =>
-            {
+            MySquareStatusChanged += (sender, args) =>
+                MyField.SetStatusOfSquare(args.Square, args.SquareStatus);
+            EnemySquareStatusChanged += (sender, args) =>
                 EnemyField.SetStatusOfSquare(args.Square, args.SquareStatus);
-            };
+            MyShot += (sender, args) => EnemySquareStatusChanged?.Invoke(sender, args);
+            EnemysShot += (sender, args) => MySquareStatusChanged?.Invoke(sender, args);
             EnemyShipDead += (sender, ship) =>
             {
-                foreach (var innerSquare in ship.InnerSquares())
-                    MyShot?.Invoke(this, new ShotEventArgs(innerSquare, SquareStatus.Dead));
+                foreach (var innerSquare in ship.InnerSquares()
+                    .Where(innerSquare => EnemyField[innerSquare] != SquareStatus.Dead))
+                    EnemySquareStatusChanged?.Invoke(this, new ShotEventArgs(innerSquare, SquareStatus.Dead));
                 foreach (var nearSquare in ship.NearSquares()
-                .Where(nearSquare => EnemyField[nearSquare] != SquareStatus.Miss))
-                    MyShot?.Invoke(this, new ShotEventArgs(nearSquare, SquareStatus.Miss));
+                    .Where(nearSquare => EnemyField[nearSquare] != SquareStatus.Miss))
+                    EnemySquareStatusChanged?.Invoke(this, new ShotEventArgs(nearSquare, SquareStatus.Miss));
                 if (--EnemyShipsAlive == 0)
                     EndGame(true);
             };
-            EnemysShot += (sender, args) =>
-            {
-                MyField.SetStatusOfSquare(args.Square, args.SquareStatus);
-            };
             MyShipDead += (sender, ship) =>
             {
-                foreach (var innerSquare in ship.InnerSquares())
-                    EnemysShot?.Invoke(this, new ShotEventArgs(innerSquare, SquareStatus.Dead));
+                foreach (var innerSquare in ship.InnerSquares()
+                    .Where(innerSquare => MyField[innerSquare] != SquareStatus.Dead))
+                    MySquareStatusChanged?.Invoke(this, new ShotEventArgs(innerSquare, SquareStatus.Dead));
                 foreach (var nearSquare in ship.NearSquares()
-                .Where(nearSquare => MyField[nearSquare] != SquareStatus.Miss))
-                    EnemysShot?.Invoke(this, new ShotEventArgs(nearSquare, SquareStatus.Miss));
+                    .Where(nearSquare => MyField[nearSquare] != SquareStatus.Miss))
+                    MySquareStatusChanged?.Invoke(this, new ShotEventArgs(nearSquare, SquareStatus.Miss));
                 if (--MyShipsAlive == 0)
                     EndGame(false);
             };
-            GameEnded += (sender, b) =>
+            GameEnded += (sender, b) => 
             {
                 MyTurn = null;
                 IsGameEnded = true;
@@ -117,13 +120,9 @@ namespace BattleShip.BusinessLogic
                 throw new ArgumentException(nameof(result) + " must be Miss or Hurt or Dead");
 
             MyTurn = result != SquareStatus.Miss;
+            MyShot?.Invoke(this, new ShotEventArgs(square, result));
             if (result == SquareStatus.Dead)
-            {
-                MyShot?.Invoke(this, new ShotEventArgs(square, SquareStatus.Hurt));
                 EnemyShipDead?.Invoke(this, EnemyField.FindShipBySquare(square));
-            }
-            else
-                MyShot?.Invoke(this, new ShotEventArgs(square, result));
         }
 
         #endregion
@@ -141,13 +140,9 @@ namespace BattleShip.BusinessLogic
 
             SquareStatus newStatus = MyField.GetResultOfShot(square);
             MyTurn = newStatus == SquareStatus.Miss;
+            EnemysShot?.Invoke(this, new ShotEventArgs(square, newStatus));
             if (newStatus == SquareStatus.Dead)
-            {
-                EnemysShot?.Invoke(this, new ShotEventArgs(square, SquareStatus.Hurt));
                 MyShipDead?.Invoke(this, MyField.FindShipBySquare(square));
-            }
-            else
-                EnemysShot?.Invoke(this, new ShotEventArgs(square, newStatus));
             return newStatus;
         }
 
@@ -161,9 +156,18 @@ namespace BattleShip.BusinessLogic
         }
 
         public class GameEndedException : AggregateException
-        { public GameEndedException() : base("Game ended") { } }
+        {
+            public GameEndedException() : base("Game ended")
+            {
+            }
+        }
+
         public class NotInitializedException : AggregateException
-        { public NotInitializedException() : base("You must initialize object by calling SetMeShotFirst") { } }
+        {
+            public NotInitializedException() : base("You must initialize object by calling SetMeShotFirst")
+            {
+            }
+        }
 
     }
 }

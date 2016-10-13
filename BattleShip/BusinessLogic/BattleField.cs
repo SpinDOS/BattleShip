@@ -31,9 +31,11 @@ namespace BattleShip.BusinessLogic
                 throw new AggregateException("You cannot set status Empty");
             if ((squareStatus == SquareStatus.Miss || squareStatus == SquareStatus.Full) 
                     && oldStatus != SquareStatus.Empty)
-                throw new AggregateException("This square is already has status");
-            if (squareStatus == SquareStatus.Dead && oldStatus != SquareStatus.Hurt)
-                throw new AggregateException("This square is not hurt");
+                throw new AggregateException("This square already has status");
+            if (squareStatus == SquareStatus.Dead && 
+                (oldStatus == SquareStatus.Miss || oldStatus == SquareStatus.Dead))
+                throw new AggregateException("This square already has status");
+
             if (squareStatus == SquareStatus.Hurt && 
                 (oldStatus != SquareStatus.Full && oldStatus != SquareStatus.Empty))
                 throw new AggregateException("This square is not full or empty");

@@ -26,9 +26,14 @@ namespace BattleShip.BusinessLogic
                 throw new ArgumentNullException(nameof(playerInterface));
             UI = playerInterface;
             EnemyConnection = enemyConnection;
-            this.EnemysShot += (sender, args) => UI.MarkMySquareWithStatus(args.Square, args.SquareStatus);
-            this.MyShot += (sender, args) => UI.MarkEnemySquareWithStatus(args.Square, args.SquareStatus);
-            this.GameEnded += GameEndEventHangler;
+            this.MySquareStatusChanged += (sender, args) => UI.MarkMySquareWithStatus(args.Square, args.SquareStatus);
+            this.EnemySquareStatusChanged += (sender, args) => UI.MarkEnemySquareWithStatus(args.Square, args.SquareStatus);
+            this.EnemysShot += (sender, args) =>
+            {
+                UI.ShowInfo("Sending answer to enemy...", true);
+                EnemyConnection.SendStatusOfEnemysShot(args.Square, args.SquareStatus);
+            };
+            this.GameEnded += ShowEndGameInUi;
             UI.InterfaceClose += (sender, args) => { Exit(); };
         }
 
@@ -49,7 +54,6 @@ namespace BattleShip.BusinessLogic
                 UI.ShowInfo("Deciding who shot first...", true);
                 bool meFirst = DecideWhoShotFirst();
                 SetMeShotFirst(meFirst);
-                EnemyConnection.SetEnemyShotFirst(!meFirst);
                 if (meFirst)
                     UI.ShowInfo("You shot first", false);
                 else
@@ -77,8 +81,6 @@ namespace BattleShip.BusinessLogic
                             Square square = EnemyConnection.GetShotFromEnemy();
                             UI.ShowInfo("Deciding what to do next...", true);
                             SquareStatus status = this.ShotFromEnemy(square);
-                            UI.ShowInfo("Sending answer to enemy...", true);
-                            EnemyConnection.SendStatusOfEnemysShot(square, status);
                             if (IsGameEnded)
                                 continue;
                             if (status == SquareStatus.Miss)
@@ -94,15 +96,6 @@ namespace BattleShip.BusinessLogic
                         break;
                     }
                 }
-
-                if (EnemyShipsAlive > 0)
-                {
-                    UI.ShowInfo("You lost. Getting enemy's full squares", true);
-                    var enemySquares = EnemyConnection.GetEnemyFullSquares().ToArray();
-                    foreach (var square in enemySquares)
-                        UI.MarkEnemySquareWithStatus(square, SquareStatus.Full);
-                    UI.ShowInfo("You lost!(", true);
-                }
             });
 
             UI.Start(ClearField.Validate(MyField.GetFullSquares()));
@@ -112,13 +105,22 @@ namespace BattleShip.BusinessLogic
         {
             if (IsGameEnded)
                 return;
-            this.GameEnded -= GameEndEventHangler;
+            this.GameEnded -= ShowEndGameInUi;
             this.EndGame(false);
             EnemyConnection.Disconnect();
         }
 
-        private void GameEndEventHangler(object sender, bool win)
-        { UI.ShowGameEnd(win); }
+        private void ShowEndGameInUi(object sender, bool win)
+        {
+            UI.ShowGameEnd(win);
+            if (win)
+                return;
+            UI.ShowInfo("You lost. Getting enemy's full squares", true);
+            var enemySquares = EnemyConnection.GetEnemyFullSquares().ToArray();
+            foreach (var square in enemySquares)
+                UI.MarkEnemySquareWithStatus(square, SquareStatus.Full);
+            UI.ShowInfo("You lost!(", true);
+        }
     }
 
 }

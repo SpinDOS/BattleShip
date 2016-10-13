@@ -10,11 +10,108 @@ namespace BattleShip.BusinessLogic
 {
     public sealed class LogicalPlayerSimulator : SimulatedPlayer
     {
-        public LogicalPlayerSimulator() : base(ClearField.RandomizeSquares()) { }
+        private Square? LastHurt = null;
+
+        public LogicalPlayerSimulator() : base(ClearField.RandomizeSquares())
+        {
+            this.EnemyShipDead += (sender, ship) => LastHurt = null;
+            this.MyShot += (sender, args) =>
+            {
+                if (args.SquareStatus == SquareStatus.Hurt)
+                    LastHurt = args.Square;
+            };
+
+        }
         protected override Square GenerateNextShot()
         {
             Thread.Sleep(800);
-            throw new NotImplementedException();
+            Random rnd = new Random();
+            Square square;
+
+            if (LastHurt == null)
+                while (true)
+                {
+                    square = new Square((byte)rnd.Next(0, 10), (byte)rnd.Next(0, 10));
+                    if (EnemyField[square] == SquareStatus.Empty)
+                        return square;
+                }
+
+
+            Ship ship = EnemyField.FindShipBySquare(LastHurt.Value);
+            int direction;
+
+            if (ship.Length == 1)
+                while (true)
+                {
+                    square = LastHurt.Value;
+                    direction = rnd.Next(4);
+                    // 0 - up, 1 - down, 2 - left, 3 - right
+                    switch (direction)
+                    {
+                        case 0:
+                            if (LastHurt.Value.X > 0)
+                                square = new Square((byte) (square.X - 1), square.Y);
+                            break;
+                        case 1:
+                            if (LastHurt.Value.X < 9)
+                                square = new Square((byte)(square.X + 1), square.Y);
+                            break;
+                        case 2:
+                            if (LastHurt.Value.Y > 0)
+                                square = new Square(square.X, (byte) (square.Y - 1));
+                            break;
+                        case 3:
+                            if (LastHurt.Value.Y < 9)
+                                square = new Square(square.X, (byte)(square.Y + 1));
+                            break;
+                    }
+                    if (EnemyField[square] == SquareStatus.Empty)
+                        return square;
+                }
+
+            direction = rnd.Next(2);
+
+            if (ship.Start.Y == ship.End.Y) // vertical
+            {
+                // 0 - up, 1 - down
+                switch (direction)
+                {
+                    case 0:
+                        if (ship.Start.X == 0)
+                            goto case 1;
+                        square = new Square((byte)(ship.Start.X - 1), ship.Start.Y);
+                        if (EnemyField[square] != SquareStatus.Empty)
+                            goto case 1;
+                        return square;
+                    case 1:
+                        if (ship.End.X == 9)
+                            goto case 0;
+                        square = new Square((byte)(ship.End.X + 1), ship.End.Y);
+                        if (EnemyField[square] != SquareStatus.Empty)
+                            goto case 0;
+                        return square;
+                }
+            }
+
+            // horizontal
+            // 0 - left, 1 - right
+            switch (direction)
+            {
+                case 0:
+                    if (ship.Start.Y == 0)
+                        goto default;
+                    square = new Square(ship.Start.X, (byte)(ship.Start.Y - 1));
+                    if (EnemyField[square] != SquareStatus.Empty)
+                        goto default;
+                    return square;
+                default: // case 1: 
+                    if (ship.Start.Y == 9)
+                        goto case 0;
+                    square = new Square(ship.End.X, (byte)(ship.End.Y + 1));
+                    if (EnemyField[square] != SquareStatus.Empty)
+                        goto case 0;
+                    return square;
+            }
         }
     }
 }
