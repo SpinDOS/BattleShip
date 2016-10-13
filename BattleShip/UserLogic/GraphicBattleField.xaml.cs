@@ -59,5 +59,6 @@ namespace BattleShip.UserLogic
                 throw new AggregateException("Unknow problem with GraphicBattleField");
             }
         }
+
     }
 }

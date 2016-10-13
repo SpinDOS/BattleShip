@@ -14,6 +14,12 @@ namespace BattleShip.UserLogic
         public CreatingWindow()
         {
             InitializeComponent();
+            GraphicField.Numbers.MouseEnter += (sender, args) => btnClear.Visibility = Visibility.Visible;
+            GraphicField.Numbers.MouseLeave += (sender, args) =>
+            {
+                if (!btnClear.IsMouseOver)
+                    btnClear.Visibility = Visibility.Collapsed;
+            };
         }
 
         public event EventHandler<StartGameEventArgs> StartGameEvent;
@@ -30,7 +36,7 @@ namespace BattleShip.UserLogic
 
         private void btnRandom_Click(object sender, RoutedEventArgs e)
         {
-            IEnumerable<Square> squares = Field.RandomizeSquares().ShipSquares;
+            IEnumerable<Square> squares = ClearField.RandomizeSquares().ShipSquares;
             for (byte i = 0; i < 10; i++)
                 for (byte j = 0; j < 10; j++)
                     GraphicField[i, j].SquareStatus = SquareStatus.Empty;
@@ -39,10 +45,10 @@ namespace BattleShip.UserLogic
         }
         private void btnStart_Click(object sender, RoutedEventArgs e)
         {
-            Field field = null;
+            ClearField clearField = null;
             try
             {
-                field = Field.Validate(GetActiveSquares());
+                clearField = ClearField.Validate(GetActiveSquares());
             }
             catch (AggregateException)
             {
@@ -56,7 +62,7 @@ namespace BattleShip.UserLogic
                 return;
             }
             StartGameEvent?.Invoke(this, new StartGameEventArgs(
-                radioButtonPVP.IsChecked??false, field));
+                radioButtonPVP.IsChecked??false, clearField));
         }
 
         private IEnumerable<Square> GetActiveSquares()
@@ -68,7 +74,13 @@ namespace BattleShip.UserLogic
                     if (GraphicField[square].SquareStatus == SquareStatus.Full)
                         yield return square;
                 }
-        } 
+        }
 
+        private void btnClear_Click(object sender, RoutedEventArgs e)
+        {
+            for (byte i = 0; i < 10; i++)
+                for (byte j = 0; j < 10; j++)
+                    GraphicField[i, j].SquareStatus = SquareStatus.Empty;
+        }
     }
 }

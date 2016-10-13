@@ -38,18 +38,10 @@ namespace BattleShip.Shared
 
         public static IEnumerable<Square> NearSquares(this Ship ship)
         {
-            byte min_x = 0;
-            if (ship.Start.X != 0)
-                min_x = (byte) (ship.Start.X - 1);
-            byte max_x = 0;
-            if (ship.End.X != 9)
-                max_x = (byte)(ship.End.X + 1);
-            byte min_y = 0;
-            if (ship.Start.Y != 0)
-                min_y = (byte)(ship.Start.Y - 1);
-            byte max_y = 0;
-            if (ship.End.Y != 9)
-                max_y = (byte)(ship.End.Y + 1);
+            byte min_x = (byte) (ship.Start.X == 0 ? 0 : ship.Start.X - 1);
+            byte max_x = (byte) (ship.End.X == 9 ? 9 : ship.End.X + 1);
+            byte min_y = (byte) (ship.Start.Y == 0 ? 0 : ship.Start.Y - 1);
+            byte max_y = (byte) (ship.End.Y == 9 ? 9 : ship.End.Y + 1);
 
             if (min_x != ship.Start.X)
                 for (byte j = min_y; j <= max_y; j++)
@@ -58,10 +50,10 @@ namespace BattleShip.Shared
                 for (byte j = min_y; j <= max_y; j++)
                     yield return new Square(max_x, j);
             if (min_y != ship.Start.Y)
-                for (byte i = min_x; i <= max_x; i++)
+                for (byte i = ship.Start.X; i <= ship.End.X; i++)
                     yield return new Square(i, min_y);
             if (max_y != ship.End.Y)
-                for (byte i = min_x; i <= max_x; i++)
+                for (byte i = ship.Start.X; i <= ship.End.X; i++)
                     yield return new Square(i, max_y);
         }
     }

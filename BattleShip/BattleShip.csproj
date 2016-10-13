@@ -57,11 +57,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BusinessLogic\BattleField.cs" />
-    <Compile Include="BusinessLogic\EnemyBattleField.cs" />
+    <Compile Include="BusinessLogic\LogicalPlayerSimulator.cs" />
     <Compile Include="BusinessLogic\MyBattleField.cs" />
     <Compile Include="BusinessLogic\SimplePlayerSimulator.cs" />
     <Compile Include="BusinessLogic\SimulatedPlayer.cs" />
-    <Compile Include="Shared\Field.cs" />
+    <Compile Include="Shared\ClearField.cs" />
     <Compile Include="BusinessLogic\MyRandomPlayerSimulator.cs" />
     <Compile Include="BusinessLogic\Player.cs" />
     <Compile Include="BusinessLogic\RealPlayer.cs" />
@@ -69,7 +69,6 @@
     <Compile Include="BusinessLogic\PVPPlayer.cs" />
     <Compile Include="DataLogic\IEnemyConnection.cs" />
     <Compile Include="DataLogic\IEnemyConnectionWithPeople.cs" />
-    <Compile Include="DataLogic\PVEConnection.cs" />
     <Compile Include="GameLifeCircle.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Shared\EventArgs.cs" />

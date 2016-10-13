@@ -1,22 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using BattleShip.Shared;
+using BattleShip.BusinessLogic;
 
-namespace BattleShip.BusinessLogic
+namespace BattleShip.Shared
 {
-    public sealed class Field
+    public sealed class ClearField
     {
         public IEnumerable<Square> ShipSquares { get; }
 
-        private Field(IEnumerable<Square> shipSquares)
+        private ClearField(IEnumerable<Square> shipSquares)
         {
             ShipSquares = shipSquares;
         }
 
-        public static Field Validate(IEnumerable<Square> shipSquares)
+        public static ClearField Validate(IEnumerable<Square> shipSquares)
         {
             if (shipSquares == null)
                 throw new ArgumentNullException(nameof(shipSquares));
@@ -75,10 +73,10 @@ namespace BattleShip.BusinessLogic
                     else
                         s1++;
             }
-            return new Field(shipSquares);
+            return new ClearField(shipSquares);
         }
 
-        public static Field RandomizeSquares()
+        public static ClearField RandomizeSquares()
         {
             List<Ship> ships = new List<Ship>(10);
             ships.Add(RandomShip(4));
@@ -110,7 +108,7 @@ namespace BattleShip.BusinessLogic
             var squares = from ship in ships
                 from square in ship.InnerSquares()
                 select square;
-            return new Field(squares);
+            return new ClearField(squares);
         }
 
         private static Ship RandomShip(int length)

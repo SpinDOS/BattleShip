@@ -11,13 +11,11 @@ namespace BattleShip.BusinessLogic
 {
     public class PVEPlayer : RealPlayer
     {
-        public PVEPlayer(Field field, IEnemyConnection enemyConnection, IPlayerInterface userInterface) 
-            : base(field, enemyConnection, userInterface) { }
+        public PVEPlayer(ClearField clearField, IEnemyConnection enemyConnection, IPlayerInterface userInterface) 
+            : base(clearField, enemyConnection, userInterface) { }
 
         protected sealed override bool DecideWhoShotFirst()
         { return new Random().Next(2) == 1; }
 
-        protected override Square GenerateNextShot()
-        { return UI.GetMyShot(); }
     }
 }

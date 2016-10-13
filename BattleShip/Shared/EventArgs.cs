@@ -57,14 +57,14 @@ namespace BattleShip.Shared
     public class StartGameEventArgs : EventArgs
     {
         public bool VsHuman { get; }
-        public Field Field { get; }
+        public ClearField ClearField { get; }
 
-        public StartGameEventArgs(bool vsHuman, Field field)
+        public StartGameEventArgs(bool vsHuman, ClearField clearField)
         {
-            if (field == null)
-                throw new ArgumentNullException(nameof(field));
+            if (clearField == null)
+                throw new ArgumentNullException(nameof(clearField));
             VsHuman = vsHuman;
-            Field = field;
+            ClearField = clearField;
         }
     }
 }

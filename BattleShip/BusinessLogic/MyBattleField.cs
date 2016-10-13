@@ -9,33 +9,38 @@ namespace BattleShip.BusinessLogic
 {
     public sealed class MyBattleField : BattleField
     {
-        public MyBattleField(Field myField)
+        public MyBattleField(ClearField myClearField)
         {
-            if (myField == null)
-                throw new ArgumentNullException(nameof(myField));
-            foreach (var square in myField.ShipSquares)
+            if (myClearField == null)
+                throw new ArgumentNullException(nameof(myClearField));
+            foreach (var square in myClearField.ShipSquares)
                 this[square] = SquareStatus.Full;
         }
 
-        public SquareStatus Shot(Square square)
+        public SquareStatus GetResultOfShot(Square square)
         {
             SquareStatus current = this[square];
-            if (current != SquareStatus.Full || current != SquareStatus.Empty)
+            if (current != SquareStatus.Full && current != SquareStatus.Empty)
                 throw new AggregateException("You have already shot at the square");
 
-            current = current == SquareStatus.Empty
-                ? SquareStatus.Miss
-                : SquareStatus.Hurt;
-            this[square] = current;
-            if (current == SquareStatus.Miss)
-                return current;
+            if (current == SquareStatus.Empty)
+                return SquareStatus.Miss;
 
             Ship ship = FindShipBySquare(square);
-            if (IsShipAlive(ship))
-                return current;
+            this[square] = SquareStatus.Hurt;
+            bool isAlive = IsShipAlive(ship);
+            this[square] = SquareStatus.Full;
 
-            MarkShipAsDead(ship);
-            return SquareStatus.Dead;
+            return isAlive ? SquareStatus.Hurt : SquareStatus.Dead;
+        }
+
+        public sealed override void SetStatusOfSquare(Square square, SquareStatus squareStatus)
+        {
+            if (squareStatus == SquareStatus.Full)
+                throw new AggregateException("I cannot set status Full");
+            if (squareStatus == SquareStatus.Hurt && this[square] != SquareStatus.Full)
+                throw new AggregateException("This square does not contain ship");
+            base.SetStatusOfSquare(square, squareStatus);
         }
 
         private bool IsShipAlive(Ship ship)

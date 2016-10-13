@@ -10,41 +10,18 @@ namespace BattleShip.BusinessLogic
 {
     public abstract class SimulatedPlayer : Player
     {
-        private readonly ConnectionToMe connectionToMe = null;
+        private readonly PVEConnection _pveConnection = null;
 
-        protected SimulatedPlayer(Field field) : base(field)
-        {connectionToMe = new ConnectionToMe(this); }
+        protected SimulatedPlayer(ClearField clearField) : base(clearField)
+        {_pveConnection = new PVEConnection(this); }
 
-        public IEnemyConnection GetConnectionToMe() => connectionToMe;
+        public IEnemyConnection GetConnectionToMe() => _pveConnection;
 
-        //public void Start()
-        //{
-        //    if (IsGameEnded)
-        //        throw GameEndedException;
-        //    if (MyTurn == null)
-        //        throw NotInitializedException;
-        //    while (!IsGameEnded)
-        //    {
-        //        if (MyTurn.Value)
-        //        {
-        //            Square square = GetMyNextShot();
-        //            SquareStatus status = EnemyConnection.ShotEnemy(square);
-        //            SetStatusOfMyShot(square, status);
-        //        }
-        //        else
-        //        {
-        //            Square square = EnemyConnection.GetShotFromEnemy();
-        //            SquareStatus status = this.ShotFromEnemy(square);
-        //            EnemyConnection.SendStatusOfEnemysShot(square, status);
-        //        }
-        //    }
-        //}
-
-        private class ConnectionToMe : IEnemyConnection
+        private class PVEConnection : IEnemyConnection
         {
             private SimulatedPlayer me;
 
-            public ConnectionToMe(SimulatedPlayer player)
+            public PVEConnection(SimulatedPlayer player)
             {
                 if (player == null)
                     throw new NullReferenceException(nameof(player));
@@ -62,6 +39,16 @@ namespace BattleShip.BusinessLogic
 
             public SquareStatus ShotEnemy(Square square)
             { return me.ShotFromEnemy(square); }
+
+            public void Disconnect()
+            { me.EndGame(true); }
+
+            public IEnumerable<Square> GetEnemyFullSquares()
+            {
+                if (!me.IsGameEnded)
+                    throw new AggregateException("You can call it only after game end");
+                return me.MyField.GetFullSquares();
+            } 
         }
 
     }
