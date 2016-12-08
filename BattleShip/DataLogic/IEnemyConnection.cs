@@ -13,5 +13,7 @@ namespace BattleShip.DataLogic
         Square GetShotFromEnemy();
         void SendStatusOfEnemysShot(Square square, SquareStatus result);
         SquareStatus ShotEnemy(Square square);
+        void Disconnect();
+        IEnumerable<Square> GetEnemyFullSquares();
     }
 }
