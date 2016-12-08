@@ -1,84 +1,25 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using BattleShip.Shared;
+using BattleShip.BusinessLogic;
 
-namespace BattleShip.BusinessLogic
+namespace BattleShip.Shared
 {
-    public sealed class Field
+    public static class BattlefieldExtensions
     {
-        public IEnumerable<Square> ShipSquares { get; }
-
-        private Field(IEnumerable<Square> shipSquares)
+        public static IEnumerable<Square> GetFullSquares(this MyBattleField field)
         {
-            ShipSquares = shipSquares;
+            for (byte i = 0; i < 10; i++)
+                for (byte j = 0; j < 10; j++)
+                {
+                    Square square = new Square(i, j);
+                    if (field[square] == SquareStatus.Full)
+                        yield return square;
+                }
         }
 
-        public static Field Validate(IEnumerable<Square> shipSquares)
-        {
-            if (shipSquares == null)
-                throw new ArgumentNullException(nameof(shipSquares));
-            AggregateException exception = new AggregateException("Bad squares");
-            List<Ship> ships = new List<Ship>(10);
-            foreach (var square in shipSquares)
-            {
-                bool added = false;
-                foreach (var ship in ships)
-                {
-                    if (ship.IsSquareNearShip(square))
-                    {
-                        if (added)
-                            throw exception;
-                        else
-                        {
-                            if (ship.TryAddSquare(square))
-                                added = true;
-                            else
-                                throw exception;
-                        }
-                    }
-                    else if (ship.IsShipContainsSquare(square))
-                        throw exception;
-                }
-                if (!added)
-                {
-                    if (ships.Count == 10)
-                        throw exception;
-                    ships.Add(new Ship(square));
-                }
-            }
-            if (ships.Count != 10)
-                throw exception;
-            int s1 = 0, s2 = 0, s3 = 0, s4 = 0;
-            foreach (var ship in ships)
-            {
-                if (ship.Length == 4)
-                    if (s4 == 1)
-                        throw exception;
-                    else
-                        s4++;
-                else if (ship.Length == 3)
-                    if (s3 == 2)
-                        throw exception;
-                    else
-                        s3++;
-                else if (ship.Length == 2)
-                    if (s2 == 3)
-                        throw exception;
-                    else
-                        s2++;
-                else if (ship.Length == 1)
-                    if (s1 == 4)
-                        throw exception;
-                    else
-                        s1++;
-            }
-            return new Field(shipSquares);
-        }
 
-        public static Field RandomizeSquares()
+        public static IEnumerable<Square> RandomizeSquares()
         {
             List<Ship> ships = new List<Ship>(10);
             ships.Add(RandomShip(4));
@@ -107,10 +48,9 @@ namespace BattleShip.BusinessLogic
                 ships.Add(ship);
             }
 
-            var squares = from ship in ships
-                from square in ship.InnerSquares()
-                select square;
-            return new Field(squares);
+            foreach (var ship in ships)
+                foreach (var Square in ship.InnerSquares())
+                    yield return Square;
         }
 
         private static Ship RandomShip(int length)

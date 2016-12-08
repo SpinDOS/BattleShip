@@ -3,11 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using BattleShip.Shared;
 
 namespace BattleShip.UserLogic
 {
-    public interface IPVPInterface : IPlayerInterface
+    interface IMyShotSource
     {
-        //void EnemyDisconnected();
+        Square GetMyShot();
     }
 }

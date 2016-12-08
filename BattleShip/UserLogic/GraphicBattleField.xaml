@@ -21,7 +21,7 @@
                 <Setter Property="VerticalContentAlignment" Value="Center"></Setter>
             </Style>
         </Grid.Resources>
-        <UniformGrid Grid.Row="0" Grid.Column ="1" Rows="1" Columns="10" Margin="10, 0, 10, 0">
+        <UniformGrid x:Name="Numbers" Grid.Row="0" Grid.Column ="1" Rows="1" Columns="10" Margin="10, 0, 10, 0">
             <Label>1</Label>
             <Label>2</Label>
             <Label>3</Label>
@@ -33,7 +33,7 @@
             <Label>9</Label>
             <Label>10</Label>
         </UniformGrid>
-        <UniformGrid Grid.Row="1" Grid.Column ="0" Rows="10" Columns="1" Margin="5,0,0,0">
+        <UniformGrid x:Name="Letters" Grid.Row="1" Grid.Column ="0" Rows="10" Columns="1" Margin="5,0,0,0">
             <Label>A</Label>
             <Label>B</Label>
             <Label>C</Label>

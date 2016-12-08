@@ -9,7 +9,7 @@ namespace BattleShip.DataLogic
 {
     public interface IEnemyConnection
     {
-        void SetEnemyShotFirst(bool enemyFirst);
+        bool IsMeShotFirst();
         Square GetShotFromEnemy();
         void SendStatusOfEnemysShot(Square square, SquareStatus result);
         SquareStatus ShotEnemy(Square square);

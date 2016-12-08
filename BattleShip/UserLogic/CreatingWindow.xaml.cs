@@ -14,6 +14,12 @@ namespace BattleShip.UserLogic
         public CreatingWindow()
         {
             InitializeComponent();
+            GraphicField.Numbers.MouseEnter += (sender, args) => btnClear.Visibility = Visibility.Visible;
+            GraphicField.Numbers.MouseLeave += (sender, args) =>
+            {
+                if (!btnClear.IsMouseOver)
+                    btnClear.Visibility = Visibility.Collapsed;
+            };
         }
 
         public event EventHandler<StartGameEventArgs> StartGameEvent;
@@ -30,19 +36,17 @@ namespace BattleShip.UserLogic
 
         private void btnRandom_Click(object sender, RoutedEventArgs e)
         {
-            IEnumerable<Square> squares = Field.RandomizeSquares().ShipSquares;
-            for (byte i = 0; i < 10; i++)
-                for (byte j = 0; j < 10; j++)
-                    GraphicField[i, j].SquareStatus = SquareStatus.Empty;
+            btnClear_Click(null, null);
+            IEnumerable<Square> squares = BattlefieldExtensions.RandomizeSquares();
             foreach (var square in squares)
                 GraphicField[square].SquareStatus = SquareStatus.Full;
         }
         private void btnStart_Click(object sender, RoutedEventArgs e)
         {
-            Field field = null;
+            MyBattleField field;
             try
             {
-                field = Field.Validate(GetActiveSquares());
+                field = new MyBattleField(GetActiveSquares());
             }
             catch (AggregateException)
             {
@@ -68,7 +72,13 @@ namespace BattleShip.UserLogic
                     if (GraphicField[square].SquareStatus == SquareStatus.Full)
                         yield return square;
                 }
-        } 
+        }
 
+        private void btnClear_Click(object sender, RoutedEventArgs e)
+        {
+            for (byte i = 0; i < 10; i++)
+                for (byte j = 0; j < 10; j++)
+                    GraphicField[i, j].SquareStatus = SquareStatus.Empty;
+        }
     }
 }

@@ -15,18 +15,28 @@
             <RowDefinition Height="*" />
             <RowDefinition Height="45" />
         </Grid.RowDefinitions>
-        <Label Grid.Row="0" Content="Создание" HorizontalContentAlignment="Center" HorizontalAlignment="Stretch"  VerticalAlignment="Stretch" Margin="0,-5,0,0" FontWeight="Bold" FontStyle="Italic" FontSize="20"/>
-        <Label Grid.Row="1" Content="Расположите ваши корабли: " HorizontalContentAlignment="Center" HorizontalAlignment="Stretch"  VerticalAlignment="Stretch" Margin="0,-5,0,0" FontWeight="Bold" FontStyle="Italic" FontSize="14"/>
-        <Label Grid.Row="2" Content="Режим игры: " HorizontalContentAlignment="Center" HorizontalAlignment="Stretch"  VerticalAlignment="Stretch" Margin="0,-8,0,0" FontSize="14"/>
+        <Label Grid.Row="0" Content="Creating field" HorizontalContentAlignment="Center" HorizontalAlignment="Stretch"  VerticalAlignment="Stretch" Margin="0,-5,0,0" Height="40" FontWeight="Bold" FontStyle="Italic" FontSize="20"/>
+        <Label Grid.Row="1" Content="Place your ships: " HorizontalContentAlignment="Center" HorizontalAlignment="Stretch"  VerticalAlignment="Stretch" Margin="0,-5,0,0" Height="30" FontWeight="Bold" FontStyle="Italic" FontSize="14"/>
+        <Label Grid.Row="2" Content="Game mode: " HorizontalContentAlignment="Center" HorizontalAlignment="Stretch"  VerticalAlignment="Stretch" Margin="0,-8,0,0" FontSize="14"/>
         <UniformGrid Grid.Row="3" Rows="1" Columns="2" Margin="0">
-            <RadioButton x:Name="radioButtonPVE" HorizontalAlignment="Center" Content="Против компьютера" FontSize="13" IsChecked="True" Margin="5,0,0,0"/>
-            <RadioButton x:Name="radioButtonPVP" HorizontalAlignment="Center" Content="Против человека" FontSize="13" Margin="0,0,5,0"/>
+            <RadioButton x:Name="radioButtonPVE" HorizontalAlignment="Center" Content="Versus PC" FontSize="13" IsChecked="True" Margin="5,0,0,0"/>
+            <RadioButton x:Name="radioButtonPVP" HorizontalAlignment="Center" Content="Versus human" FontSize="13" Margin="0,0,5,0"/>
         </UniformGrid>
         <local:GraphicBattleField x:Name="GraphicField" Grid.Row="4" Square_Clicked="Field_Square_Clicked"/>
         <UniformGrid Grid.Row="5" Rows="1" Columns="2" Margin="0">
-            <Button x:Name="btnRandom" Content="Рандом" FontWeight="Bold" FontStyle="Italic" Margin="10,5,10,10" FontSize="13" Click="btnRandom_Click"/>
-            <Button x:Name="btnStart" Content="Начать игру" FontWeight="Bold" FontStyle="Italic" Margin="10,5,10,10" FontSize="13" Click="btnStart_Click"/>
-
+            <Button x:Name="btnRandom" Content="Randomize" FontWeight="Bold" FontStyle="Italic" Margin="10,5,10,10" FontSize="13" Click="btnRandom_Click"/>
+            <Button x:Name="btnStart" Content="Start game" FontWeight="Bold" FontStyle="Italic" Margin="10,5,10,10" FontSize="13" Click="btnStart_Click"/>
         </UniformGrid>
+        <Grid Grid.Row="4"  Margin="30,0,10,0" Height="23" VerticalAlignment="Top">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="4*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Button x:Name="btnClear" Grid.Column="1" Margin="0,2,1,2" Visibility="Collapsed" Click="btnClear_Click">
+                <Grid Margin="0,-2,0,0">
+                    <TextBlock Text="Clear" FontSize="14" Padding="0"></TextBlock>
+                </Grid>
+            </Button>
+        </Grid>
     </Grid>
 </Window>

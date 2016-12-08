@@ -9,23 +9,16 @@ using BattleShip.BusinessLogic;
 namespace BattleShip.Shared
 {
 
-    public class MessageEventArgs : RoutedEventArgs
+    public class DataEventArgs : EventArgs
     {
-        public string Message { get; } // переделать в массив байтов - пусть форма сама решает, как обработать
+        public byte[] Data { get; }
 
-        public MessageEventArgs(string message)
+        public DataEventArgs(byte[] data)
         {
-            if (string.IsNullOrWhiteSpace(message))
-                throw new ArgumentException("Message is empty");
-            Message = message;
+            if (data == null)
+                throw new ArgumentNullException(nameof(data));
+            Data = data;
         }
-        public MessageEventArgs(string message, RoutedEventArgs e) : base(e.RoutedEvent, e.OriginalSource)
-        {
-            if (string.IsNullOrWhiteSpace(message))
-                throw new ArgumentException("Message is empty");
-            Message = message;
-        }
-
     }
 
     public class SquareEventArgs : RoutedEventArgs
@@ -57,14 +50,14 @@ namespace BattleShip.Shared
     public class StartGameEventArgs : EventArgs
     {
         public bool VsHuman { get; }
-        public Field Field { get; }
+        public MyBattleField MyField { get; }
 
-        public StartGameEventArgs(bool vsHuman, Field field)
+        public StartGameEventArgs(bool vsHuman, MyBattleField myField)
         {
-            if (field == null)
-                throw new ArgumentNullException(nameof(field));
+            if (myField == null)
+                throw new ArgumentNullException(nameof(myField));
             VsHuman = vsHuman;
-            Field = field;
+            MyField = myField;
         }
     }
 }

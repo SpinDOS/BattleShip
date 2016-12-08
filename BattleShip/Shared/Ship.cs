@@ -10,9 +10,9 @@ namespace BattleShip.BusinessLogic
 {
     public sealed class Ship
     {
-        public Square Start { get; private set; }
-        public Square End { get; private set; }
-        public byte Length { get; private set; }
+        public Square Start { get; }
+        public Square End { get; }
+        public byte Length { get; }
         public Ship(Square square)
         {
             Start = End = square;
@@ -55,25 +55,15 @@ namespace BattleShip.BusinessLogic
                 throw new ArgumentException("Max length of ship is 4");
         }
 
-        public bool TryAddSquare(Square square)
+        public static bool operator ==(Ship left, Ship right)
         {
-            if (Length == 4)
-                return false;
-            if ((Start.X == End.X && Start.X == square.X && Start.Y == square.Y + 1) ||
-                (Start.Y == End.Y && Start.Y == square.Y && Start.X == square.X + 1))
-            {
-                Start = square;
-                Length++;
-                return true;
-            }
-            if ((Start.X == End.X && Start.X == square.X && End.Y + 1 == square.Y) ||
-                (Start.Y == End.Y && Start.Y == square.Y && End.X + 1 == square.X))
-            {
-                End = square;
-                Length++;
-                return true;
-            }
-            return false;
+            if (left == null)
+                throw new ArgumentNullException(nameof(left));
+            if (right == null)
+                throw new ArgumentNullException(nameof(right));
+            return left.Start == right.Start && left.End == right.End;
         }
+
+        public static bool operator !=(Ship left, Ship right) => !(left == right);
     }
 }

@@ -10,9 +10,11 @@ namespace BattleShip.BusinessLogic
 {
     public sealed class SimplePlayerSimulator : SimulatedPlayer
     {
-        public SimplePlayerSimulator() : base(Field.RandomizeSquares()) { }
+        public SimplePlayerSimulator() :
+            base(new MyBattleField(BattlefieldExtensions.RandomizeSquares())) { }
 
-        protected override Square GenerateNextShot()
+
+        public override Square GetNextShot()
         {
             Thread.Sleep(800);
             for (byte i = 0; i < 10; i++)

@@ -56,30 +56,30 @@
     <Reference Include="PresentationFramework" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BusinessLogic\BattleField.cs" />
-    <Compile Include="BusinessLogic\EnemyBattleField.cs" />
-    <Compile Include="BusinessLogic\MyBattleField.cs" />
-    <Compile Include="BusinessLogic\SimplePlayerSimulator.cs" />
-    <Compile Include="BusinessLogic\SimulatedPlayer.cs" />
-    <Compile Include="Shared\Field.cs" />
-    <Compile Include="BusinessLogic\MyRandomPlayerSimulator.cs" />
-    <Compile Include="BusinessLogic\Player.cs" />
-    <Compile Include="BusinessLogic\RealPlayer.cs" />
-    <Compile Include="BusinessLogic\PVEPlayer.cs" />
-    <Compile Include="BusinessLogic\PVPPlayer.cs" />
+    <Compile Include="BusinessLogic\Battlefield\BattleField.cs" />
+    <Compile Include="BusinessLogic\Battlefield\EnemyBattleField.cs" />
+    <Compile Include="BusinessLogic\Player\LogicalPlayerSimulator.cs" />
+    <Compile Include="BusinessLogic\Battlefield\MyBattleField.cs" />
+    <Compile Include="BusinessLogic\Player\RealPlayer.cs" />
+    <Compile Include="BusinessLogic\Player\SimplePlayerSimulator.cs" />
+    <Compile Include="BusinessLogic\Player\SimulatedPlayer.cs" />
+    <Compile Include="DataLogic\SimulatedConnection.cs" />
+    <Compile Include="Shared\BattlefieldExtensions.cs" />
+    <Compile Include="BusinessLogic\Player\MyRandomPlayerSimulator.cs" />
+    <Compile Include="BusinessLogic\Player\Player.cs" />
+    <Compile Include="BusinessLogic\sRealPlayer.cs" />
     <Compile Include="DataLogic\IEnemyConnection.cs" />
     <Compile Include="DataLogic\IEnemyConnectionWithPeople.cs" />
-    <Compile Include="DataLogic\PVEConnection.cs" />
     <Compile Include="GameLifeCircle.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Shared\EventArgs.cs" />
+    <Compile Include="UserLogic\IMyShotSource.cs" />
     <Compile Include="UserLogic\IPlayerInterface.cs" />
     <Compile Include="UserLogic\ButtonStylesResourceDictionary.cs" />
     <Compile Include="UserLogic\ButtonWithSquareStatus.cs" />
     <Compile Include="Shared\Ship.cs" />
     <Compile Include="Shared\Square.cs" />
-    <Compile Include="Shared\SquareStatus.cs" />
-    <Compile Include="Shared\Utils.cs" />
+    <Compile Include="Shared\ShipExtensions.cs" />
     <Page Include="UserLogic\ConnectingWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

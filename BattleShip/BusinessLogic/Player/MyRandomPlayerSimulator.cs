@@ -11,9 +11,11 @@ namespace BattleShip.BusinessLogic
 {
     public sealed class MyRandomPlayerSimulator : SimulatedPlayer
     {
-        public MyRandomPlayerSimulator() : base(Field.RandomizeSquares()) { }
+        public MyRandomPlayerSimulator() : 
+            base(new MyBattleField(BattlefieldExtensions.RandomizeSquares()))
+        { }
 
-        protected override Square GenerateNextShot()
+        public override Square GetNextShot()
         {
             Thread.Sleep(800);
             Random rnd = new Random();
