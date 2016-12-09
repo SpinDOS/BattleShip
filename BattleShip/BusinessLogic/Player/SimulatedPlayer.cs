@@ -52,8 +52,11 @@ namespace BattleShip.BusinessLogic
             if (IsGameEnded)
                 throw new AggregateException("Game ended");
 
-            myTurn = status != SquareStatus.Miss;
             EnemyField.Shot(square, status, myId);
+            if (EnemyField.ShipsAlive == 0)
+                IsGameEnded = true;
+
+            myTurn = status != SquareStatus.Miss;
         }
 
         /// <summary>
@@ -71,6 +74,9 @@ namespace BattleShip.BusinessLogic
                 throw new AggregateException("Game ended");
 
             var status = MyField.Shot(square, myId);
+            if (MyField.ShipsAlive == 0)
+                IsGameEnded = true;
+
             myTurn = status == SquareStatus.Miss;
             return status;
         }

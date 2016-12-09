@@ -11,7 +11,7 @@ namespace BattleShip.DataLogic
     /// <summary>
     /// Simulated connection to simulated player
     /// </summary>
-    class SimulatedConnection : IEnemyConnection
+    public sealed class SimulatedConnection : IEnemyConnection
     {
         private bool disposed = false;
         private SimulatedPlayer enemy;
@@ -76,7 +76,7 @@ namespace BattleShip.DataLogic
         {
             if (disposed)
                 throw new ObjectDisposedException("Connection is closed");
-            enemy.ForceEndGame();
+            enemy.ForceEndGame(true);
             return true;
         }
 
@@ -94,6 +94,8 @@ namespace BattleShip.DataLogic
         {
             if (!disposed)
                 disposed = true;
+            else
+                enemy = null;
         }
     }
 }

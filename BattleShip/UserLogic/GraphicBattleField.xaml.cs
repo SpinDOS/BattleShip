@@ -10,6 +10,9 @@ namespace BattleShip.UserLogic
     /// </summary>
     public partial class GraphicBattleField : UserControl
     {
+        /// <summary>
+        /// Triggers when square clicked
+        /// </summary>
         public event EventHandler<SquareEventArgs> Square_Clicked;
         public GraphicBattleField()
         {
@@ -17,11 +20,13 @@ namespace BattleShip.UserLogic
             for(int i = 0; i < 10; i++)
                 for (int j = 0; j < 10; j++)
                 {
+                    // add button with special name
                     var button = new ButtonWithSquareStatus {Name = "Btn_" + i + j};
                     Buttons.Children.Add(button);
                 }
         }
 
+        // routes buttonClick to Square_Clicked
         private void Button_Click(object sender, RoutedEventArgs e)
         {
             Button button = e.OriginalSource as Button;

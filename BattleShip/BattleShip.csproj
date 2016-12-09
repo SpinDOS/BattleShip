@@ -58,20 +58,25 @@
   <ItemGroup>
     <Compile Include="BusinessLogic\Battlefield\BattleField.cs" />
     <Compile Include="BusinessLogic\Battlefield\EnemyBattleField.cs" />
+    <Compile Include="BusinessLogic\GameLifeCircle.cs" />
     <Compile Include="BusinessLogic\Player\LogicalPlayerSimulator.cs" />
     <Compile Include="BusinessLogic\Battlefield\MyBattleField.cs" />
     <Compile Include="BusinessLogic\Player\RealPlayer.cs" />
     <Compile Include="BusinessLogic\Player\SimplePlayerSimulator.cs" />
     <Compile Include="BusinessLogic\Player\SimulatedPlayer.cs" />
+    <Compile Include="DataLogic\IEnemyConnection.cs" />
     <Compile Include="DataLogic\SimulatedConnection.cs" />
     <Compile Include="Shared\BattlefieldExtensions.cs" />
     <Compile Include="BusinessLogic\Player\MyRandomPlayerSimulator.cs" />
     <Compile Include="BusinessLogic\Player\Player.cs" />
-    <Compile Include="DataLogic\IEnemyConnection.cs" />
+    <Compile Include="DataLogic\IEnemyGameConnection.cs" />
     <Compile Include="DataLogic\IEnemyConnectionWithPeople.cs" />
-    <Compile Include="GameLifeCircle.cs" />
+    <Compile Include="AppLifeCircle.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Shared\EventArgs.cs" />
+    <Compile Include="UserLogic\DifficultyChoose.xaml.cs">
+      <DependentUpon>DifficultyChoose.xaml</DependentUpon>
+    </Compile>
     <Compile Include="UserLogic\IMyShotSource.cs" />
     <Compile Include="UserLogic\IPlayerInterface.cs" />
     <Compile Include="UserLogic\ButtonStylesResourceDictionary.cs" />
@@ -80,6 +85,10 @@
     <Compile Include="Shared\Square.cs" />
     <Compile Include="Shared\ShipExtensions.cs" />
     <Page Include="UserLogic\ConnectingWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="UserLogic\DifficultyChoose.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -102,7 +111,6 @@
     <Compile Include="UserLogic\ConnectingWindow.xaml.cs">
       <DependentUpon>ConnectingWindow.xaml</DependentUpon>
     </Compile>
-    <Compile Include="UserLogic\IPVPInterface.cs" />
     <Compile Include="UserLogic\GameWindow.xaml.cs">
       <DependentUpon>GameWindow.xaml</DependentUpon>
     </Compile>

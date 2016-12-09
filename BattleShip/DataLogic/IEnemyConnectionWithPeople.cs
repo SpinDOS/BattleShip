@@ -10,7 +10,7 @@ namespace BattleShip.DataLogic
     /// <summary>
     /// Connection to real player
     /// </summary>
-    public interface IEnemyConnectionWithPeople : IEnemyConnection
+    public interface IEnemyConnectionWithPeople : IEnemyGameConnection
     {
     }
 }

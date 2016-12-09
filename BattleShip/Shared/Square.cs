@@ -32,7 +32,7 @@ namespace BattleShip.Shared
         public byte X { get; }
         public byte Y { get; }
 
-        public override string ToString() => $"Square {X}, {Y}";
+        public override string ToString() => $"Square [{X}, {Y}]";
         public override int GetHashCode() => (X << 8) + Y;
         public static bool operator ==(Square l, Square r) => l.X == r.X && l.Y == r.Y;
         public static bool operator !=(Square l, Square r) => l.X != r.X || l.Y != r.Y;

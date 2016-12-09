@@ -57,7 +57,7 @@ namespace BattleShip.BusinessLogic
                 throw new ArgumentNullException(nameof(id));
             if (Owner != null)
                 throw new AggregateException("This field already has owner");
-            if (player.ConfirmId(id)) // check if this id belongs to player
+            if (!player.ConfirmId(id)) // check if this id belongs to player
                 throw new InvalidOperationException("This id does not belong to this player");
             Owner = player;
             _ownerId = id;
@@ -73,7 +73,7 @@ namespace BattleShip.BusinessLogic
         {
             if (ownerId == null)
                 throw new ArgumentNullException(nameof(ownerId));
-            if (ReferenceEquals(ownerId, _ownerId))
+            if (!ReferenceEquals(ownerId, _ownerId))
                 throw new InvalidOperationException("Failed to verify ownerId");
 
             SquareStatus oldStatus = this[square];
@@ -217,30 +217,26 @@ namespace BattleShip.BusinessLogic
             if (strict && ships.Count != 10)
                 return false;
 
-            // check ships count
-            int s1 = 0, s2 = 0, s3 = 0, s4 = 0;
+            // check ship length count
+            byte[] counts = new byte[4];
             foreach (var ship in ships)
+                counts[ship.Length - 1]++;
+
+            if (strict)
             {
-                switch (ship.Length)
-                {
-                    case 4:
-                        if (s4++ == 1)
-                            return false;
-                        break;
-                    case 3:
-                        if (s3++ == 2)
-                            return false;
-                        break;
-                    case 2:
-                        if (s2++ == 3)
-                            return false;
-                        break;
-                    case 1:
-                        if (s1++ == 4)
-                            return false;
-                        break;
-                }
+                for (int i = 0; i < 4; i++)
+                    if (counts[i] != 4 - i)
+                        return false;
             }
+            else
+            {
+                if (counts[3] > 1 || // 4-squared ship
+                    counts[2] > 1 + 2 || //4sq ship + 2 3sq ships
+                    counts[1] > 1 + 2 + 3 || //4sq ship + 2 3sq ships + 3 2sq ships
+                    counts[0] > 1 + 2 + 3 + 4)
+                    return false;
+            }
+
             return true;
         }
 

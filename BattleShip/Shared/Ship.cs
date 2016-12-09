@@ -68,5 +68,18 @@ namespace BattleShip.BusinessLogic
         }
 
         public static bool operator !=(Ship left, Ship right) => !(left == right);
+        public override bool Equals(object obj)
+        {
+            Ship ship = obj as Ship;
+            if (ship == null)
+                return false;
+            return ship == this;
+        }
+
+        public override int GetHashCode() 
+            => Start.GetHashCode() << 16 + End.GetHashCode();
+
+        public override string ToString() => $"Ship from {Start} to {End}";
+        
     }
 }

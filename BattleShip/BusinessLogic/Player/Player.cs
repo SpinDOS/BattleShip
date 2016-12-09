@@ -42,7 +42,7 @@ namespace BattleShip.BusinessLogic
             EnemyField.SetOwner(this, myId);
         }
 
-        private bool _isGameEnded = false;
+        private volatile bool _isGameEnded = false;
 
         /// <summary>
         /// True, if game has ended
@@ -50,7 +50,7 @@ namespace BattleShip.BusinessLogic
         public bool IsGameEnded
         {
             get { return _isGameEnded; }
-            protected set // only false -> true
+            protected set // only * -> true
             {
                 if (!value)
                     throw new ArgumentException("Can't set game end to false");
@@ -64,7 +64,7 @@ namespace BattleShip.BusinessLogic
         public bool ConfirmId(BattleField.Identifier id) => ReferenceEquals(id, myId);
 
         /// <summary>
-        /// End game if enemy or me gave up
+        /// End game if someone gave up
         /// </summary>
         public virtual void ForceEndGame(bool win)
         {

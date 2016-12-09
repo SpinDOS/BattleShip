@@ -142,7 +142,7 @@ namespace BattleShip.BusinessLogic
                         goto default; // if cant go left then go right
                     return square;
                 default: // case 1: move right
-                    if (ship.Start.Y == 9)
+                    if (ship.End.Y == 9)
                         goto case 0; // if cant go right then go left
                     square = new Square(ship.End.X, (byte)(ship.End.Y + 1));
                     if (EnemyField[square] != SquareStatus.Empty)

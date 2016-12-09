@@ -4,6 +4,9 @@ using BattleShip.Shared;
 
 namespace BattleShip.UserLogic
 {
+    /// <summary>
+    /// Class of button with squarestatus for form
+    /// </summary>
     public sealed class ButtonWithSquareStatus : Button
     {
         public ButtonWithSquareStatus() : base()

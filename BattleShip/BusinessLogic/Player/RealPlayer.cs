@@ -16,7 +16,7 @@ namespace BattleShip.BusinessLogic
     public sealed class RealPlayer : Player
     {
         // connection with enemy
-        private IEnemyConnection enemy;
+        private IEnemyGameConnection enemy;
         // source of my next shot
         private IMyShotSource me;
 
@@ -30,11 +30,19 @@ namespace BattleShip.BusinessLogic
         public event EventHandler<ShotEventArgs> EnemyShot;
 
         /// <summary>
+        /// Trigger when MyTurn initialized
+        /// </summary>
+        public event EventHandler<bool> MyTurnInitialized; 
+
+        /// <summary>
         /// Trigger when game ends
         /// </summary>
-        public event EventHandler<bool> GameEnd; 
+        public event EventHandler<bool> GameEnd;
 
-        public RealPlayer(MyBattleField myField, IEnemyConnection enemy, IMyShotSource me) : base(myField)
+        public bool MyTurn { get; private set; } = false;
+
+        public RealPlayer(MyBattleField myField, 
+            IEnemyGameConnection enemy, IMyShotSource me) : base(myField)
         {
             if (enemy == null)
                 throw new ArgumentNullException(nameof(enemy));
@@ -45,22 +53,26 @@ namespace BattleShip.BusinessLogic
             
             // events initialization
             MyShot += (sender, args) => EnemyField.Shot(args.Square, args.SquareStatus, myId);
-
+            GameEnd += (sender, b) => MyTurn = false;
         }
 
-        public void Start(CancellationToken ct)
+        public void Start()
         {
             // decide who first
-            bool myTurn = enemy.IsMeShotFirst();
-            while (!ct.IsCancellationRequested && !IsGameEnded)
+            MyTurn = enemy.IsMeShotFirst();
+            MyTurnInitialized?.Invoke(this, MyTurn);
+            while (!IsGameEnded)
             {
                 Square square;
                 SquareStatus status;
-                if (myTurn)
+                if (MyTurn)
                 {
                     // shot
                     square = me.GetMyShot();
                     status = enemy.ShotEnemy(square);
+
+                    // i shot again if i didnot miss
+                    MyTurn = status != SquareStatus.Miss;
 
                     // call event
                     MyShot?.Invoke(this, new ShotEventArgs(square, status)); // mark in field
@@ -72,8 +84,7 @@ namespace BattleShip.BusinessLogic
                         GameEnd?.Invoke(this, true);
                     }
 
-                    // i shot again if i didnot miss
-                    myTurn = status != SquareStatus.Miss;
+                    
                 }
                 else
                 {
@@ -84,6 +95,8 @@ namespace BattleShip.BusinessLogic
                     // report enemy
                     enemy.SendStatusOfEnemysShot(square, status);
 
+                    MyTurn = status == SquareStatus.Miss;
+
                     // call event
                     EnemyShot?.Invoke(this, new ShotEventArgs(square, status));
 
@@ -93,13 +106,15 @@ namespace BattleShip.BusinessLogic
                         IsGameEnded = true;
                         GameEnd?.Invoke(this, false);
                     }
-
-                    myTurn = status == SquareStatus.Miss;
+                    
                 }
 
             }
         }
 
+        /// <summary>
+        /// Force end game if someone gave up
+        /// </summary>
         public override void ForceEndGame(bool win)
         {
             base.ForceEndGame(win);
