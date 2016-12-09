@@ -7,8 +7,11 @@ using BattleShip.Shared;
 
 namespace BattleShip.UserLogic
 {
-    interface IMyShotSource
+    public interface IMyShotSource
     {
+        /// <summary>
+        /// Get shot from user
+        /// </summary>
         Square GetMyShot();
     }
 }

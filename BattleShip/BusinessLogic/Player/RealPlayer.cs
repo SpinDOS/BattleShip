@@ -10,13 +10,28 @@ using BattleShip.UserLogic;
 
 namespace BattleShip.BusinessLogic
 {
-    class RealPlayer : Player
+    /// <summary>
+    /// Class for logic of real player
+    /// </summary>
+    public sealed class RealPlayer : Player
     {
+        // connection with enemy
         private IEnemyConnection enemy;
+        // source of my next shot
         private IMyShotSource me;
 
-        public event EventHandler<ShotEventArgs> ShotMade;
-        public event EventHandler<Tuple<Ship, bool>> ShipDead;
+        /// <summary>
+        /// Trigger when i get result of my shot
+        /// </summary>
+        public event EventHandler<ShotEventArgs> MyShot;
+        /// <summary>
+        /// Trigger when enemy shot me
+        /// </summary>
+        public event EventHandler<ShotEventArgs> EnemyShot;
+
+        /// <summary>
+        /// Trigger when game ends
+        /// </summary>
         public event EventHandler<bool> GameEnd; 
 
         public RealPlayer(MyBattleField myField, IEnemyConnection enemy, IMyShotSource me) : base(myField)
@@ -27,67 +42,68 @@ namespace BattleShip.BusinessLogic
                 throw new ArgumentNullException(nameof(me));
             this.enemy = enemy;
             this.me = me;
+            
+            // events initialization
+            MyShot += (sender, args) => EnemyField.Shot(args.Square, args.SquareStatus, myId);
 
-            ShotMade += (sender, args) =>
-            {
-                BattleField field = args.IsMyShip ? MyField : EnemyField;
-                field.SetStatusOfSquare(args.Square, args.SquareStatus);
-            };
-
-            ShipDead += (sender, tuple) =>
-            {
-                BattleField field = tuple.Item2 ? MyField : EnemyField;
-                Ship ship = tuple.Item1;
-                field.MarkShipAsDead(ship);
-            };
-
-            GameEnd += (sender, b) => IsGameEnded = true;
         }
 
         public void Start(CancellationToken ct)
         {
+            // decide who first
             bool myTurn = enemy.IsMeShotFirst();
             while (!ct.IsCancellationRequested && !IsGameEnded)
             {
-                BattleField field = myTurn ? MyField : EnemyField;
-                bool my = myTurn;
                 Square square;
                 SquareStatus status;
                 if (myTurn)
                 {
+                    // shot
                     square = me.GetMyShot();
                     status = enemy.ShotEnemy(square);
+
+                    // call event
+                    MyShot?.Invoke(this, new ShotEventArgs(square, status)); // mark in field
+
+                    // check for end game
+                    if (EnemyField.ShipsAlive == 0)
+                    {
+                        IsGameEnded = true;
+                        GameEnd?.Invoke(this, true);
+                    }
+
+                    // i shot again if i didnot miss
                     myTurn = status != SquareStatus.Miss;
                 }
                 else
                 {
+                    // shot
                     square = enemy.GetShotFromEnemy();
-                    status = MyField.GetResultOfShot(square);
+                    status = MyField.Shot(square, myId); // mark in field
+
+                    // report enemy
                     enemy.SendStatusOfEnemysShot(square, status);
+
+                    // call event
+                    EnemyShot?.Invoke(this, new ShotEventArgs(square, status));
+
+                    // check for end game
+                    if (MyField.ShipsAlive == 0)
+                    {
+                        IsGameEnded = true;
+                        GameEnd?.Invoke(this, false);
+                    }
+
                     myTurn = status == SquareStatus.Miss;
                 }
 
-                ShotMade(this, new ShotEventArgs(square, status, !my)); // initialized in .ctor
-
-                if (status != SquareStatus.Dead)
-                    continue;
-
-                Ship ship = field.FindShipBySquare(square);
-                ShipDead.Invoke(this, Tuple.Create(ship, !my)); // initialized in .ctor
-
-                if (my)
-                {
-                    if (--MyShipsAlive != 0)
-                        continue;
-                }
-                else
-                {
-                    if (--EnemyShipsAlive != 0)
-                        continue;
-                }
-
-                GameEnd(this, my); // initialized in .ctor
             }
+        }
+
+        public override void ForceEndGame(bool win)
+        {
+            base.ForceEndGame(win);
+            GameEnd?.Invoke(this, win);
         }
     }
 }

@@ -7,21 +7,10 @@ using BattleShip.Shared;
 
 namespace BattleShip.DataLogic
 {
+    /// <summary>
+    /// Connection to real player
+    /// </summary>
     public interface IEnemyConnectionWithPeople : IEnemyConnection
     {
-        bool Connected { get; }
-
-        bool GetMeShotFirst();
-
-        byte[] ReceiveData();
-        void SendData(byte[] data);
-
-        event EventHandler EnemyAsksToRestart;
-        void AnswerEnemyForRestartRequest(bool accept);
-        bool AskEnemyToRestart();
-
-        void SendEnemyFullSquares(IEnumerable<Square> FullSquares);
-
-        event EventHandler EnemyDisconnected;
     }
 }

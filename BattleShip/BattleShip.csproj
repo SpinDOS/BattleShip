@@ -67,7 +67,6 @@
     <Compile Include="Shared\BattlefieldExtensions.cs" />
     <Compile Include="BusinessLogic\Player\MyRandomPlayerSimulator.cs" />
     <Compile Include="BusinessLogic\Player\Player.cs" />
-    <Compile Include="BusinessLogic\sRealPlayer.cs" />
     <Compile Include="DataLogic\IEnemyConnection.cs" />
     <Compile Include="DataLogic\IEnemyConnectionWithPeople.cs" />
     <Compile Include="GameLifeCircle.cs" />

@@ -8,6 +8,7 @@ using BattleShip.Shared;
 
 namespace BattleShip.BusinessLogic
 {
+
     public sealed class Ship
     {
         public Square Start { get; }
@@ -21,36 +22,38 @@ namespace BattleShip.BusinessLogic
 
         public Ship(Square start, Square end)
         {
-            if (start.X == end.X)
+            if (start.X == end.X) // horizontal
             {
-                if (start.Y <= end.Y)
+                if (start.Y <= end.Y) // all ok
                 {
                     Start = start;
                     End = end;
                 }
-                else
+                else // invert start and end
                 {
                     End = start;
                     Start = end;
                 }
                 Length = (byte)(End.Y - Start.Y + 1);
             }
-            else if (start.Y == end.Y)
+            else if (start.Y == end.Y) // vertical
             {
-                if (start.X <= end.X)
+                if (start.X <= end.X) // all ok
                 {
                     Start = start;
                     End = end;
                 }
-                else
+                else // invert start and end
                 {
                     End = start;
                     Start = end;
                 }
                 Length = (byte) (End.X - Start.X + 1);
             }
-            else
+            else // not horizontal or vertical
                 throw new ArgumentException("Squares must be in line");
+
+            // check length for too long ship
             if (Length > 4)
                 throw new ArgumentException("Max length of ship is 4");
         }

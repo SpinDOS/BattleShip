@@ -10,10 +10,20 @@ namespace BattleShip.BusinessLogic
 {
     public sealed class SimplePlayerSimulator : SimulatedPlayer
     {
+        /// <summary>
+        /// Initialize field with random ships
+        /// </summary>
         public SimplePlayerSimulator() :
-            base(new MyBattleField(BattlefieldExtensions.RandomizeSquares())) { }
+            this(new MyBattleField(BattlefieldExtensions.RandomizeSquares())) { }
 
+        /// <summary>
+        /// Initialize field with param squares
+        /// </summary>
+        public SimplePlayerSimulator(MyBattleField myField) : base(myField) { }
 
+        /// <summary>
+        /// Generate next shot by the most simple algorithm
+        /// </summary>
         public override Square GetNextShot()
         {
             Thread.Sleep(800);

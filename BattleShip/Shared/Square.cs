@@ -11,6 +11,9 @@ namespace BattleShip.Shared
         Dead = 4,
     }
 
+    /// <summary>
+    /// Square of field
+    /// </summary>
     public struct Square
     {
         public Square(byte x, byte y)

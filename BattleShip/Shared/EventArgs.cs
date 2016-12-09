@@ -11,6 +11,9 @@ namespace BattleShip.Shared
 
     public class DataEventArgs : EventArgs
     {
+        /// <summary>
+        /// Event args with data byte array
+        /// </summary>
         public byte[] Data { get; }
 
         public DataEventArgs(byte[] data)
@@ -21,6 +24,9 @@ namespace BattleShip.Shared
         }
     }
 
+    /// <summary>
+    /// Event args with square
+    /// </summary>
     public class SquareEventArgs : RoutedEventArgs
     {
         public Square Square { get; }
@@ -34,6 +40,9 @@ namespace BattleShip.Shared
         }
     }
 
+    /// <summary>
+    /// Event args with square and status
+    /// </summary>
     public class ShotEventArgs : EventArgs
     {
         public Square Square { get; }
@@ -46,7 +55,9 @@ namespace BattleShip.Shared
         }
     }
 
-
+    /// <summary>
+    /// Event args for starting game
+    /// </summary>
     public class StartGameEventArgs : EventArgs
     {
         public bool VsHuman { get; }
