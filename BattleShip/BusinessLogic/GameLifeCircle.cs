@@ -19,38 +19,38 @@ namespace BattleShip.BusinessLogic
         /// <summary>
         /// Start game
         /// </summary>
-        public static void Start(MyBattleField myField, GameWindow window, IEnemyConnection enemy)
+        public static void Start(MyBattleField myField, IGameUserInterface UI, IEnemyConnection enemy)
         {
-            RealPlayer me = new RealPlayer(myField, enemy, window);
+            RealPlayer me = new RealPlayer(myField, enemy, UI);
             // provide info about first shot
             me.MyTurnInitialized += (sender, b) => 
-                window.ShowInfo(b? "You shoot first" : "Enemy shoot first", !b);
+                UI.ShowInfo(b? "You shoot first" : "Enemy shoot first", !b);
 
             // provide info about shots
-            me.MyShot += (sender, args) => window.ShowInfo($"My shot to {args.Square}: {args.SquareStatus}", !me.MyTurn);
-            me.EnemyShot += (sender, args) => window.ShowInfo($"Enemy's shot to {args.Square}: {args.SquareStatus}", !me.MyTurn);
+            me.MyShot += (sender, args) => UI.ShowInfo($"My shot to {args.Square}: {args.SquareStatus}", !me.MyTurn);
+            me.EnemyShot += (sender, args) => UI.ShowInfo($"Enemy's shot to {args.Square}: {args.SquareStatus}", !me.MyTurn);
 
             // change squarestatus in form
             me.MyField.SquareStatusChanged +=
-                (sender, args) => window.MarkMySquareWithStatus(args.Square, args.SquareStatus);
+                (sender, args) => UI.MarkMySquareWithStatus(args.Square, args.SquareStatus);
             me.EnemyField.SquareStatusChanged +=
-                (sender, args) => window.MarkEnemySquareWithStatus(args.Square, args.SquareStatus);
+                (sender, args) => UI.MarkEnemySquareWithStatus(args.Square, args.SquareStatus);
 
             // provide enfo about game end
             me.GameEnd += (sender, b) =>
             {
-                window.ShowGameEnd(b);
+                UI.ShowGameEnd(b);
                 if (!b)
-                    window.ShowEnemyFullSquares(enemy.GetEnemyFullSquares());
+                    UI.ShowEnemyFullSquares(enemy.GetEnemyFullSquares());
             };
 
             // catch info from form
-            window.InterfaceClose += (sender, args) => me.ForceEndGame(false);
-            window.GiveUp += (sender, args) => me.ForceEndGame(false);
+            UI.InterfaceForceClose += (sender, args) => me.ForceEndGame(false);
+            UI.GiveUp += (sender, args) => me.ForceEndGame(false);
 
             // start game
             ThreadPool.QueueUserWorkItem(obj => me.Start());
-            window.Start(me.MyField.GetFullSquares());
+            UI.Start(me.MyField.GetFullSquares());
         }
     }
 }

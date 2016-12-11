@@ -48,7 +48,7 @@ namespace BattleShip.UserLogic
             {
                 field = new MyBattleField(GetActiveSquares());
             }
-            catch (AggregateException)
+            catch (ArgumentException)
             {
                 string message = "You must place these ships: " + Environment.NewLine +
                                  '\u2022' + " one 4-square ship" + Environment.NewLine +

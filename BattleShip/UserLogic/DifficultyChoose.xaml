@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:BattleShip.UserLogic"
         mc:Ignorable="d"
-        Title="Choose difficulty" Height="178.959" Width="186.118" ResizeMode="NoResize" ShowInTaskbar="False" WindowStartupLocation="CenterOwner">
+        Title="Choose difficulty" Height="230.202" Width="186.118" ResizeMode="NoResize" ShowInTaskbar="False" WindowStartupLocation="CenterOwner">
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="79*"/>
@@ -15,7 +15,8 @@
         <RadioButton x:Name="Level1" Content="The easiest level" HorizontalAlignment="Left" Margin="10,34,0,0" VerticalAlignment="Top" FontSize="14" Height="18" Width="119"/>
         <RadioButton x:Name="Level2" Content="Random" HorizontalAlignment="Left" Margin="10,57,0,0" VerticalAlignment="Top" FontSize="14" Height="18" Width="71"/>
         <RadioButton x:Name="Level3" Content="Human-like" HorizontalAlignment="Left" Margin="10,80,0,0" VerticalAlignment="Top" IsChecked="True" FontSize="14" Height="18" Width="91"/>
-        <Button x:Name="button" Content="Ok" HorizontalAlignment="Left" Margin="49,105,0,0" VerticalAlignment="Top" Width="78" FontSize="14" Click="button_Click" Height="23"/>
-
+        <RadioButton x:Name="Level4" Content="Smart human-like" HorizontalAlignment="Left" Margin="10,103,0,0" VerticalAlignment="Top" FontSize="14" Height="18" Width="138"/>
+        <RadioButton x:Name="Level5" Content="Cheater" HorizontalAlignment="Left" Margin="10,126,0,0" VerticalAlignment="Top" FontSize="14" Height="18" Width="91"/>
+        <Button x:Name="button" Content="Ok" HorizontalAlignment="Left" Margin="49,0,0,15" Width="78" FontSize="14" Click="button_Click" Height="23" VerticalAlignment="Bottom"/>
     </Grid>
 </Window>

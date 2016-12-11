@@ -41,6 +41,10 @@ namespace BattleShip.UserLogic
                 return 2;
             if (Level3.IsChecked.Value)
                 return 3;
+            if (Level4.IsChecked.Value)
+                return 4;
+            if (Level5.IsChecked.Value)
+                return 5;
             throw new NotImplementedException("There is no another difficulty levels");
         }
 

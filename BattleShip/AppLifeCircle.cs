@@ -32,7 +32,7 @@ namespace BattleShip
             if (!e.VsHuman)
             {
                 try
-                { sim_enemy = AskDifficulty(); }
+                { sim_enemy = AskDifficulty(e.MyField); }
                 catch (OperationCanceledException)
                 { return; }
             }
@@ -44,7 +44,7 @@ namespace BattleShip
         }
 
         // create form and ask user for difficulty level
-        private SimulatedPlayer AskDifficulty()
+        private SimulatedPlayer AskDifficulty(MyBattleField myField)
         {
             var difChoose = new DifficultyChoose();
             difChoose.Owner = createWindow;
@@ -58,6 +58,10 @@ namespace BattleShip
                     return new MyRandomPlayerSimulator();
                 case 3:
                     return new LogicalPlayerSimulator();
+                case 4:
+                    return new SmartPlayerSimulator();
+                case 5:
+                    return new CheaterPlayerSimulator(myField.GetFullSquares());
                 default:
                     throw new NotImplementedException("Unknown difficulty level");
             }

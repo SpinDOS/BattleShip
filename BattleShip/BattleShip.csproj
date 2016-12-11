@@ -59,18 +59,19 @@
     <Compile Include="BusinessLogic\Battlefield\BattleField.cs" />
     <Compile Include="BusinessLogic\Battlefield\EnemyBattleField.cs" />
     <Compile Include="BusinessLogic\GameLifeCircle.cs" />
+    <Compile Include="BusinessLogic\Player\CheaterPlayerSimulator.cs" />
     <Compile Include="BusinessLogic\Player\LogicalPlayerSimulator.cs" />
     <Compile Include="BusinessLogic\Battlefield\MyBattleField.cs" />
     <Compile Include="BusinessLogic\Player\RealPlayer.cs" />
     <Compile Include="BusinessLogic\Player\SimplePlayerSimulator.cs" />
     <Compile Include="BusinessLogic\Player\SimulatedPlayer.cs" />
+    <Compile Include="BusinessLogic\Player\SmartPlayerSimulator.cs" />
     <Compile Include="DataLogic\IEnemyConnection.cs" />
     <Compile Include="DataLogic\SimulatedConnection.cs" />
     <Compile Include="Shared\BattlefieldExtensions.cs" />
     <Compile Include="BusinessLogic\Player\MyRandomPlayerSimulator.cs" />
     <Compile Include="BusinessLogic\Player\Player.cs" />
-    <Compile Include="DataLogic\IEnemyGameConnection.cs" />
-    <Compile Include="DataLogic\IEnemyConnectionWithPeople.cs" />
+    <Compile Include="DataLogic\IGameConnection.cs" />
     <Compile Include="AppLifeCircle.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Shared\EventArgs.cs" />
@@ -78,7 +79,7 @@
       <DependentUpon>DifficultyChoose.xaml</DependentUpon>
     </Compile>
     <Compile Include="UserLogic\IMyShotSource.cs" />
-    <Compile Include="UserLogic\IPlayerInterface.cs" />
+    <Compile Include="UserLogic\IGameUserInterface.cs" />
     <Compile Include="UserLogic\ButtonStylesResourceDictionary.cs" />
     <Compile Include="UserLogic\ButtonWithSquareStatus.cs" />
     <Compile Include="Shared\Ship.cs" />

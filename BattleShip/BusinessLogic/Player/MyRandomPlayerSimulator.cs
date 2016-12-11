@@ -28,13 +28,15 @@ namespace BattleShip.BusinessLogic
         public override Square GetNextShot()
         {
             Thread.Sleep(800);
-            Random rnd = new Random();
-            while (true)
-            {
-                Square square = new Square((byte) rnd.Next(0,10), (byte) rnd.Next(0, 10));
-                if (EnemyField[square] == SquareStatus.Empty)
-                    return square;
-            }
+
+            var squares = EnemyField.GetEmptySquares().ToArray();
+
+            // if empty
+            if (squares.Length == 0)
+                throw new AggregateException("No empty squares");
+
+            // return random empty square
+            return squares[new Random().Next(squares.Length)];
         }
     }
 }

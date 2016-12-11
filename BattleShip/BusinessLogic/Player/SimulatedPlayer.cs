@@ -80,5 +80,12 @@ namespace BattleShip.BusinessLogic
             myTurn = status == SquareStatus.Miss;
             return status;
         }
+
+        /// <summary>
+        /// End game if someone gave up
+        /// </summary>
+        public sealed override void ForceEndGame(bool win) => base.ForceEndGame(win);
+        // prevent overriding
+
     }
 }

@@ -23,6 +23,21 @@ namespace BattleShip.Shared
         }
 
         /// <summary>
+        /// Get not hurt squares of field
+        /// </summary>
+        public static IEnumerable<Square> GetEmptySquares(this EnemyBattleField field)
+        {
+            // enumerate all squares
+            for (byte i = 0; i < 10; i++)
+                for (byte j = 0; j < 10; j++)
+                { // report only full
+                    Square square = new Square(i, j);
+                    if (field[square] == SquareStatus.Empty)
+                        yield return square;
+                }
+        }
+
+        /// <summary>
         /// Randomize squares
         /// </summary>
         public static IEnumerable<Square> RandomizeSquares()

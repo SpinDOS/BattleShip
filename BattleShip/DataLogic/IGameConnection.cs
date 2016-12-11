@@ -10,7 +10,7 @@ namespace BattleShip.DataLogic
     /// <summary>
     /// Connection with enemy only for game
     /// </summary>
-    public interface IEnemyGameConnection : IDisposable
+    public interface IGameConnection : IDisposable
     {
         /// <summary>
         /// Detect who shot first

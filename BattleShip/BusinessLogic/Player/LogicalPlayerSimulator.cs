@@ -11,7 +11,7 @@ namespace BattleShip.BusinessLogic
     /// <summary>
     /// Contains humanlike logic for next shot
     /// </summary>
-    public sealed class LogicalPlayerSimulator : SimulatedPlayer
+    public class LogicalPlayerSimulator : SimulatedPlayer
     {
         // square of last hurt
         private Square? LastHurt = null;
@@ -32,7 +32,7 @@ namespace BattleShip.BusinessLogic
         /// <summary>
         /// Marks last shot with status
         /// </summary>
-        public override void GetReportOfMyShot(Square square, SquareStatus status)
+        public sealed override void GetReportOfMyShot(Square square, SquareStatus status)
         { // save last hurt to LastHurt
             switch (status)
             {
@@ -51,24 +51,28 @@ namespace BattleShip.BusinessLogic
         /// <summary>
         /// Generate next shot by logic
         /// </summary>
-        public override Square GetNextShot()
+        public sealed override Square GetNextShot()
         {
             // if not my turn
             if (!myTurn.HasValue || !myTurn.Value)
                 throw new AggregateException("Can not shot now");
 
-            Thread.Sleep(800);
-            Random rnd = new Random();
+            // imitate thoughts time
+            //Thread.Sleep(800);
+
             Square square;
 
-            // if no info of any ship i will just random next shot
+            // if no info of any ship, get new square
             if (LastHurt == null)
-                while (true)
-                {
-                    square = new Square((byte)rnd.Next(0, 10), (byte)rnd.Next(0, 10));
-                    if (EnemyField[square] == SquareStatus.Empty)
-                        return square;
-                }
+            {
+                square = GetNewSquare();
+                if (EnemyField[square] != SquareStatus.Empty)
+                    throw new Exception("Bad implementation - generated square is not empty");
+                return square;
+            }
+                
+
+            Random rnd = new Random();
 
             // find ship of last hurt
             Ship ship = EnemyField.FindShipBySquare(LastHurt.Value);
@@ -149,6 +153,22 @@ namespace BattleShip.BusinessLogic
                         goto case 0; // if cant go right then go left
                     return square;
             }
+        }
+
+        /// <summary>
+        /// Get new square when there is no info about hurt ships
+        /// </summary>
+        /// <returns>New square to shot</returns>
+        protected virtual Square GetNewSquare()
+        {
+            var squares = EnemyField.GetEmptySquares().ToArray();
+
+            // if empty
+            if (squares.Length == 0)
+                throw new AggregateException("No empty squares");
+
+            // return random empty square
+            return squares[new Random().Next(squares.Length)];
         }
     }
 }

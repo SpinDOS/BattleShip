@@ -16,7 +16,7 @@ namespace BattleShip.BusinessLogic
     public sealed class RealPlayer : Player
     {
         // connection with enemy
-        private IEnemyGameConnection enemy;
+        private IGameConnection enemy;
         // source of my next shot
         private IMyShotSource me;
 
@@ -42,7 +42,7 @@ namespace BattleShip.BusinessLogic
         public bool MyTurn { get; private set; } = false;
 
         public RealPlayer(MyBattleField myField, 
-            IEnemyGameConnection enemy, IMyShotSource me) : base(myField)
+            IGameConnection enemy, IMyShotSource me) : base(myField)
         {
             if (enemy == null)
                 throw new ArgumentNullException(nameof(enemy));

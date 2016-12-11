@@ -7,7 +7,7 @@ using BattleShip.Shared;
 
 namespace BattleShip.DataLogic
 {
-    public interface IEnemyConnection : IEnemyGameConnection
+    public interface IEnemyConnection : IGameConnection
     {
         /// <summary>
         /// Give up

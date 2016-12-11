@@ -22,17 +22,39 @@ namespace BattleShip.UserLogic
     /// <summary>
     /// Interaction logic for GameWindow.xaml
     /// </summary>
-    public partial class GameWindow : Window, IMyShotSource
+    public partial class GameWindow : Window, IGameUserInterface
     {
+        // for click handling
         volatile TaskCompletionSource<Square> tcs = new TaskCompletionSource<Square>();
-        public event EventHandler InterfaceClose;
+
+        /// <summary>
+        /// Trigger when user closes window
+        /// </summary>
+        public event EventHandler InterfaceForceClose;
+
+        /// <summary>
+        /// Trigger when player wants to give up
+        /// </summary>
         public event EventHandler GiveUp; 
+
+        // prevent actions after endgame
         private bool EndGame = false;
-        private bool closedByUser = false;
 
         public GameWindow()
         {
             InitializeComponent();
+        }
+        
+        /// <summary>
+        /// Return next player's shot
+        /// </summary>
+        /// <returns></returns>
+        public Square GetMyShot()
+        {
+            // get square by event of click
+            Square square = tcs.Task.Result;
+            tcs = new TaskCompletionSource<Square>();
+            return square;
         }
 
         /// <summary>
@@ -47,18 +69,6 @@ namespace BattleShip.UserLogic
 
             // show form
             this.ShowDialog();
-        }
-
-        /// <summary>
-        /// Return next player's shot
-        /// </summary>
-        /// <returns></returns>
-        public Square GetMyShot()
-        {
-            // get square by event of click
-            Square square = tcs.Task.Result;
-            tcs = new TaskCompletionSource<Square>();
-            return square;
         }
 
         /// <summary>
@@ -98,7 +108,7 @@ namespace BattleShip.UserLogic
         /// <param name="win">true, if i win</param>
         public void ShowGameEnd(bool win)
         {
-            if (closedByUser || EndGame)
+            if (EndGame)
                 return;
             Btn_GiveUp.Dispatcher.Invoke(() => Btn_GiveUp.IsEnabled = false);
             EndGame = true;
@@ -124,7 +134,6 @@ namespace BattleShip.UserLogic
         // ask before closing and trigger interface close event
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            closedByUser = true;
             if (EndGame)
                 return;
             if (!EndGame && MessageBox.Show("Are you sure want to quit?",
@@ -132,7 +141,10 @@ namespace BattleShip.UserLogic
                     MessageBoxButton.OKCancel, MessageBoxImage.Question) == MessageBoxResult.Cancel)
                 e.Cancel = true;
             else
-                InterfaceClose?.Invoke(this, EventArgs.Empty);
+            {
+                EndGame = true;
+                InterfaceForceClose?.Invoke(this, EventArgs.Empty);
+            }
         }
 
         // provide my next shot
