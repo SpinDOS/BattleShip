@@ -38,23 +38,27 @@ namespace BattleShip.BusinessLogic
         /// <summary>
         /// Generates next shot with knowledge about enemy's ships
         /// </summary>
-        /// <returns>Returns enemy's ship square(33%) or random square(67%)</returns>
+        /// <returns>Returns enemy's ship square(20%) or random square(80%)</returns>
         protected override Square GetNewSquare()
         {
             Random rnd = new Random();
             Square square;
             // return enemy's ship square - 33%
-            if (rnd.Next(3) == 0)
+            if (rnd.Next(5) == 0)
             {
-                while (true)
+                int start, i;
+                start = i = rnd.Next(EnemySquares.Length);
+                while (EnemyField[EnemySquares[i]] != SquareStatus.Empty)
                 {
-                    square = EnemySquares[rnd.Next(20)];
-                    if (EnemyField[square] == SquareStatus.Empty)
-                        return square;
+                    if (++i == EnemySquares.Length)
+                        i = 0;
+                    if (i == start)
+                        throw new AggregateException("All enemy squares have been shot");
                 }
+                return EnemySquares[i];
             }
 
-            // return random square - 67%
+            // return random square - 80%
             return base.GetNewSquare();
         }
     }

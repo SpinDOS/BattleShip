@@ -58,7 +58,7 @@ namespace BattleShip.BusinessLogic
                 throw new AggregateException("Can not shot now");
 
             // imitate thoughts time
-            //Thread.Sleep(800);
+            Thread.Sleep(800);
 
             Square square;
 
