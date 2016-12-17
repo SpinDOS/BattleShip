@@ -13,7 +13,8 @@ namespace BattleShip
         [STAThread]
         public static void Main(string[] args)
         {
-            new AppLifeCircle().Start();
+            new ConnectingWindow().ShowDialog();
+            //new AppLifeCircle().Start();
         }
     }
 }
