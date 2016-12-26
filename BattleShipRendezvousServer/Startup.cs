@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using BattleShipRendezvousServer.Model;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -38,6 +39,7 @@ namespace BattleShipRendezvousServer
             services.AddApplicationInsightsTelemetry(Configuration);
 
             services.AddMemoryCache();
+            services.AddSingleton<LobbyCollection>();
             services.AddMvc();
         }
 
