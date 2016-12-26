@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -11,6 +12,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using BattleShip.DataLogic;
 
 namespace BattleShip.UserLogic
 {
@@ -25,6 +27,21 @@ namespace BattleShip.UserLogic
         {
             InitializeComponent();
         }
+
+        public Task<int> Start()
+        {
+            var x = GeTask();
+            this.ShowDialog();
+            return x;
+        }
+
+        private async Task<int> GeTask()
+        {
+            await Task.Delay(5000);
+            await this.Dispatcher.InvokeAsync(() => { if (this.IsVisible) this.Close(); });
+            return 3;
+        }
+
 
         // prevent not-digit input
         private void TxtLobbyId_TextChanged(object sender, TextChangedEventArgs e)

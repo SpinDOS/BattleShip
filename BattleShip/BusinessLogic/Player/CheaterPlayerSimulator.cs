@@ -42,8 +42,7 @@ namespace BattleShip.BusinessLogic
         protected override Square GetNewSquare()
         {
             Random rnd = new Random();
-            Square square;
-            // return enemy's ship square - 33%
+            // return enemy's ship square - 20%
             if (rnd.Next(5) == 0)
             {
                 int start, i;
