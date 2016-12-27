@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using BattleShipRendezvousServer.Dependency_Injection;
@@ -12,12 +13,6 @@ using Newtonsoft.Json;
 
 namespace BattleShipRendezvousServer.Controllers
 {
-    /* TODO 
-     * CheckMyLobby
-     * ReportOwnerIEP
-     * CheckByGuest
-     * ReportGuestIEP
-     */
     [Route("api/[controller]")]
     public class LobbyController : Controller
     {
@@ -28,52 +23,90 @@ namespace BattleShipRendezvousServer.Controllers
         }
 
         // api/lobby/create
-        [HttpGet("create")]
+        [HttpGet("Create")]
         public ActionResult Create()
         {
+            // generate random lobby info
             Random rnd = new Random();
             Guid guid = Guid.NewGuid();
             int publickey = rnd.Next(100000, 1000000);
             int password = rnd.Next(1000, 10000);
             Lobby lobby = new Lobby();
+
+            // insert lobby to cache
             _lobbies.CreateEntry(guid, publickey, password, lobby);
+
+            // report lobbyInfo
             LobbyInfo lobbyInfo = new LobbyInfo(guid, publickey, password);
             return Json(lobbyInfo);
         }
 
-        // GET api/values/5
-        [HttpGet("{id}")]
-        public string Get(int id)
+        // api/lobby/reportguestready/?publickey=0&password=0
+        [HttpPut("ReportGuestReady")]
+        public ActionResult ReportGuestReady(int publickey, int password)
         {
-            return "value";
+            // try get lobby by publickey and password
+            Lobby lobby;
+            if (!_lobbies.TryGetValueByPublicKey(publickey, password, out lobby))
+                return NotFound();
+
+            // report guest ready
+            lobby.GuestReady = true;
+            return NoContent();
         }
 
-        // POST api/values
-        [HttpPost]
-        public void Post([FromBody]string value)
+        // api/lobby/checkmylobby/aa-aa-aa-aa
+        [HttpGet("CheckMyLobby/{privatekey}")]
+        public ActionResult CheckMyLobby(Guid privatekey)
         {
+            ICacheWithPublicPrivateKeysEntry<Guid, int, int, Lobby> entry;
+            // try find entry
+            if (!_lobbies.TryGetEntryByPrivateKey(privatekey, out entry))
+                return NotFound(); // if not found - error code
+            // report that guest ready
+            return Json(new {GuestReady = entry.Value.GuestReady});
         }
 
-        // PUT api/values/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody]string value)
+
+        // api/lobby/reportowneriep/aa-aa-aa-aa
+        [HttpPut("ReportOwnerIEP/{privatekey}")]
+        public ActionResult ReportOwnerIEP(Guid privatekey, [FromBody] dynamic ownerinfo)
         {
+            ICacheWithPublicPrivateKeysEntry<Guid, int, int, Lobby> entry;
+            // try find entry
+            if (!_lobbies.TryGetEntryByPrivateKey(privatekey, out entry))
+                return NotFound(); // if not found - error code
+
+            // save iep from body to lobby
+            entry.Value.OwnerIEP = ownerinfo.OwnerIEP;
+
+            // report guest IEP
+            return Json(new { GuestIEP = entry.Value.GuestIEP });
         }
 
-        // api/lobby/delete
-        [HttpDelete("delete")]
-        public ActionResult Delete()
+        // api/lobby/reportguestiep/?publickey=0&password=0
+        [HttpPut("ReportGuestIEP")]
+        public ActionResult ReportGuestIEP(int publickey, int password, [FromBody] dynamic guestinfo)
         {
-            byte[] arr = new byte[52]; // 52 - length of serialized Guid
-            // read string from body
-            HttpContext.Request.Body.Read(arr, 0, arr.Length);
-            string serialized = Encoding.UTF8.GetString(arr);
-            // deserialize to dynamic to get access to any property
-            dynamic deserialized = JsonConvert.DeserializeObject(serialized);
-            // get guid from dynamic
-            Guid guid = (Guid) deserialized.PrivateKey;
+            // try get lobby by publickey and password
+            Lobby lobby;
+            if (!_lobbies.TryGetValueByPublicKey(publickey, password, out lobby))
+                return NotFound();
+
+            // save guest iep from body to lobby
+            lobby.GuestIEP = guestinfo.GuestIEP;
+
+            // report owner iep
+            return Json(new {OwnerIEP = lobby.OwnerIEP});
+        }
+
+
+        // api/lobby/delete/aa-aa-aa-aa
+        [HttpDelete("Delete/{privatekey}")]
+        public ActionResult Delete(Guid privatekey)
+        {
             // remove by privatekey
-            if (_lobbies.TryRemove(guid))
+            if (_lobbies.TryRemove(privatekey))
                 return NoContent();
             else
                 return NotFound();

@@ -21,7 +21,10 @@ namespace BattleShip
                 new ConnectionEstablisher().CreateLobby();
                 MessageBox.Show("");
             }
-            catch { }
+            catch (Exception e)
+            {
+                MessageBox.Show(e.ToString());
+            }
             //new AppLifeCircle().Start();
         }
     }

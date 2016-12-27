@@ -15,11 +15,11 @@ namespace BattleShip.DataLogic
         public void CreateLobby()
         {
             Guid guid = Guid.NewGuid();
-            string s = JsonConvert.SerializeObject(new {Publickey = guid});
+            IPEndPoint iep = new IPEndPoint(IPAddress.Parse("192.168.100.130"), 45030);
+            string s = JsonConvert.SerializeObject(new {OwnerIEP = iep.ToString()});
             byte[] arrrr = Encoding.UTF8.GetBytes(s);
-            MessageBox.Show(guid.ToString());
-            HttpWebRequest req = (HttpWebRequest)WebRequest.Create("http://localhost:3184/api/lobby/delete");
-            req.Method = "DELETE";
+            HttpWebRequest req = (HttpWebRequest)WebRequest.Create("http://localhost:3184/api/lobby/ReportGuestReady/?publickey=3&password=4");
+            req.Method = "PUT";
             req.Accept = "application/json";
             req.ContentType = "application/json";
             req.Timeout = 30000;
@@ -29,13 +29,14 @@ namespace BattleShip.DataLogic
             req.Headers.Add(HttpRequestHeader.ContentEncoding, "utf-8");
             //string s = JsonConvert.SerializeObject(new {info = "abcdABCS"});
             //byte[] input = Encoding.UTF8.GetBytes(s);
-            req.ContentLength = arrrr.Length;
-            using (var stream = req.GetRequestStream())
-            {
-                stream.Write(arrrr, 0, arrrr.Length);
-                stream.Flush();
-                stream.Close();
-            }
+            req.ContentLength = 0;
+            //req.ContentLength = arrrr.Length;
+            //using (var stream = req.GetRequestStream())
+            //{
+            //    stream.Write(arrrr, 0, arrrr.Length);
+            //    stream.Flush();
+            //    stream.Close();
+            //}
             var res = req.GetResponse() as HttpWebResponse;
             
             var stream1 = res.GetResponseStream();
