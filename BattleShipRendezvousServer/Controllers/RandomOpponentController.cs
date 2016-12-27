@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using BattleShipRendezvousServer.Middleware;
 using BattleShipRendezvousServer.Model;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -26,13 +27,15 @@ namespace BattleShipRendezvousServer.Controllers
         public JsonResult Get()
         {
             LobbyInfo lobbyInfo = null;
-            //if (_searcher.TryGetOpponent(out lobbyInfo))
-            //{
-            //    return Json(lobbyInfo);
-            //}
-            //else
+            // get enemy
+            if (_searcher.TryGetEnemy(out lobbyInfo)) // if found enemy
             {
-                return Json(lobbyInfo);
+                return Json(new {Found = true,
+                    PublicKey = lobbyInfo.PublicKey, Password = lobbyInfo.Password});
+            }
+            else // if you have to wait for another enemy
+            {
+                return Json(new {Found = false, PrivateKey = lobbyInfo.PrivateKey});
             }
         }
     }

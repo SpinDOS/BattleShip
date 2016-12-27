@@ -10,14 +10,14 @@ namespace BattleShipRendezvousServer.Model
     /// </summary>
     public class LobbyInfo
     {
-        public int PublicId { get; }
-        public Guid PrivateId { get; }
+        public int PublicKey { get; }
+        public Guid PrivateKey { get; }
         public int Password { get; }
 
-        public LobbyInfo(Guid privateId, int publicId, int password)
+        public LobbyInfo(Guid privateKey, int publicKey, int password)
         {
-            PrivateId = privateId;
-            PublicId = publicId;
+            PrivateKey = privateKey;
+            PublicKey = publicKey;
             Password = password;
         }
     }
