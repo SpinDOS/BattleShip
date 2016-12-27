@@ -25,12 +25,12 @@ namespace BattleShipRendezvousServer.Controllers
         [HttpGet]
         public JsonResult Get()
         {
-            LobbyInfo lobbyInfo;
-            if (_searcher.TryGetOpponent(out lobbyInfo))
-            {
-                return Json(lobbyInfo);
-            }
-            else
+            LobbyInfo lobbyInfo = null;
+            //if (_searcher.TryGetOpponent(out lobbyInfo))
+            //{
+            //    return Json(lobbyInfo);
+            //}
+            //else
             {
                 return Json(lobbyInfo);
             }

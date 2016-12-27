@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Authentication;
 using System.Threading.Tasks;
 
 namespace BattleShipRendezvousServer.Middleware
@@ -9,23 +10,48 @@ namespace BattleShipRendezvousServer.Middleware
     /// Interface for cache with access to object of TValue by 
     /// TPrivateKey or TPublicKey + TPassword 
     /// </summary>
-    interface ICacheWithPublicPrivateKeys<TPrivateKey, TPublicKey, TPassword, TValue>
+    public interface ICacheWithPublicPrivateKeys<TPrivateKey, TPublicKey, TPassword, TValue>
     {
+
+        /// <summary>
+        /// Count of entries in the cache
+        /// </summary>
+        int Count { get; }
         /// <summary>
         /// Get entry by private key
         /// </summary>
         /// <param name="privateKey">key for search</param>
-        /// <returns></returns>
+        /// <returns>Entry of the key</returns>
+        /// <exception cref="KeyNotFoundException">private key not found</exception>
         ICacheWithPublicPrivateKeysEntry<TPrivateKey, TPublicKey, TPassword, TValue>
-            GetEntryByPrivateKey(TPrivateKey privateKey);
+        this[TPrivateKey privateKey] { get; }
+
+        /// <summary>
+        /// Try get value by private key 
+        /// </summary>
+        /// <param name="privateKey">private key to search</param>
+        /// <param name="entry">if found, entry of the key</param>
+        /// <returns>true, if found</returns>
+        bool TryGetEntryByPrivateKey(TPrivateKey privateKey, out ICacheWithPublicPrivateKeysEntry<TPrivateKey, TPublicKey, TPassword, TValue> entry);
+
+        /// <summary>
+        /// Try get value by public key and password
+        /// </summary>
+        /// <param name="publicKey">public key to search</param>
+        /// <param name="password">password to confirm key</param>
+        /// <param name="value">if found, value of the key</param>
+        /// <returns>true, if found</returns>
+        bool TryGetValueByPublicKey(TPublicKey publicKey, TPassword password, out TValue value);
 
         /// <summary>
         /// Get value by public key
         /// </summary>
         /// <param name="publicKey">key for search</param>
-        /// <param name="password">password to confirm</param>
-        /// <returns></returns>
-        TValue GetValueByPublicKey(TPublicKey publicKey, TPassword password);
+        /// <param name="password">password to confirm key</param>
+        /// <returns>Value of the entry</returns>
+        /// <exception cref="KeyNotFoundException">public key not found</exception>
+        /// <exception cref="AuthenticationException">password is not correct</exception>
+        TValue this[TPublicKey publicKey, TPassword password] { get; }
 
         /// <summary>
         /// Create entry with following parameters
@@ -37,9 +63,11 @@ namespace BattleShipRendezvousServer.Middleware
             TPassword password, TValue value);
 
         /// <summary>
-        /// Remove entry by private key
+        /// Try remove entry by private key
         /// </summary>
-        void Remove(TPrivateKey privateKey);
+        /// <param name="privateKey">key of entry to remove</param>
+        /// <returns>true, if key was found and entry was removed</returns>
+        bool TryRemove(TPrivateKey privateKey);
 
     }
 }

@@ -11,6 +11,10 @@ namespace BattleShipRendezvousServer.Middleware
     /// <summary>
     /// Memory cache with private and public keys for access value
     /// </summary>
+    /// <typeparam name="TPrivateKey">Type of private key</typeparam>
+    /// <typeparam name="TPublicKey">Type of public key</typeparam>
+    /// <typeparam name="TPassword">Type of password</typeparam>
+    /// <typeparam name="TValue">Type of value</typeparam>
     public partial class MemoryCacheWithPublicPrivateKeys<TPrivateKey, TPublicKey, TPassword, TValue> :
         ICacheWithPublicPrivateKeys<TPrivateKey, TPublicKey, TPassword, TValue>
     {
@@ -24,12 +28,24 @@ namespace BattleShipRendezvousServer.Middleware
         Dictionary<TPrivateKey, CacheEntry> entries = new Dictionary<TPrivateKey, CacheEntry>();
 
         /// <summary>
+        /// Create cache with default TimerExpirationCheckDelay = 60
+        /// </summary>
+        public MemoryCacheWithPublicPrivateKeys()
+        {
+            _timer = new Timer(TimerCallback, null, TimeSpan.Zero, TimerExpirationCheckDelay);
+        }
+
+        /// <summary>
         /// Default sliding expiration delay for entries
         /// </summary>
         public TimeSpan? DefaultSlidingExpirationDelay { get; set; } = TimeSpan.FromSeconds(15);
 
-        private TimeSpan _timerExpirationCheckDelay;
+        // underlying field for TimerExpirationCheckDelay
+        private TimeSpan _timerExpirationCheckDelay = TimeSpan.FromSeconds(60);
 
+        /// <summary>
+        /// Delay between checks of entry expirations by timer
+        /// </summary>
         public TimeSpan TimerExpirationCheckDelay
         {
             get { return _timerExpirationCheckDelay; }
@@ -41,65 +57,118 @@ namespace BattleShipRendezvousServer.Middleware
         }
 
         /// <summary>
-        /// Create cache with default TimerExpirationCheckDelay = 60
+        /// Count of entries in the cache
         /// </summary>
-        public MemoryCacheWithPublicPrivateKeys() : this(TimeSpan.FromSeconds(60))
-        { }
+        public int Count => entries.Count;
 
-        /// <summary>
-        /// Create cache with TimerExpirationCheckDelay
-        /// </summary>
-        /// <param name="timerExpirationCheckDelay">How often the object will look for unused entries</param>
-        public MemoryCacheWithPublicPrivateKeys(TimeSpan timerExpirationCheckDelay)
-        {
-            _timerExpirationCheckDelay = timerExpirationCheckDelay;
-            _timer = new Timer(TimerCallback, null, TimeSpan.Zero, timerExpirationCheckDelay);
-        }
 
         /// <summary>
         /// Get entry by private key
         /// </summary>
-        /// <returns>Full informated entry</returns>
-        public ICacheWithPublicPrivateKeysEntry<TPrivateKey, TPublicKey, TPassword, TValue> 
-            GetEntryByPrivateKey(TPrivateKey privateKey)
+        /// <param name="privateKey">key for search</param>
+        /// <returns>Entry of the key</returns>
+        /// <exception cref="KeyNotFoundException">private key not found</exception>
+        ICacheWithPublicPrivateKeysEntry<TPrivateKey, TPublicKey, TPassword, TValue>
+            ICacheWithPublicPrivateKeys<TPrivateKey, TPublicKey, TPassword, TValue>.this[TPrivateKey privateKey]
         {
-            var entry = entries[privateKey];
-            // sync and check entry
-            if (!entry.Check(true))
-                throw new AggregateException("The entry with this private key is expired");
-            return entry;
+            get
+            {
+                ICacheWithPublicPrivateKeysEntry<TPrivateKey, TPublicKey, TPassword, TValue> result;
+                // if found - return, else - throw exception
+                if (TryGetEntryByPrivateKey(privateKey, out result))
+                    return result;
+                throw new KeyNotFoundException($"Private key {privateKey} not found");
+            }
         }
 
         /// <summary>
-        /// Get value by public key and password
+        /// Try get value by private key 
         /// </summary>
-        /// <param name="publicKey">public key to search</param>
-        /// <param name="password">password to confirm public key</param>
-        /// <returns></returns>
-        public TValue GetValueByPublicKey(TPublicKey publicKey, TPassword password)
+        /// <param name="privateKey">private key to search</param>
+        /// <param name="entry">if found, entry of the key</param>
+        /// <returns>true, if found</returns>
+        public bool TryGetEntryByPrivateKey(TPrivateKey privateKey, out ICacheWithPublicPrivateKeysEntry<TPrivateKey, TPublicKey, TPassword, TValue> entry)
         {
-            // get private key
-            TPrivateKey privateKey = PublicKeyToPrivate[publicKey];
-            // get entry
-            CacheEntry entry = entries[privateKey];
-            // sync and check entry
-            if (!entry.Check(false))
-                throw new AggregateException("The entry with this public key is expired");
-
-            // check password
-            if (!entry.Password.Equals(password))
-                throw new AuthenticationException("Bad password");
-
-            // return just value of the entry
-            return entry.Value;
-
+            // modify out parameter
+            entry = null;
+            CacheEntry cacheEntry;
+            // try find entry
+            if (!entries.TryGetValue(privateKey, out cacheEntry))
+                return false;
+            // check entry
+            if (!cacheEntry.Check(true))
+                return false;
+            // return entry
+            entry = cacheEntry;
+            return true;
         }
 
+        /// <summary>
+        /// Try get value by public key and password
+        /// </summary>
+        /// <param name="publicKey">public key to search</param>
+        /// <param name="password">password to confirm key</param>
+        /// <param name="value">if found, value of the key</param>
+        /// <returns>true, if found</returns>
+        public bool TryGetValueByPublicKey(TPublicKey publicKey, TPassword password, out TValue value)
+        {
+            // modify out parameter
+            value = default(TValue);
+            TPrivateKey privateKey;
+            // try find private key
+            if (!PublicKeyToPrivate.TryGetValue(publicKey, out privateKey))
+                return false;
+
+            // try find entry
+            CacheEntry cacheEntry;
+            if (!entries.TryGetValue(privateKey, out cacheEntry))
+                return false;
+
+            // check password
+            if (!cacheEntry.Password.Equals(password))
+                throw new AuthenticationException("Bad password");
+            // check entry
+            if (!cacheEntry.Check(false))
+                return false;
+
+            // return value
+            value = cacheEntry.Value;
+            return true;
+        }
+
+        /// <summary>
+        /// Get value by public key
+        /// </summary>
+        /// <param name="publicKey">key for search</param>
+        /// <param name="password">password to confirm key</param>
+        /// <returns>Value of the entry</returns>
+        /// <exception cref="KeyNotFoundException">public key not found</exception>
+        /// <exception cref="AuthenticationException">password is not correct</exception>
+        TValue ICacheWithPublicPrivateKeys<TPrivateKey, TPublicKey, TPassword, TValue>.this[TPublicKey publicKey, TPassword password]
+        {
+            get
+            {
+                TValue value;
+                // if found - return, else - throw exception
+                if (TryGetValueByPublicKey(publicKey, password, out value))
+                    return value;
+                throw new KeyNotFoundException($"Public key {publicKey} not found");
+            }
+        }
+
+        /// <summary>
+        /// Create entry with following parameters
+        /// </summary>
+        /// <returns>Retrun created entry for modifying SlidingExpirationDelay 
+        /// or to listen to event</returns>
         public ICacheWithPublicPrivateKeysEntry<TPrivateKey, TPublicKey, TPassword, TValue> CreateEntry(TPrivateKey privateKey, TPublicKey publicKey, TPassword password,
             TValue value)
         {
             // create entry with parameters
             var entry = new CacheEntry(privateKey, publicKey, password, value);
+
+            // initialize sliding expiration
+            entry.SlidingExpirationDelay = DefaultSlidingExpirationDelay;
 
             // remove entry info from dictionaries on expired or remove
             entry.EntryRemoved += (key, key1, password1, value1, reason) =>
@@ -107,17 +176,31 @@ namespace BattleShipRendezvousServer.Middleware
                 entries.Remove(key);
                 PublicKeyToPrivate.Remove(publicKey);
             };
+
+            // add entry to dictionaries
+            PublicKeyToPrivate.Add(publicKey, privateKey);
+            entries.Add(privateKey, entry);
+
             return entry;
         }
 
+
         /// <summary>
-        /// Remove entry
+        /// Try remove entry by private key
         /// </summary>
         /// <param name="privateKey">key of entry to remove</param>
-        public void Remove(TPrivateKey privateKey)
+        /// <returns>true, if key was found and entry was removed</returns>
+        public bool TryRemove(TPrivateKey privateKey)
         {
-            // no need to check - sync and remove
-            entries[privateKey].Remove();
+            // try get entry
+            CacheEntry entry;
+            bool result = entries.TryGetValue(privateKey, out entry);
+
+            // if found - remove
+            if (result)
+                entry.Remove();
+
+            return result;
         }
 
 

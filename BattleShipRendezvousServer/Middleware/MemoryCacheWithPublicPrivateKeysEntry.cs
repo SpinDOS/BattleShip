@@ -26,13 +26,38 @@ namespace BattleShipRendezvousServer.Middleware
             public TPrivateKey PrivateKey { get; }
             public TPublicKey PublicKey { get; }
             public TPassword Password { get; }
-            public TValue Value { get; }
+
+            private TValue _value;
+
+            public TValue Value
+            {
+                get { return _value; }
+                set
+                {
+                    lock (this)
+                    {
+                        _value = value;
+                    }
+                }
+            }
+
+            private TimeSpan? _slidingExpirationDelay;
 
             /// <summary>
             /// The entry is removed if time spent after last check by private id 
             /// is greater than SlidingExpirationTime
             /// </summary>
-            public TimeSpan? SlidingExpirationDelay { get; set; }
+            public TimeSpan? SlidingExpirationDelay
+            {
+                get { return _slidingExpirationDelay; }
+                set
+                {
+                    lock (this)
+                    {
+                        _slidingExpirationDelay = value;
+                    }
+                }
+            }
 
             /// <summary>
             /// Trigger when entry is removed
