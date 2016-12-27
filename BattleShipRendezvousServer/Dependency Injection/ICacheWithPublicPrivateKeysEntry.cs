@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
-namespace BattleShipRendezvousServer.Middleware
+namespace BattleShipRendezvousServer.Dependency_Injection
 {
     /// <summary>
     /// Interface for entry of ICacheWithPublicPrivateKeys

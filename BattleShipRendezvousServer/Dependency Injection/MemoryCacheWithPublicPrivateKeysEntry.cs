@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using System.Threading;
 
-namespace BattleShipRendezvousServer.Middleware
+namespace BattleShipRendezvousServer.Dependency_Injection
 {
     public partial class MemoryCacheWithPublicPrivateKeys<TPrivateKey, TPublicKey, TPassword, TValue> :
         ICacheWithPublicPrivateKeys<TPrivateKey, TPublicKey, TPassword, TValue>
@@ -31,7 +29,13 @@ namespace BattleShipRendezvousServer.Middleware
 
             public TValue Value
             {
-                get { return _value; }
+                get
+                {
+                    lock (this)
+                    {
+                        return _value;
+                    }
+                }
                 set
                 {
                     lock (this)
@@ -49,7 +53,13 @@ namespace BattleShipRendezvousServer.Middleware
             /// </summary>
             public TimeSpan? SlidingExpirationDelay
             {
-                get { return _slidingExpirationDelay; }
+                get
+                {
+                    lock (this)
+                    {
+                        return _slidingExpirationDelay;
+                    }
+                }
                 set
                 {
                     lock (this)

@@ -3,10 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Authentication;
 using System.Threading;
-using System.Threading.Tasks;
-using BattleShipRendezvousServer.Model;
 
-namespace BattleShipRendezvousServer.Middleware
+namespace BattleShipRendezvousServer.Dependency_Injection
 {
     /// <summary>
     /// Memory cache with private and public keys for access value
@@ -35,10 +33,28 @@ namespace BattleShipRendezvousServer.Middleware
             _timer = new Timer(TimerCallback, null, TimeSpan.Zero, TimerExpirationCheckDelay);
         }
 
+        private TimeSpan? _defaultSlidingExpirationDelay = TimeSpan.FromSeconds(15);
+
         /// <summary>
         /// Default sliding expiration delay for entries
         /// </summary>
-        public TimeSpan? DefaultSlidingExpirationDelay { get; set; } = TimeSpan.FromSeconds(15);
+        public TimeSpan? DefaultSlidingExpirationDelay
+        {
+            get
+            {
+                lock (this)
+                {
+                    return _defaultSlidingExpirationDelay;
+                }
+            }
+            set
+            {
+                lock (this)
+                {
+                    _defaultSlidingExpirationDelay = value;
+                }
+            }
+        }
 
         // underlying field for TimerExpirationCheckDelay
         private TimeSpan _timerExpirationCheckDelay = TimeSpan.FromSeconds(60);
@@ -48,11 +64,20 @@ namespace BattleShipRendezvousServer.Middleware
         /// </summary>
         public TimeSpan TimerExpirationCheckDelay
         {
-            get { return _timerExpirationCheckDelay; }
+            get
+            {
+                lock (this)
+                {
+                    return _timerExpirationCheckDelay;
+                }
+            }
             set
             {
-                _timerExpirationCheckDelay = value;
-                _timer.Change(TimeSpan.Zero, value);
+                lock (this)
+                {
+                    _timerExpirationCheckDelay = value;
+                    _timer.Change(TimeSpan.Zero, value); 
+                }
             }
         }
 

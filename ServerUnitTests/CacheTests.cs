@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Security.Authentication;
 using System.Threading;
 using System.Threading.Tasks;
-using BattleShipRendezvousServer.Middleware;
+using BattleShipRendezvousServer.Dependency_Injection;
 using BattleShipRendezvousServer.Model;
 using Xunit;
 
@@ -14,7 +14,7 @@ namespace ServerUnitTests
         [Fact]
         public void TimerRemoveCheck()
         {
-            var cache = new MemoryCacheWithPublicPrivateKeys<Guid, int, int, Lobby>();
+            var cache = new BattleShipRendezvousServer.Dependency_Injection.MemoryCacheWithPublicPrivateKeys<Guid, int, int, Lobby>();
             cache.TimerExpirationCheckDelay = TimeSpan.FromSeconds(10);
             cache.DefaultSlidingExpirationDelay = TimeSpan.FromSeconds(5);
             ICacheWithPublicPrivateKeys<Guid, int, int, Lobby> icache = cache;
@@ -34,7 +34,7 @@ namespace ServerUnitTests
         [Fact]
         public void CheckExistanceOfEntries()
         {
-            var cache = new MemoryCacheWithPublicPrivateKeys<Guid, int, int, Lobby>();
+            var cache = new BattleShipRendezvousServer.Dependency_Injection.MemoryCacheWithPublicPrivateKeys<Guid, int, int, Lobby>();
             cache.TimerExpirationCheckDelay = TimeSpan.FromHours(1);
             cache.DefaultSlidingExpirationDelay = TimeSpan.FromHours(1);
             ICacheWithPublicPrivateKeys<Guid, int, int, Lobby> icache = cache;
@@ -118,7 +118,7 @@ namespace ServerUnitTests
         [Fact]
         public void SlidingExpireationCheck()
         {
-            var cache = new MemoryCacheWithPublicPrivateKeys<Guid, int, int, Lobby>();
+            var cache = new BattleShipRendezvousServer.Dependency_Injection.MemoryCacheWithPublicPrivateKeys<Guid, int, int, Lobby>();
             cache.TimerExpirationCheckDelay = TimeSpan.FromHours(1);
             cache.DefaultSlidingExpirationDelay = TimeSpan.FromSeconds(5);
             ICacheWithPublicPrivateKeys<Guid, int, int, Lobby> icache = cache;

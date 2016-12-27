@@ -1,11 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using BattleShipRendezvousServer.Model;
-using Microsoft.AspNetCore.Builder;
 
-namespace BattleShipRendezvousServer.Middleware
+namespace BattleShipRendezvousServer.Dependency_Injection
 {
     /// <summary>
     /// Middleware for finding random opponent

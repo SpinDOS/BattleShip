@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using BattleShipRendezvousServer.Middleware;
+using BattleShipRendezvousServer.Dependency_Injection;
 using BattleShipRendezvousServer.Model;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;

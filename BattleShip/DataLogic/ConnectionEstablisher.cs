@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 using Newtonsoft.Json;
 
 namespace BattleShip.DataLogic
@@ -13,8 +14,12 @@ namespace BattleShip.DataLogic
     {
         public void CreateLobby()
         {
-            HttpWebRequest req = (HttpWebRequest)WebRequest.Create("http://localhost:3184/api/randomopponent/");
-            req.Method = "Get";
+            Guid guid = Guid.NewGuid();
+            string s = JsonConvert.SerializeObject(new {Publickey = guid});
+            byte[] arrrr = Encoding.UTF8.GetBytes(s);
+            MessageBox.Show(guid.ToString());
+            HttpWebRequest req = (HttpWebRequest)WebRequest.Create("http://localhost:3184/api/lobby/delete");
+            req.Method = "DELETE";
             req.Accept = "application/json";
             req.ContentType = "application/json";
             req.Timeout = 30000;
@@ -24,13 +29,13 @@ namespace BattleShip.DataLogic
             req.Headers.Add(HttpRequestHeader.ContentEncoding, "utf-8");
             //string s = JsonConvert.SerializeObject(new {info = "abcdABCS"});
             //byte[] input = Encoding.UTF8.GetBytes(s);
-            //req.ContentLength = input.Length;
-            //using (var stream = req.GetRequestStream())
-            //{
-            //    stream.Write(input, 0, input.Length);
-            //    stream.Flush();
-            //    stream.Close();
-            //}
+            req.ContentLength = arrrr.Length;
+            using (var stream = req.GetRequestStream())
+            {
+                stream.Write(arrrr, 0, arrrr.Length);
+                stream.Flush();
+                stream.Close();
+            }
             var res = req.GetResponse() as HttpWebResponse;
             
             var stream1 = res.GetResponseStream();
