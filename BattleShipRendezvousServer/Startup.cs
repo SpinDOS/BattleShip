@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using BattleShipRendezvousServer.Middleware;
 using BattleShipRendezvousServer.Model;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -38,8 +39,9 @@ namespace BattleShipRendezvousServer
             // Add framework services.
             services.AddApplicationInsightsTelemetry(Configuration);
 
-            services.AddMemoryCache();
-            services.AddSingleton<LobbyCollection>();
+            services.AddSingleton<ICacheWithPublicPrivateKeys<Guid, int, int, Lobby>, 
+                MemoryCacheWithPublicPrivateKeys<Guid, int, int, Lobby>>();
+            services.AddSingleton<RandomOpponentSearch>();
             services.AddMvc();
         }
 

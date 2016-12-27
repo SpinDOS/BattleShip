@@ -15,10 +15,10 @@ namespace BattleShipRendezvousServer.Controllers
     [Route("api/[controller]")]
     public class RandomOpponentController : Controller
     {
-        private LobbyCollection _lobbies;
-        public RandomOpponentController(LobbyCollection lobbies)
+        private RandomOpponentSearch _searcher;
+        public RandomOpponentController(RandomOpponentSearch searcher)
         {
-            _lobbies = lobbies;
+            _searcher = searcher;
         }
 
         // Get api/randomopponent/
@@ -26,14 +26,13 @@ namespace BattleShipRendezvousServer.Controllers
         public JsonResult Get()
         {
             LobbyInfo lobbyInfo;
-            if (_lobbies.TryGetRandomOpponent(out lobbyInfo))
+            if (_searcher.TryGetOpponent(out lobbyInfo))
             {
-                lobbyInfo.Lobby.GuestReady = true;
-                return Json(new {FoundOpponent = true, PublicID = lobbyInfo.PublicId, Password = lobbyInfo.Password});
+                return Json(lobbyInfo);
             }
             else
             {
-                return Json(new { FoundOpponent = false, PrivateID = lobbyInfo.PrivateId});
+                return Json(lobbyInfo);
             }
         }
     }

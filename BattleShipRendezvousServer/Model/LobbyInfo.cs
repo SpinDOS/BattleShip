@@ -5,20 +5,20 @@ using System.Threading.Tasks;
 
 namespace BattleShipRendezvousServer.Model
 {
+    /// <summary>
+    /// Incapsulate info about lobby
+    /// </summary>
     public class LobbyInfo
     {
-        public Lobby Lobby { get; set; }
         public int PublicId { get; }
         public Guid PrivateId { get; }
         public int Password { get; }
 
-        public LobbyInfo()
+        public LobbyInfo(Guid privateId, int publicId, int password)
         {
-            Random rnd = new Random();
-            PublicId = rnd.Next(100000, 1000000);
-            Password = rnd.Next(1000, 10000);
-            PrivateId = Guid.NewGuid();
-            Lobby = new Lobby();
+            PrivateId = privateId;
+            PublicId = publicId;
+            Password = password;
         }
     }
 }

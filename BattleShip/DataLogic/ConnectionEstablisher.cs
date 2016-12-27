@@ -13,7 +13,7 @@ namespace BattleShip.DataLogic
     {
         public void CreateLobby()
         {
-            HttpWebRequest req = (HttpWebRequest)WebRequest.Create("http://localhost:5000/api/randomopponent/");
+            HttpWebRequest req = (HttpWebRequest)WebRequest.Create("http://localhost:3184/api/randomopponent/");
             req.Method = "Get";
             req.Accept = "application/json";
             req.ContentType = "application/json";
