@@ -18,7 +18,7 @@ namespace BattleShip.DataLogic
             IPEndPoint iep = new IPEndPoint(IPAddress.Parse("192.168.100.130"), 45030);
             string s = JsonConvert.SerializeObject(new {OwnerIEP = iep.ToString()});
             byte[] arrrr = Encoding.UTF8.GetBytes(s);
-            HttpWebRequest req = (HttpWebRequest)WebRequest.Create("http://localhost:3184/api/lobby/ReportGuestReady/?publickey=3&password=4");
+            HttpWebRequest req = (HttpWebRequest)WebRequest.Create("http://localhost:3184/api/lobby/ReportOwnerIEP/" + guid.ToString());
             req.Method = "PUT";
             req.Accept = "application/json";
             req.ContentType = "application/json";
@@ -30,13 +30,13 @@ namespace BattleShip.DataLogic
             //string s = JsonConvert.SerializeObject(new {info = "abcdABCS"});
             //byte[] input = Encoding.UTF8.GetBytes(s);
             req.ContentLength = 0;
-            //req.ContentLength = arrrr.Length;
-            //using (var stream = req.GetRequestStream())
-            //{
-            //    stream.Write(arrrr, 0, arrrr.Length);
-            //    stream.Flush();
-            //    stream.Close();
-            //}
+            req.ContentLength = arrrr.Length;
+            using (var stream = req.GetRequestStream())
+            {
+                stream.Write(arrrr, 0, arrrr.Length);
+                stream.Flush();
+                stream.Close();
+            }
             var res = req.GetResponse() as HttpWebResponse;
             
             var stream1 = res.GetResponseStream();

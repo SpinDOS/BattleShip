@@ -48,7 +48,7 @@ namespace BattleShipRendezvousServer.Controllers
             // try get lobby by publickey and password
             Lobby lobby;
             if (!_lobbies.TryGetValueByPublicKey(publickey, password, out lobby))
-                return NotFound();
+                return BadRequest();
 
             // report guest ready
             lobby.GuestReady = true;
@@ -62,7 +62,7 @@ namespace BattleShipRendezvousServer.Controllers
             ICacheWithPublicPrivateKeysEntry<Guid, int, int, Lobby> entry;
             // try find entry
             if (!_lobbies.TryGetEntryByPrivateKey(privatekey, out entry))
-                return NotFound(); // if not found - error code
+                return BadRequest(); // if not found - error code
             // report that guest ready
             return Json(new {GuestReady = entry.Value.GuestReady});
         }
@@ -75,13 +75,22 @@ namespace BattleShipRendezvousServer.Controllers
             ICacheWithPublicPrivateKeysEntry<Guid, int, int, Lobby> entry;
             // try find entry
             if (!_lobbies.TryGetEntryByPrivateKey(privatekey, out entry))
-                return NotFound(); // if not found - error code
+                return BadRequest(); // if not found - error code
 
-            // save iep from body to lobby
-            entry.Value.OwnerIEP = ownerinfo.OwnerIEP;
+            // read string from body
+            string strIep = ownerinfo.OwnerIEP;
+
+            // try get IPEndPoint
+            IPEndPoint iep = strIep.ToIpEndPoint();
+            if (iep == null) // if error - return error code
+                return BadRequest();
+
+            // save to lobby
+            entry.Value.OwnerIEP = iep;
+
 
             // report guest IEP
-            return Json(new { GuestIEP = entry.Value.GuestIEP });
+            return Json(new { GuestIEP = entry.Value.GuestIEP?.ToString() });
         }
 
         // api/lobby/reportguestiep/?publickey=0&password=0
@@ -91,13 +100,20 @@ namespace BattleShipRendezvousServer.Controllers
             // try get lobby by publickey and password
             Lobby lobby;
             if (!_lobbies.TryGetValueByPublicKey(publickey, password, out lobby))
-                return NotFound();
+                return BadRequest();
 
-            // save guest iep from body to lobby
-            lobby.GuestIEP = guestinfo.GuestIEP;
+            // read string from body
+            string strIep = guestinfo.GuestIEP;
+            // try get IPEndPoint
+            IPEndPoint iep = strIep.ToIpEndPoint();
+            if (iep == null)// if error - return error code
+                return BadRequest();
+
+            // save to lobby
+            lobby.GuestIEP = iep;
 
             // report owner iep
-            return Json(new {OwnerIEP = lobby.OwnerIEP});
+            return Json(new {OwnerIEP = lobby.OwnerIEP?.ToString()});
         }
 
 
@@ -109,7 +125,7 @@ namespace BattleShipRendezvousServer.Controllers
             if (_lobbies.TryRemove(privatekey))
                 return NoContent();
             else
-                return NotFound();
+                return BadRequest();
         }
     }
 }

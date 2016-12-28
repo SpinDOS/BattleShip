@@ -29,8 +29,9 @@ namespace BattleShipRendezvousServer.Dependency_Injection
             // sync object
             lock (this)
             {
+                ICacheWithPublicPrivateKeysEntry<Guid, int, int, Lobby> entry;
                 // if no one waiting
-                if (waitingEnemy == null)
+                if (waitingEnemy == null || !_lobbies.TryGetEntryByPrivateKey(waitingEnemy.PrivateKey, out entry))
                 {
                     // generate data for new entry
                     Random rnd = new Random();
@@ -39,7 +40,7 @@ namespace BattleShipRendezvousServer.Dependency_Injection
                     int password = rnd.Next(1000, 10000);
                     Lobby lobby = new Lobby();
                     // add entry to lobby collection
-                    var entry = _lobbies.CreateEntry(guid, publickey, password, lobby);
+                    entry = _lobbies.CreateEntry(guid, publickey, password, lobby);
 
                     // on entry remove, set waitingEnemy to null if the enemy hasnot changed
                     entry.EntryRemoved += (key, publicKey, i, value, reason) =>
@@ -60,7 +61,7 @@ namespace BattleShipRendezvousServer.Dependency_Injection
                 else // waitingEnemy exists
                 {
                     // tell him that he has found enemy
-                    _lobbies[waitingEnemy.PrivateKey].Value.GuestReady = true;
+                    entry.Value.GuestReady = true;
                     // return him
                     lobbyInfo = waitingEnemy;
                     // let next people search for new enemy
