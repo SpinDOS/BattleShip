@@ -38,6 +38,10 @@
     <StartupObject>BattleShip.Program</StartupObject>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="LiteNetLib, Version=1.0.6209.2207, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>bin\Debug\LiteNetLib.dll</HintPath>
+    </Reference>
     <Reference Include="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.9.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
       <Private>True</Private>
@@ -71,6 +75,7 @@
     <Compile Include="BusinessLogic\Player\SimulatedPlayer.cs" />
     <Compile Include="BusinessLogic\Player\SmartPlayerSimulator.cs" />
     <Compile Include="DataLogic\ConnectionEstablisher.cs" />
+    <Compile Include="DataLogic\ConnectionState.cs" />
     <Compile Include="DataLogic\IEnemyConnection.cs" />
     <Compile Include="DataLogic\SimulatedConnection.cs" />
     <Compile Include="Shared\BattlefieldExtensions.cs" />
@@ -162,7 +167,9 @@
   <ItemGroup>
     <Resource Include="Images\Miss.png" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <WCFMetadata Include="Service References\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
