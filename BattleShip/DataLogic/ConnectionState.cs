@@ -8,6 +8,7 @@ namespace BattleShip.DataLogic
 {
     public enum ConnectionState
     {
+        GettingInfoFromServer, 
         WaitingForOpponent, 
         WaitingForOpponentsIP,
         TryingToConnectP2P,

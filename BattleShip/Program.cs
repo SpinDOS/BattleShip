@@ -3,11 +3,13 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using BattleShip.BusinessLogic;
 using BattleShip.DataLogic;
 using BattleShip.UserLogic;
+using LiteNetLib;
 using Newtonsoft.Json;
 
 namespace BattleShip
@@ -21,7 +23,9 @@ namespace BattleShip
             window.Show();
             //try
             //{
-                new ConnectionEstablisher().CreateLobby();
+            var fs = new CancellationTokenSource();
+            //fs.CancelAfter(150);
+                new ConnectionEstablisher().GetRandomOpponent(fs.Token);
                 MessageBox.Show("");
             //}
             //catch (Exception e)

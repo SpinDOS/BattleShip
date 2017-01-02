@@ -30,12 +30,12 @@ namespace BattleShipRendezvousServer.Controllers
             // get enemy
             if (_searcher.TryGetEnemy(out lobbyInfo)) // if found enemy
             {
-                return Json(new {Found = true,
-                    PublicKey = lobbyInfo.PublicKey, Password = lobbyInfo.Password});
+                return Json(new {found = true,
+                    publicKey = lobbyInfo.PublicKey, password = lobbyInfo.Password});
             }
             else // if you have to wait for another enemy
             {
-                return Json(new {Found = false, PrivateKey = lobbyInfo.PrivateKey});
+                return Json(new {found = false, privateKey = lobbyInfo.PrivateKey});
             }
         }
     }

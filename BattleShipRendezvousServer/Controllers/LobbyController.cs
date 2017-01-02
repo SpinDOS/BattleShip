@@ -78,10 +78,10 @@ namespace BattleShipRendezvousServer.Controllers
                 return BadRequest(); // if not found - error code
 
             // read string from body
-            string strIep = ownerinfo.OwnerIEP;
+            string strIep = ownerinfo?.ownerIEP;
 
             // try get IPEndPoint
-            IPEndPoint iep = strIep.ToIpEndPoint();
+            IPEndPoint iep = strIep?.ToIpEndPoint();
             if (iep == null) // if error - return error code
                 return BadRequest();
 
@@ -90,7 +90,7 @@ namespace BattleShipRendezvousServer.Controllers
 
 
             // report guest IEP
-            return Json(new { GuestIEP = entry.Value.GuestIEP?.ToString() });
+            return Json(new { guestIEP = entry.Value.GuestIEP?.ToString() });
         }
 
         // api/lobby/reportguestiep/?publickey=0&password=0
@@ -103,9 +103,9 @@ namespace BattleShipRendezvousServer.Controllers
                 return BadRequest();
 
             // read string from body
-            string strIep = guestinfo.GuestIEP;
+            string strIep = guestinfo?.guestIEP;
             // try get IPEndPoint
-            IPEndPoint iep = strIep.ToIpEndPoint();
+            IPEndPoint iep = strIep?.ToIpEndPoint();
             if (iep == null)// if error - return error code
                 return BadRequest();
 
@@ -113,7 +113,7 @@ namespace BattleShipRendezvousServer.Controllers
             lobby.GuestIEP = iep;
 
             // report owner iep
-            return Json(new {OwnerIEP = lobby.OwnerIEP?.ToString()});
+            return Json(new {ownerIEP = lobby.OwnerIEP?.ToString()});
         }
 
 

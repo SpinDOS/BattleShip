@@ -38,9 +38,9 @@
     <StartupObject>BattleShip.Program</StartupObject>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="LiteNetLib, Version=1.0.6209.2207, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="LiteNetLib, Version=1.0.6210.27086, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>bin\Debug\LiteNetLib.dll</HintPath>
+      <HintPath>Dependencies_dlls\LiteNetLib.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.9.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
@@ -77,6 +77,7 @@
     <Compile Include="DataLogic\ConnectionEstablisher.cs" />
     <Compile Include="DataLogic\ConnectionState.cs" />
     <Compile Include="DataLogic\IEnemyConnection.cs" />
+    <Compile Include="DataLogic\Lumisoft_edited.cs" />
     <Compile Include="DataLogic\SimulatedConnection.cs" />
     <Compile Include="Shared\BattlefieldExtensions.cs" />
     <Compile Include="BusinessLogic\Player\MyRandomPlayerSimulator.cs" />
@@ -85,6 +86,7 @@
     <Compile Include="AppLifeCircle.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Shared\EventArgs.cs" />
+    <Compile Include="Shared\StringToIEPExtension.cs" />
     <Compile Include="UserLogic\DifficultyChoose.xaml.cs">
       <DependentUpon>DifficultyChoose.xaml</DependentUpon>
     </Compile>
@@ -147,6 +149,8 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
+    <None Include="Resources\StunServers.txt" />
+    <None Include="Dependencies_dlls\LiteNetLib.dll" />
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
