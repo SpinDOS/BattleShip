@@ -101,11 +101,14 @@ namespace BattleShipRendezvousServer.Controllers
             Lobby lobby;
             if (!_lobbies.TryGetValueByPublicKey(publickey, password, out lobby))
                 return BadRequest();
+            Console.WriteLine();
 
             // read string from body
             string strIep = guestinfo?.guestIEP;
+            
             // try get IPEndPoint
             IPEndPoint iep = strIep?.ToIpEndPoint();
+            
             if (iep == null)// if error - return error code
                 return BadRequest();
 

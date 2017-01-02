@@ -138,11 +138,11 @@ namespace BattleShip.DataLogic
         {
             ct.ThrowIfCancellationRequested();
             ConnectionState = ConnectionState.WaitingForOpponent;
-            //while (!CheckMyLobby_IsOpponentReady(privatekey))
-            //{
-            //    ct.ThrowIfCancellationRequested();
-            //    Thread.Sleep(RequesInterval);
-            //}
+            while (!CheckMyLobby_IsOpponentReady(privatekey))
+            {
+                ct.ThrowIfCancellationRequested();
+                Thread.Sleep(RequesInterval);
+            }
 
             IPEndPoint localIep = new IPEndPoint(IPAddress.Loopback, new Random().Next(8000, 8500));
             IPEndPoint myPublicIep = GetMyIEP(localIep, ct);
@@ -375,7 +375,7 @@ namespace BattleShip.DataLogic
 
         private string ReportLobbyOwnerIEP(Guid privatekey, IPEndPoint publicIep)
         {
-            string content = JsonConvert.SerializeObject(new {ownerIEP  = publicIep.ToString()});
+            string content = JsonConvert.SerializeObject(new {ownerIEP = publicIep.ToString()});
             var response = MakeRequest(@"/api/lobby/reportOwnerIEP/" + privatekey, "PUT", content);
             if (response == null)
                 throw _formatException;
@@ -392,6 +392,8 @@ namespace BattleShip.DataLogic
         }
 
         private void EstablishConnection(IPEndPoint myiep, IPEndPoint enemyIep)
-        { }
+        {
+            Thread.Sleep(2000);
+        }
     }
 }
