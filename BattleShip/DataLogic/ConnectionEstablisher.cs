@@ -144,7 +144,7 @@ namespace BattleShip.DataLogic
                 Thread.Sleep(RequesInterval);
             }
 
-            IPEndPoint localIep = new IPEndPoint(IPAddress.Loopback, new Random().Next(8000, 8500));
+            IPEndPoint localIep = new IPEndPoint(IPAddress.Any, new Random().Next(8000, 8500));
             IPEndPoint myPublicIep = GetMyIEP(localIep, ct);
             string opponentIepString;
             while ((opponentIepString = ReportLobbyOwnerIEP(privatekey, myPublicIep)) == null)
@@ -164,7 +164,7 @@ namespace BattleShip.DataLogic
             MakeRequest($@"/api/lobby/reportGuestReady/?publickey={publickey}&password={password}",
                 "PUT", null);
             ct.ThrowIfCancellationRequested();
-            IPEndPoint localIep = new IPEndPoint(IPAddress.Loopback, new Random().Next(8000, 8500));
+            IPEndPoint localIep = new IPEndPoint(IPAddress.Any, new Random().Next(8000, 8500));
             IPEndPoint myPublicIep = GetMyIEP(localIep, ct);
             string opponentIepString;
             while ((opponentIepString = ReportLobbyGuestIEP(publickey, password, myPublicIep)) == null)
@@ -336,7 +336,6 @@ namespace BattleShip.DataLogic
         {
             var file = new StringReader(Resources.StunServers);
             IPEndPoint result = null;
-            localIep = new IPEndPoint(IPAddress.Parse("192.168.1.2"), 8354);
 
             while (result == null)
             {
@@ -393,7 +392,25 @@ namespace BattleShip.DataLogic
 
         private void EstablishConnection(IPEndPoint myiep, IPEndPoint enemyIep)
         {
-            Thread.Sleep(2000);
+            EventBasedNetListener listener = new EventBasedNetListener();
+            listener.PeerConnectedEvent += peer => MessageBox.Show("peer connected " + peer.EndPoint);
+            listener.NetworkReceiveEvent += (peer, reader) => MessageBox.Show("Message received");
+            NetClient client = new NetClient(listener, "Battleship");
+            client.PeerToPeerMode = true;
+            client.Start(myiep.Port);
+            client.Connect(enemyIep.Address.ToString(), enemyIep.Port);
+            while (!client.IsConnected)
+            {
+                Thread.Sleep(500);
+            }
+            client.PollEvents();
+            client.Peer.Send(new byte[10], SendOptions.ReliableOrdered);
+            Thread.Sleep(5000);
+            client.PollEvents();
+            MessageBox.Show("OK");
+            
+            //Thread.Sleep(1000);
+            //client.PollEvents();
         }
     }
 }

@@ -65,8 +65,16 @@ namespace LumiSoft_edited
             }
 
             // get end point of server
-            IPEndPoint remoteEndPoint =
-                new IPEndPoint(System.Net.Dns.GetHostAddresses(stunServer)[0], port);
+            IPEndPoint remoteEndPoint;
+            try
+            {
+                remoteEndPoint = new IPEndPoint(System.Net.Dns.GetHostAddresses(stunServer)[0], port);
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+                
 
             // try get my public end point or return null
             STUN_Message test = new STUN_Message();
