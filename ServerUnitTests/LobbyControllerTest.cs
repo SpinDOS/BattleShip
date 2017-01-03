@@ -44,7 +44,10 @@ namespace ServerUnitTests
             // check ability to connect to owner
             response = await _client.PutAsync
                 ($"/api/lobby/ReportGuestReady/?publickey={publickey}&password={password}", new ByteArrayContent(new byte[0]));
-            Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            // check that owner has not reported its iep
+            dynamic dyn0 = JsonConvert.DeserializeObject(await response.Content.ReadAsStringAsync());
+            Assert.False((bool) dyn0.ownerReportedIEP);
 
             // check for exception by bad password
             try
@@ -52,6 +55,7 @@ namespace ServerUnitTests
                 response = await _client.PutAsync
                 ($"/api/lobby/ReportGuestReady/?publickey={publickey}&password={password + 1}",
                     new ByteArrayContent(new byte[0]));
+                Assert.Equal(1, 2);
             }
             catch (AuthenticationException) { }
 
@@ -84,6 +88,14 @@ namespace ServerUnitTests
             Assert.True((bool)dyn1.found);
             int publickey = dyn1.publicKey;
             int password = dyn1.password;
+
+            // check ability to connect to owner
+            response = await _client.PutAsync
+                ($"/api/lobby/ReportGuestReady/?publickey={publickey}&password={password}", new ByteArrayContent(new byte[0]));
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            // check that owner has not reported its iep
+            dynamic dyn0 = JsonConvert.DeserializeObject(await response.Content.ReadAsStringAsync());
+            Assert.False((bool) dyn0.ownerReportedIEP);
 
             ConnectToMyself(privatekey, publickey, password);
 
@@ -128,8 +140,14 @@ namespace ServerUnitTests
             content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/json");
             response = _client.PutAsync($"/api/lobby/ReportOwnerIEP/{privatekey}", content).Result;
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-            return;
 
+            // check ability to connect to owner
+            response = _client.PutAsync
+                ($"/api/lobby/ReportGuestReady/?publickey={publickey}&password={password}", new ByteArrayContent(new byte[0])).Result;
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            // check that owner has reported its iep
+            dynamic dyn7 = JsonConvert.DeserializeObject(response.Content.ReadAsStringAsync().Result);
+            Assert.True((bool) dyn7.ownerReportedIEP);
 
             // wait more time for sliding expiration delay refresh check
             Thread.Sleep(10000);

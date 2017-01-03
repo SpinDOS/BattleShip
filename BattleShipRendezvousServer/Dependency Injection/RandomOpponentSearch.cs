@@ -60,9 +60,7 @@ namespace BattleShipRendezvousServer.Dependency_Injection
                 }
                 else // waitingEnemy exists
                 {
-                    // tell him that he has found enemy
-                    entry.Value.GuestReady = true;
-                    // return him
+                    // return waitingEnemy
                     lobbyInfo = waitingEnemy;
                     // let next people search for new enemy
                     waitingEnemy = null;

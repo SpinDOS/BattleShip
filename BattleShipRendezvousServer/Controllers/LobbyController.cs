@@ -52,7 +52,7 @@ namespace BattleShipRendezvousServer.Controllers
 
             // report guest ready
             lobby.GuestReady = true;
-            return NoContent();
+            return Json(new { ownerReportedIEP = lobby.OwnerIEP != null });
         }
 
         // api/lobby/checkmylobby/aa-aa-aa-aa
@@ -64,9 +64,8 @@ namespace BattleShipRendezvousServer.Controllers
             if (!_lobbies.TryGetEntryByPrivateKey(privatekey, out entry))
                 return BadRequest(); // if not found - error code
             // report that guest ready
-            return Json(new {GuestReady = entry.Value.GuestReady});
+            return Json(new {guestReady = entry.Value.GuestReady});
         }
-
 
         // api/lobby/reportowneriep/aa-aa-aa-aa
         [HttpPut("ReportOwnerIEP/{privatekey}")]
@@ -101,7 +100,6 @@ namespace BattleShipRendezvousServer.Controllers
             Lobby lobby;
             if (!_lobbies.TryGetValueByPublicKey(publickey, password, out lobby))
                 return BadRequest();
-            Console.WriteLine();
 
             // read string from body
             string strIep = guestinfo?.guestIEP;

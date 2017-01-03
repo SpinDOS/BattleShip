@@ -12,7 +12,6 @@ namespace BattleShip.DataLogic
         WaitingForOpponent, 
         WaitingForOpponentsIP,
         TryingToConnectP2P,
-        Connected,
-        Disconnected,
+        Ready,
     }
 }
