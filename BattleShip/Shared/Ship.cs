@@ -1,12 +1,6 @@
 using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using BattleShip.Shared;
 
-namespace BattleShip.BusinessLogic
+namespace BattleShip.Shared
 {
 
     public sealed class Ship

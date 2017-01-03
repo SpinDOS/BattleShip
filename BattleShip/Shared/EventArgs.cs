@@ -71,4 +71,16 @@ namespace BattleShip.Shared
             MyField = myField;
         }
     }
+
+    public class AuthentificationEventArgs : EventArgs
+    {
+        public int PublicKey { get; }
+        public int Password { get; }
+
+        public AuthentificationEventArgs(int publicKey, int password)
+        {
+            PublicKey = publicKey;
+            Password = password;
+        }
+    }
 }
