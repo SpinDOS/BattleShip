@@ -96,15 +96,17 @@ namespace BattleShipUnitTests
                 password = args.Password;
             };
             // create lobby with cancellation after 15 sec
-            cts1.CancelAfter(15000);
             var task = Task.Run(() => client1 = establisher1.CreateLobby(cts1.Token));
 
             CancellationTokenSource cts2 = new CancellationTokenSource();
+
             // wait a time
-            Thread.Sleep(5000);
+            while (password == 0)
+            {
+                Thread.Sleep(500);
+            }
 
             // try connect lobby with cancellation after 10 sec
-            cts2.CancelAfter(10000);
             NetClient client2 = new ConnectionEstablisher().ConnectLobby(publickey, password, cts2.Token);
             // check if clients are connected
             Assert.True(client2.IsConnected);

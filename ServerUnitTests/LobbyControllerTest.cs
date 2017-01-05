@@ -43,25 +43,24 @@ namespace ServerUnitTests
 
             // check ability to connect to owner
             response = await _client.PutAsync
-                ($"/api/lobby/ReportGuestReady/?publickey={publickey}&password={password}", new ByteArrayContent(new byte[0]));
+            ($"/api/lobby/ReportGuestReady/?publickey={publickey}&password={password}",
+                new ByteArrayContent(new byte[0]));
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             // check that owner has not reported its iep
             dynamic dyn0 = JsonConvert.DeserializeObject(await response.Content.ReadAsStringAsync());
             Assert.False((bool) dyn0.ownerReportedIEP);
 
             // check for exception by bad password
-            try
-            {
-                response = await _client.PutAsync
-                ($"/api/lobby/ReportGuestReady/?publickey={publickey}&password={password + 1}",
-                    new ByteArrayContent(new byte[0]));
-                Assert.Equal(1, 2);
-            }
-            catch (AuthenticationException) { }
+            response = await _client.PutAsync
+            ($"/api/lobby/ReportGuestReady/?publickey={publickey}&password={password + 1}",
+                new ByteArrayContent(new byte[0]));
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+
 
             // check for error while connecting not exisiting lobby
             response = await _client.PutAsync
-                ($"/api/lobby/ReportGuestReady/?publickey={publickey+1}&password={password}", new ByteArrayContent(new byte[0]));
+            ($"/api/lobby/ReportGuestReady/?publickey={publickey + 1}&password={password}",
+                new ByteArrayContent(new byte[0]));
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
 
             ConnectToMyself(privatekey, publickey, password);

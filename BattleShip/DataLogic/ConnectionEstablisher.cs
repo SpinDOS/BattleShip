@@ -28,8 +28,6 @@ namespace BattleShip.DataLogic
 
         // readonly exception for any server response format error
         private readonly FormatException _formatException = new FormatException("Bad format of server response");
-        // bufer for decoding responses of requests to server
-        private readonly byte[] _bufer = new byte[200];
 
         // volatile field for multi-thread cancellation of request
         protected volatile HttpWebRequest _request;
@@ -42,13 +40,13 @@ namespace BattleShip.DataLogic
 
         #endregion
 
-        #region Constructor
+        #region Constructors
 
         /// <summary>
         /// Initialize class with server adress from ServerInfo.json and check connection to the server
         /// </summary>
         /// <exception cref="FileLoadException">Can not read data from ServerInfo.json</exception>
-        /// <exception cref="InvalidOperationException">ServerInfo.json does not contain adress of valid server</exception>
+        /// <exception cref="ArgumentException">ServerInfo.json does not contain adress of valid server</exception>
         public ConnectionEstablisher()
         {
             // try read data
@@ -68,40 +66,54 @@ namespace BattleShip.DataLogic
 
             // get server adress
             dynamic dyn = JsonConvert.DeserializeObject(text);
-            ServerAdress = dyn?.ServerAdress;
 
-            // if not found serveradress
-            if (string.IsNullOrWhiteSpace(ServerAdress))
-                throw new InvalidOperationException("Could not find server adress in ServerInfo.json");
+            // check adress
+            CheckAdress((string) dyn.ServerAdress);
+        }
 
+        /// <summary>
+        /// Initialize class with server adress and check connection to the server
+        /// </summary>
+        /// <param name="adress">adress of the server</param>
+        /// <exception cref="ArgumentException">adress is not an adress of valid server</exception>
+        public ConnectionEstablisher(string adress)
+        { // check adress
+            CheckAdress(adress); 
+        }
+        
+        // check adress and throw exception if server by the adress is not available
+        private void CheckAdress(string adress)
+        {
             // try connect to server
             try
             {
-                var response = WebRequest.Create(ServerAdress).GetResponse();
+                var response = WebRequest.Create(adress).GetResponse();
                 response.Close();
             }
             // if can not connect to server
             catch (WebException e)
             {
                 if (e.Status == WebExceptionStatus.ConnectFailure)
-                    throw new InvalidOperationException("Could not connect server from the ServerInfo.json");
+                    throw new InvalidOperationException("Server is unavailable");
                 // if any other status, server is ok => ignore exception
             }
             // if bad uri 
             catch (Exception e) when (e is NotSupportedException || e is UriFormatException)
             {
-                throw new InvalidOperationException("Invalid server adress in the ServerInfo.json");
+                throw new InvalidOperationException("Invalid server adress");
             }
+
+            ServerAdress = adress;
         }
 
         #endregion
-        
+
         #region Properties
 
         /// <summary>
         /// Adress of server to find opponent
         /// </summary>
-        protected string ServerAdress { get; }
+        protected string ServerAdress { get; private set; }
 
         /// <summary>
         /// Return state of finding opponent process
@@ -109,7 +121,11 @@ namespace BattleShip.DataLogic
         public ConnectionState ConnectionState
         {
             get { return _connectionState; }
-            protected set { _connectionState = value; }
+            protected set
+            {
+                _connectionState = value;
+                ConnectionStateChanged?.Invoke(this, value);
+            }
         }
 
         /// <summary>
@@ -118,6 +134,7 @@ namespace BattleShip.DataLogic
         public TimeSpan RequesInterval { get; set; } = TimeSpan.FromSeconds(7.5);
 
         public event EventHandler<AuthentificationEventArgs> GotLobbyPublicInfo;
+        public event EventHandler<ConnectionState> ConnectionStateChanged;
 
         #endregion
 
@@ -131,75 +148,83 @@ namespace BattleShip.DataLogic
         /// <exception cref="AggregateException">thrown if another opponent search progress is in use</exception>
         /// <exception cref="FormatException">thrown if server returns response in bad format</exception>
         /// <exception cref="TimeoutException">thrown if server has not responded during timeout</exception>
-        /// <exception cref="ArgumentException">thrown if server from ServerInfo.json is unavailable</exception>
+        /// <exception cref="ArgumentException">thrown if server from is unavailable</exception>
         /// <exception cref="OperationCanceledException">thrown if operation cancelled by user</exception>
         /// <exception cref="DirectoryNotFoundException">thrown if pre-defined relative url is unavailable</exception>
+        /// <exception cref="AuthenticationException">thrown if RequestInterval is too large 
+        /// and server delete created lobby or another server authentification error</exception>
         public NetClient GetRandomOpponent(CancellationToken ct)
         {
             // Change Connection state
             if (ConnectionState != ConnectionState.Ready)
-                throw new AggregateException("Opponent is already found");
+                throw new AggregateException("Opponent search is already in progress");
             ConnectionState = ConnectionState.GettingInfoFromServer;
 
             // abort request on cancellation
             ct.Register(() => _request?.Abort());
 
-            // get response
-            var response = MakeRequest(@"/api/randomOpponent", "GET", null);
-
-            // check if cancelled
-            ct.ThrowIfCancellationRequested();
-
-            if (response == null)
-                throw _formatException;
-
-            // check response format
-            bool found;
+            // reset ConnectionState on exception
             try
             {
-                found = response.found;
-            }
-            catch (RuntimeBinderException)
-            {
-                throw _formatException;
-            }
+                // get response
+                var response = MakeRequest(@"/api/randomOpponent", "GET", null);
 
-            if (found)
-            {
-                int publickey;
-                int password;
+                // check if cancelled
+                ct.ThrowIfCancellationRequested();
 
-                // check format
+                if (response == null)
+                    throw _formatException;
+
+                // check response format
+                bool found;
                 try
                 {
-                    publickey = response.publicKey;
-                    password = response.password;
+                    found = response.found;
                 }
                 catch (RuntimeBinderException)
                 {
                     throw _formatException;
                 }
 
-                // change connection state to ready 
-                // to pass initial check in ConnectLobby
-                ConnectionState = ConnectionState.Ready;
-                return ConnectLobby(publickey, password, ct);
-            }
-            else
-            {
-                // check format
-                Guid privatekey;
-                try
+                if (found)
                 {
-                    privatekey = response.privateKey;
+                    int publickey;
+                    int password;
+
+                    // check format
+                    try
+                    {
+                        publickey = response.publicKey;
+                        password = response.password;
+                    }
+                    catch (RuntimeBinderException)
+                    {
+                        throw _formatException;
+                    }
+
+                    // change connection state to ready 
+                    // to pass initial check in ConnectLobby
+                    ConnectionState = ConnectionState.Ready;
+                    return ConnectLobby(publickey, password, ct);
                 }
-                catch (RuntimeBinderException)
+                else
                 {
-                    throw _formatException;
+                    // check format
+                    Guid privatekey;
+                    try
+                    {
+                        privatekey = response.privateKey;
+                    }
+                    catch (RuntimeBinderException)
+                    {
+                        throw _formatException;
+                    }
+
+                    return ControlMyLobby(privatekey, ct);
                 }
 
-                return ControlMyLobby(privatekey, ct);
             }
+            finally { ConnectionState = ConnectionState.Ready;}
         }
 
         /// <summary>
@@ -210,9 +235,10 @@ namespace BattleShip.DataLogic
         /// <exception cref="AggregateException">thrown if another opponent search progress is in use</exception>
         /// <exception cref="FormatException">thrown if server returns response in bad format</exception>
         /// <exception cref="TimeoutException">thrown if server has not responded during timeout</exception>
-        /// <exception cref="ArgumentException">thrown if server from ServerInfo.json is unavailable</exception>
+        /// <exception cref="ArgumentException">thrown if server from is unavailable</exception>
         /// <exception cref="OperationCanceledException">thrown if operation cancelled by user</exception>
         /// <exception cref="DirectoryNotFoundException">thrown if pre-defined relative url is unavailable</exception>
+        /// <exception cref="AuthenticationException">thrown if RequestInterval is too large and server delete created lobby</exception>
         public NetClient CreateLobby(CancellationToken ct)
         {
             // Change Connection state
@@ -223,23 +249,29 @@ namespace BattleShip.DataLogic
             // abort request on cancellation
             ct.Register(() => _request?.Abort());
 
-            dynamic response = MakeRequest(@"/api/lobby/create", "GET", null);
-            Guid privatekey;
-            int publickey, password;
+            // reset ConnectionState on exception
             try
             {
-                privatekey = response.privateKey;
-                publickey = response.publicKey;
-                password = response.password;
-            }
-            catch (RuntimeBinderException)
-            {
-                throw _formatException;
-            }
+                dynamic response = MakeRequest(@"/api/lobby/create", "GET", null);
+                Guid privatekey;
+                int publickey, password;
+                try
+                {
+                    privatekey = response.privateKey;
+                    publickey = response.publicKey;
+                    password = response.password;
+                }
+                catch (RuntimeBinderException)
+                {
+                    throw _formatException;
+                }
 
-            GotLobbyPublicInfo?.Invoke(this, new AuthentificationEventArgs(publickey, password));
+                GotLobbyPublicInfo?.Invoke(this, new AuthentificationEventArgs(publickey, password));
 
-            return ControlMyLobby(privatekey, ct);
+                return ControlMyLobby(privatekey, ct);
+            }
+            finally { ConnectionState = ConnectionState.Ready;}
+
         }
 
         /// <summary>
@@ -252,7 +284,7 @@ namespace BattleShip.DataLogic
         /// <exception cref="AggregateException">thrown if another opponent search progress is in use</exception>
         /// <exception cref="FormatException">thrown if server returns response in bad format</exception>
         /// <exception cref="TimeoutException">thrown if server has not responded during timeout</exception>
-        /// <exception cref="ArgumentException">thrown if server from ServerInfo.json is unavailable</exception>
+        /// <exception cref="ArgumentException">thrown if server from is unavailable</exception>
         /// <exception cref="OperationCanceledException">thrown if operation cancelled by user</exception>
         /// <exception cref="DirectoryNotFoundException">thrown if pre-defined relative url is unavailable</exception>
         /// <exception cref="AuthenticationException">thrown if publickey or password are not found in the server</exception>
@@ -266,35 +298,40 @@ namespace BattleShip.DataLogic
             // abort request on cancellation
             ct.Register(() => _request?.Abort());
 
-            ct.ThrowIfCancellationRequested();
-
-            // report owner that i am ready
-            while (!ReportGuestReady(publickey, password))
+            // reset ConnectionState on exception
+            try
             {
-                // check owner answer with small delay
-                Thread.Sleep(500);
                 ct.ThrowIfCancellationRequested();
+
+                // report owner that i am ready
+                while (!ReportGuestReady(publickey, password))
+                {
+                    // check owner answer with small delay
+                    Thread.Sleep(500);
+                    ct.ThrowIfCancellationRequested();
+                }
+
+                // Change Connection state
+                ConnectionState = ConnectionState.WaitingForOpponentsIP;
+
+                // create local iep
+                IPEndPoint localIep = new IPEndPoint(IPAddress.Any, new Random().Next(8000, 8500));
+                // get my public iep
+                IPEndPoint myPublicIep = GetMyIEP(localIep, ct);
+                // report my public iep and get opponent's public iep
+                string opponentIepString = ReportLobbyGuestIEP(publickey, password, myPublicIep);
+                IPEndPoint opponentIep = opponentIepString?.ToIpEndPoint();
+                // check opponent's public iep is not null as server reported that owner has reported its iep
+                if (opponentIep == null)
+                    throw _formatException;
+
+                ct.ThrowIfCancellationRequested();
+
+                // establish connection
+                ConnectionState = ConnectionState.TryingToConnectP2P;
+                return EstablishConnection(localIep, opponentIep, ct);
             }
-
-            // Change Connection state
-            ConnectionState = ConnectionState.WaitingForOpponentsIP;
-
-            // create local iep
-            IPEndPoint localIep = new IPEndPoint(IPAddress.Any, new Random().Next(8000, 8500));
-            // get my public iep
-            IPEndPoint myPublicIep = GetMyIEP(localIep, ct);
-            // report my public iep and get opponent's public iep
-            string opponentIepString = ReportLobbyGuestIEP(publickey, password, myPublicIep);
-            IPEndPoint opponentIep = opponentIepString?.ToIpEndPoint();
-            // check opponent's public iep is not null as server reported that owner has reported its iep
-            if (opponentIep == null)
-                throw _formatException;
-
-            ct.ThrowIfCancellationRequested();
-
-            // establish connection
-            ConnectionState = ConnectionState.TryingToConnectP2P;
-            return EstablishConnection(localIep, opponentIep, ct);
+            finally { ConnectionState = ConnectionState.Ready; }
         }
 
         #endregion
@@ -348,7 +385,6 @@ namespace BattleShip.DataLogic
             }
             finally
             {
-                ConnectionState = ConnectionState.Ready;
                 try
                 {
                     MakeRequest("/api/lobby/delete/" + privatekey, "DELETE", null);
@@ -552,24 +588,24 @@ namespace BattleShip.DataLogic
                 return null;
             }
 
-            // read content
-            int count;
-            using (var stream = response.GetResponseStream())
-            {
-                count = stream.Read(_bufer, 0, _bufer.Length);
-            }
-            response.Close();
-
             // try decode content
             try
             {
-                return JsonConvert.DeserializeObject(Encoding.UTF8.GetString(_bufer, 0, count));
+                string text;
+                using (var reader = new StreamReader(response.GetResponseStream(), Encoding.UTF8))
+                {
+                    text = reader.ReadToEnd();
+                }
+                return JsonConvert.DeserializeObject(text);
             }
-            catch (Exception e)
-            { // if byte array can not be converted to string or string is not json-serialized object
-                if (e is ArgumentException || e is JsonException)
-                    throw _formatException;
-                throw;
+            catch (Exception e) when (e is ArgumentException || e is JsonException || e is IOException)
+            {
+                // if response stream can not be read or its content is not json-serialized object
+                throw _formatException;
+            }
+            finally
+            {
+                response.Close();
             }
         }
 

@@ -78,7 +78,7 @@ namespace ServerUnitTests
             {
                 Assert.Equal(3, 4);
             }
-
+            
             // check exception on getting notexisting entry by private key
             try
             {
@@ -105,7 +105,7 @@ namespace ServerUnitTests
                 var x = icache[publicId1, 2];
                 Assert.Equal(9, 10);
             }
-            catch (AuthenticationException)
+            catch (KeyNotFoundException)
             {
             }
 
@@ -130,12 +130,8 @@ namespace ServerUnitTests
                 Assert.Equal(17, 18);
 
             // check exception on getting existing entry by bad password
-            try
-            {
-                icache.TryGetValueByPublicKey(publicId1, 2, out lobby);
-                    Assert.Equal(19, 20);
-            }
-            catch (AuthenticationException) { }
+            bool b = icache.TryGetValueByPublicKey(publicId1, 2, out lobby);
+            Assert.False(b);
 
             // check true on removing existing entry
             if (!icache.TryRemove(guid1))

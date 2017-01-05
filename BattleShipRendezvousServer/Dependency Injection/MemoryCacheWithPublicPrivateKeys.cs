@@ -149,11 +149,8 @@ namespace BattleShipRendezvousServer.Dependency_Injection
             if (!entries.TryGetValue(privateKey, out cacheEntry))
                 return false;
 
-            // check password
-            if (!cacheEntry.Password.Equals(password))
-                throw new AuthenticationException("Bad password");
-            // check entry
-            if (!cacheEntry.Check(false))
+            // check endtry and then check password
+            if (!cacheEntry.Check(false) || !cacheEntry.Password.Equals(password))
                 return false;
 
             // return value
