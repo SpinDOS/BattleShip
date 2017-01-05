@@ -55,8 +55,11 @@ namespace BattleShip.UserLogic
         // source to cancel search
         private CancellationTokenSource _cancellationOfSearch = new CancellationTokenSource();
 
-        // empty action for refreshing form by dispatcher
-        readonly Action _emptyAction = delegate { };
+        // object for syncing while creating _connectionEstablisher
+        private readonly object _objToSync = new object();
+
+        // object to imitate some task created while getting info about server to connect
+        private readonly Task<NetClient> emptyTask = Task.FromResult((NetClient) null);
 
         #endregion
 
@@ -252,8 +255,23 @@ namespace BattleShip.UserLogic
                 LabelInfo.Content = "Getting info about server";
                 // block form
                 ChangeStateOnForm(false);
-                // if connectionEstablisher is not set yet and can not be set now
-                if (_connectionEstablisher == null && !TryGetConnectionEstablisher())
+
+                // set task to not-null object to detect some operation is in progress and cancel it
+                _task = emptyTask;
+
+                // try get _connectionEstablisher in another thread
+                // save current CancellationTokenSource to local variable because
+                // if user cancel the operation, _cancellationOfSearch will be set to new CancellationTokenSource
+                // but we need to check current _cancellationOfSearch
+                var currectCancellationTokerSource = _cancellationOfSearch;
+                bool connectionEstablisherReady = await Task.Run(() => TryGetConnectionEstablisher());
+
+                // if operation is cancelled, return witout any error reports or search
+                if (currectCancellationTokerSource.IsCancellationRequested)
+                    return;
+
+                // if connectionEstablisher is not ready, report error
+                if (!connectionEstablisherReady)
                 {
                     // unblock form and show error
                     ChangeStateOnForm(true);
@@ -467,9 +485,6 @@ namespace BattleShip.UserLogic
                 // change button text to cancel
                 MainButton.Content = "Cancel";
             }
-
-            // refresh form
-            this.Dispatcher.Invoke(DispatcherPriority.Render, TimeSpan.Zero, _emptyAction);
         }
 
         #endregion
@@ -480,31 +495,39 @@ namespace BattleShip.UserLogic
         // else set up connectionEstablisher events and return it
         private bool TryGetConnectionEstablisher()
         {
-            // try create new connectionEstablisher
-            try
+            // lock object to prevent multiple creatings of _connectionEstablisher
+            lock (_objToSync)
             {
-                _connectionEstablisher = new ConnectionEstablisher()
-                { RequesInterval = TimeSpan.FromSeconds(5)}; 
-                // set shorter requestInterval for faster cancellation
+                // if _connectionEstablisher already exists, return true;
+                if (_connectionEstablisher != null)
+                    return true;
+
+                // else try create new connectionEstablisher
+                try
+                {
+                    _connectionEstablisher = new ConnectionEstablisher()
+                        {RequesInterval = TimeSpan.FromSeconds(5)};
+                    // set shorter requestInterval for faster cancellation
+                }
+                // if error occurs - return false
+                catch (Exception exc) when (exc is FileLoadException || exc is InvalidOperationException)
+                {
+                    return false;
+                }
+
+                // if everything is ok, set up events
+
+                // provide just created lobby info for search mode CreateLobby
+                _connectionEstablisher.GotLobbyPublicInfo += (o, args) =>
+                {
+                    TxtLobbyId.Dispatcher.InvokeAsync(() => TxtLobbyId.Text = args.PublicKey.ToString());
+                    TxtPassword.Dispatcher.InvokeAsync(() => TxtPassword.Text = args.Password.ToString());
+                };
+
+                // provide changes of ConnectionState
+                _connectionEstablisher.ConnectionStateChanged += WriteInfoAboutConnectionStatus;
+                return true;
             }
-            // if error occurs - return false
-            catch (Exception exc) when (exc is FileLoadException || exc is InvalidOperationException)
-            {
-                return false;
-            }
-
-            // if everything is ok, set up events
-
-            // provide just created lobby info for search mode CreateLobby
-            _connectionEstablisher.GotLobbyPublicInfo += (o, args) =>
-            {
-                TxtLobbyId.Dispatcher.InvokeAsync(() => TxtLobbyId.Text = args.PublicKey.ToString());
-                TxtPassword.Dispatcher.InvokeAsync(() => TxtPassword.Text = args.Password.ToString());
-            };
-
-            // provide changes of ConnectionState
-            _connectionEstablisher.ConnectionStateChanged += WriteInfoAboutConnectionStatus;
-            return true;
         }
 
         #endregion
