@@ -12,7 +12,12 @@ namespace BattleShip.DataLogic
         /// <summary>
         /// Give up
         /// </summary>
-        bool GiveUp();
+        void GiveUp();
+
+        /// <summary>
+        /// Enemy gave up
+        /// </summary>
+        event EventHandler EnemyGaveUp;
 
         /// <summary>
         /// Get not hurt squares of enemy

@@ -16,6 +16,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using System.Windows.Threading;
 using BattleShip.DataLogic;
+using BattleShip.Shared;
 using LiteNetLib;
 
 namespace BattleShip.UserLogic
@@ -44,10 +45,10 @@ namespace BattleShip.UserLogic
         protected ConnectionEstablisher _connectionEstablisher;
 
         // reference to set result of the operation from event handler
-        private volatile NetClient _result;
+        private volatile NetClientAndListener _result;
 
         // task of establishing connection. Need to wait it on cancellation
-        private volatile Task<NetClient> _task;
+        private volatile Task<NetClientAndListener> _task;
 
         // mode of search. Need it to prevent asking radiobuttons multiple times
         private volatile SearchMode _searchMode = SearchMode.RandomOpponent;
@@ -59,7 +60,7 @@ namespace BattleShip.UserLogic
         private readonly object _objToSync = new object();
 
         // object to imitate some task created while getting info about server to connect
-        private readonly Task<NetClient> emptyTask = Task.FromResult((NetClient) null);
+        private readonly Task<NetClientAndListener> emptyTask = Task.FromResult((NetClientAndListener) null);
 
         #endregion
 
@@ -92,10 +93,10 @@ namespace BattleShip.UserLogic
         #region Public entry point - Start()
 
         /// <summary>
-        /// Show UI and return connected NetClient
+        /// Show UI and return connected NetClientAndListener
         /// </summary>
-        /// <returns>Connected NetClient or null if cancelled</returns>
-        public NetClient Start()
+        /// <returns>Connected NetClientAndListener or null if cancelled</returns>
+        public NetClientAndListener Start()
         { // show dialog and handle events of click
             this.ShowDialog();
             // when window closes, return result or null (if result is not set before)
@@ -218,7 +219,7 @@ namespace BattleShip.UserLogic
             if (_task == null)
             {
                 // decide what action to do in task depending on chosen SearchMode
-                Func<NetClient> function = null;
+                Func<NetClientAndListener> function = null;
                 switch (_searchMode)
                 {
                     // if search random opponent
@@ -280,7 +281,7 @@ namespace BattleShip.UserLogic
                     return;
                 }
 
-                // try set result to returned from connectionEstablisher netClient
+                // try set result to returned from connectionEstablisher NetClientAndListener
                 try
                 {
                     // run establishing connection in task and save it to _task for cancellation delay

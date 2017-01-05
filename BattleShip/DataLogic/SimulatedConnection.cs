@@ -17,6 +17,11 @@ namespace BattleShip.DataLogic
         private SimulatedPlayer enemy;
 
         /// <summary>
+        /// Need to implement IEnemyConnection. This event is never raised
+        /// </summary>
+        public event EventHandler EnemyGaveUp;
+
+        /// <summary>
         /// Create connection with simulated player
         /// </summary>
         public SimulatedConnection(SimulatedPlayer enemy)
@@ -72,12 +77,11 @@ namespace BattleShip.DataLogic
         /// <summary>
         /// Give up
         /// </summary>
-        public bool GiveUp()
+        public void GiveUp()
         {
             if (disposed)
                 throw new ObjectDisposedException("Connection is closed");
             enemy.ForceEndGame(true);
-            return true;
         }
 
         /// <summary>

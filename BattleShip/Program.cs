@@ -19,10 +19,16 @@ namespace BattleShip
         [STAThread]
         public static void Main(string[] args)
         {
-            var cl = new ConnectingWindow().Start();
+            var window = new CreatingWindow();
+            window.Show();
+            var cl = new ConnectingWindow().Start().Client;
+            Thread.Sleep(120);
+            cl.Peer.Send(new byte[10], SendOptions.ReliableOrdered);
+            cl.PollEvents();
+            Thread.Sleep(1000);
+            cl.PollEvents();
             MessageBox.Show((cl != null && cl.IsConnected).ToString());
-            //var window = new CreatingWindow();
-            //window.Show();
+            window.Close();
             //NetClient c;
 
 

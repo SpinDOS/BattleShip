@@ -144,7 +144,7 @@ namespace BattleShip.DataLogic
         /// Gets random opponent
         /// </summary>
         /// <param name="ct">token to cancel process</param>
-        /// <returns>netclient connected to found opponent</returns>
+        /// <returns>netclient and listener connected to found opponent</returns>
         /// <exception cref="AggregateException">thrown if another opponent search progress is in use</exception>
         /// <exception cref="FormatException">thrown if server returns response in bad format</exception>
         /// <exception cref="TimeoutException">thrown if server has not responded during timeout</exception>
@@ -153,7 +153,7 @@ namespace BattleShip.DataLogic
         /// <exception cref="DirectoryNotFoundException">thrown if pre-defined relative url is unavailable</exception>
         /// <exception cref="AuthenticationException">thrown if RequestInterval is too large 
         /// and server delete created lobby or another server authentification error</exception>
-        public NetClient GetRandomOpponent(CancellationToken ct)
+        public NetClientAndListener GetRandomOpponent(CancellationToken ct)
         {
             // Change Connection state
             if (ConnectionState != ConnectionState.Ready)
@@ -231,7 +231,7 @@ namespace BattleShip.DataLogic
         /// Create lobby and wait for opponent
         /// </summary>
         /// <param name="ct">token to cancel process</param>
-        /// <returns>Netclient connected to opponent</returns>
+        /// <returns>Netclient and listener connected to opponent</returns>
         /// <exception cref="AggregateException">thrown if another opponent search progress is in use</exception>
         /// <exception cref="FormatException">thrown if server returns response in bad format</exception>
         /// <exception cref="TimeoutException">thrown if server has not responded during timeout</exception>
@@ -239,7 +239,7 @@ namespace BattleShip.DataLogic
         /// <exception cref="OperationCanceledException">thrown if operation cancelled by user</exception>
         /// <exception cref="DirectoryNotFoundException">thrown if pre-defined relative url is unavailable</exception>
         /// <exception cref="AuthenticationException">thrown if RequestInterval is too large and server delete created lobby</exception>
-        public NetClient CreateLobby(CancellationToken ct)
+        public NetClientAndListener CreateLobby(CancellationToken ct)
         {
             // Change Connection state
             if (ConnectionState != ConnectionState.Ready)
@@ -280,7 +280,7 @@ namespace BattleShip.DataLogic
         /// <param name="publickey">public key of the lobby</param>
         /// <param name="password">password of the lobby</param>
         /// <param name="ct">token to cancel process</param>
-        /// <returns>Netclient connected to opponent</returns>
+        /// <returns>Netclient and listener connected to opponent</returns>
         /// <exception cref="AggregateException">thrown if another opponent search progress is in use</exception>
         /// <exception cref="FormatException">thrown if server returns response in bad format</exception>
         /// <exception cref="TimeoutException">thrown if server has not responded during timeout</exception>
@@ -288,7 +288,7 @@ namespace BattleShip.DataLogic
         /// <exception cref="OperationCanceledException">thrown if operation cancelled by user</exception>
         /// <exception cref="DirectoryNotFoundException">thrown if pre-defined relative url is unavailable</exception>
         /// <exception cref="AuthenticationException">thrown if publickey or password are not found in the server</exception>
-        public NetClient ConnectLobby(int publickey, int password, CancellationToken ct)
+        public NetClientAndListener ConnectLobby(int publickey, int password, CancellationToken ct)
         {
             // Change Connection state
             if (ConnectionState != ConnectionState.Ready)
@@ -339,7 +339,7 @@ namespace BattleShip.DataLogic
         #region Logic of controlling just created lobby
 
         // check lobby until opponent come and then connect him
-        protected NetClient ControlMyLobby(Guid privatekey, CancellationToken ct)
+        protected NetClientAndListener ControlMyLobby(Guid privatekey, CancellationToken ct)
         {
             ct.Register(() => _request?.Abort());
             // delete lobby on any error
@@ -467,9 +467,9 @@ namespace BattleShip.DataLogic
         #region Establishing connection
 
         // establish connection from socket on myiep to enemy on enemyIep
-        protected NetClient EstablishConnection(IPEndPoint myiep, IPEndPoint enemyIep, CancellationToken ct)
+        protected NetClientAndListener EstablishConnection(IPEndPoint myiep, IPEndPoint enemyIep, CancellationToken ct)
         {
-            // create client
+            // create listener and client
             EventBasedNetListener listener = new EventBasedNetListener();
             NetClient client = new NetClient(listener, "Battleship")
             { PeerToPeerMode = true };
@@ -489,7 +489,7 @@ namespace BattleShip.DataLogic
 
             // collect all events raised during connection process
             client.PollEvents();
-            return client;
+            return new NetClientAndListener(client, listener);
         }
 
         #endregion
