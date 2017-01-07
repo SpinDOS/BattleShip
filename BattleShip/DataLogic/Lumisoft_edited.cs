@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Net.Sockets;
 using System.Net;
 using System.IO;
+using System.Security;
 
 namespace LumiSoft_edited
 {
@@ -29,15 +30,30 @@ namespace LumiSoft_edited
         /// <exception cref="IOException">Is raised when no connection to STUN server.</exception>
         public static IPEndPoint GetPublicEP(string stunServer, int port, IPEndPoint localEndPoint)
         {
+            if (localEndPoint == null)
+                throw new ArgumentNullException(nameof(localEndPoint));
             // create socket with ability to reuse same local end point
             Socket socket = new Socket(SocketType.Dgram, ProtocolType.Udp) {ExclusiveAddressUse = false};
             socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
-            socket.Bind(localEndPoint);
-            // get public end point
-            var result = GetPublicEP(stunServer, port, socket);
-            // close socket
-            socket.Close();
-            return result;
+            try
+            {
+                socket.Bind(localEndPoint);
+            }
+            catch (Exception e) when(e is SocketException || e is SecurityException)
+            {
+                throw new ArgumentException("Socket can not bind localEndPoint");
+            }
+
+            try
+            {
+                // return public end point
+                return GetPublicEP(stunServer, port, socket);
+            }
+            finally
+            {
+                // anyway close socket
+                socket.Close();
+            }
         }
 
         /// <summary>

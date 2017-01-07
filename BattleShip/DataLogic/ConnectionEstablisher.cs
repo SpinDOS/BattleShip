@@ -311,13 +311,20 @@ namespace BattleShip.DataLogic
                     ct.ThrowIfCancellationRequested();
                 }
 
+                // get my public iep
+
+                // Change Connection state
+                ConnectionState = ConnectionState.GettingMyPublicIp;
+                // local iep.port for next use
+                int localPort;
+                // get my public iep and local port
+                IPEndPoint myPublicIep = GetMyIEP(ct, out localPort);
+
+                // get opponent's ip
+
                 // Change Connection state
                 ConnectionState = ConnectionState.WaitingForOpponentsIP;
-
-                // create local iep
-                IPEndPoint localIep = new IPEndPoint(IPAddress.Any, new Random().Next(8000, 8500));
-                // get my public iep
-                IPEndPoint myPublicIep = GetMyIEP(localIep, ct);
+                
                 // report my public iep and get opponent's public iep
                 string opponentIepString = ReportLobbyGuestIEP(publickey, password, myPublicIep);
                 IPEndPoint opponentIep = opponentIepString?.ToIpEndPoint();
@@ -329,7 +336,7 @@ namespace BattleShip.DataLogic
 
                 // establish connection
                 ConnectionState = ConnectionState.TryingToConnectP2P;
-                return EstablishConnection(localIep, opponentIep, ct);
+                return EstablishConnection(localPort, opponentIep, ct);
             }
             finally { ConnectionState = ConnectionState.Ready; }
         }
@@ -354,10 +361,18 @@ namespace BattleShip.DataLogic
                     Thread.Sleep(RequesInterval);
                 }
 
-                // create local iep
-                IPEndPoint localIep = new IPEndPoint(IPAddress.Any, new Random().Next(8000, 8500));
+                // get my public iep
 
-                // change ConnectionState
+                // Change Connection state
+                ConnectionState = ConnectionState.GettingMyPublicIp;
+                // local iep.port for next use
+                int localPort;
+                // get my public iep and local port
+                IPEndPoint myPublicIep = GetMyIEP(ct, out localPort);
+
+                // get opponent's ip
+
+                // Change Connection state
                 ConnectionState = ConnectionState.WaitingForOpponentsIP;
 
                 // loop until opponent reports its public iep
@@ -365,7 +380,7 @@ namespace BattleShip.DataLogic
                 while (true)
                 {
                     // get my iep, report it to server and try get opponent's iep
-                    opponentIepString = ReportLobbyOwnerIEP(privatekey, GetMyIEP(localIep, ct));
+                    opponentIepString = ReportLobbyOwnerIEP(privatekey, myPublicIep);
                     // if got opponent's iep
                     if (opponentIepString != null)
                         break;
@@ -381,7 +396,7 @@ namespace BattleShip.DataLogic
 
                 // establish connection
                 ConnectionState = ConnectionState.TryingToConnectP2P;
-                return EstablishConnection(localIep, opponentIep, ct);
+                return EstablishConnection(localPort, opponentIep, ct);
             }
             finally
             {
@@ -466,8 +481,8 @@ namespace BattleShip.DataLogic
 
         #region Establishing connection
 
-        // establish connection from socket on myiep to enemy on enemyIep
-        protected NetClientAndListener EstablishConnection(IPEndPoint myiep, IPEndPoint enemyIep, CancellationToken ct)
+        // establish connection from socket on localPort to enemy on enemyIep
+        protected NetClientAndListener EstablishConnection(int localPort, IPEndPoint enemyIep, CancellationToken ct)
         {
             // create listener and client
             EventBasedNetListener listener = new EventBasedNetListener();
@@ -475,7 +490,7 @@ namespace BattleShip.DataLogic
             { PeerToPeerMode = true };
 
             // start client on myiep
-            client.Start(myiep.Port);
+            client.Start(localPort);
 
             // connect to client on enemyIep
             client.Connect(enemyIep.Address.ToString(), enemyIep.Port);
@@ -487,8 +502,6 @@ namespace BattleShip.DataLogic
                 ct.ThrowIfCancellationRequested();
             }
 
-            // collect all events raised during connection process
-            client.PollEvents();
             return new NetClientAndListener(client, listener);
         }
 
@@ -610,50 +623,75 @@ namespace BattleShip.DataLogic
         }
 
         // return public endpoint of socket in the localIep
-        protected IPEndPoint GetMyIEP(IPEndPoint localIep, CancellationToken ct)
+        protected IPEndPoint GetMyIEP(CancellationToken ct, out int localPort)
         {
-            IPEndPoint result = null;
-            // try get iep from _goodStunServer
-
-            // if working server is found
-            if (_goodStunServer != null)
+            // create socket to find its public iep
+            using (Socket socket = new Socket(SocketType.Dgram, ProtocolType.Udp))
             {
-                result = LumiSoft_edited.STUN_Client.GetPublicEP(_goodStunServer.Item1, _goodStunServer.Item2, localIep);
-                if (result != null) // if server reported my iep
-                    return result;
-                else // forget this server because it is not working
-                    _goodStunServer = null;
-            }
+                socket.ExclusiveAddressUse = false;
+                socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
 
-            // read list of servers from file
-            var file = new StringReader(Resources.StunServers);
-
-            while (true)
-            {
-                ct.ThrowIfCancellationRequested();
-
-                // read string and parse to adress and port
-                string str = file.ReadLine();
-                if (str == null)
-                    throw new AggregateException("Not found any working STUN server");
-                string[] parts = str.Split(':');
-                string site = parts[0];
-
-                // default port of any stun server is 3478
-                int port = 3478;
-                if (parts.Length == 2) // if line contains info about port, prefer this info
-                    port = int.Parse(parts[1]);
-
-                // try get result
-                result = LumiSoft_edited.STUN_Client.GetPublicEP(site, port, localIep);
-                if (result != null) // if server report my iep
+                // randomize localport while socket can not bind the localPort
+                Random rnd = new Random();
+                do
                 {
-                    _goodStunServer = Tuple.Create(site, port); // save server as working
-                    break; // break loop and return result
+                    // randomize localPort
+                    localPort = rnd.Next(8000, 8500);
+                    // try bind
+                    try
+                    {
+                        socket.Bind(new IPEndPoint(IPAddress.Any, localPort));
+                    } // if can not bind - indicate the error 
+                    catch (Exception e) when (e is SocketException || e is SecurityException)
+                    {
+                        localPort = -1;
+                    }
+                } while (localPort < 0);
+
+
+                // try get iep from _goodStunServer
+                IPEndPoint result = null;
+
+                // if working server is found
+                if (_goodStunServer != null)
+                {
+                    result = LumiSoft_edited.STUN_Client.GetPublicEP(_goodStunServer.Item1, _goodStunServer.Item2, socket);
+                    if (result != null) // if server reported my iep
+                        return result;
+                    else // forget this server because it is not working
+                        _goodStunServer = null;
                 }
+
+                // read list of servers from file
+                var file = new StringReader(Resources.StunServers);
+
+                while (true)
+                {
+                    ct.ThrowIfCancellationRequested();
+
+                    // read string and parse to adress and port
+                    string str = file.ReadLine();
+                    if (str == null)
+                        throw new AggregateException("Not found any working STUN server");
+                    string[] parts = str.Split(':');
+                    string site = parts[0];
+
+                    // default port of any stun server is 3478
+                    int port = 3478;
+                    if (parts.Length == 2) // if line contains info about port, prefer this info
+                        port = int.Parse(parts[1]);
+
+                    // try get result
+                    result = LumiSoft_edited.STUN_Client.GetPublicEP(site, port, socket);
+                    if (result != null) // if server report my iep
+                    {
+                        _goodStunServer = Tuple.Create(site, port); // save server as working
+                        break; // break loop and return result
+                    }
+                }
+                file.Close();
+                return result; 
             }
-            file.Close();
-            return result;
         }
 
         #endregion

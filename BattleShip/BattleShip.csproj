@@ -42,6 +42,10 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>Dependencies_dlls\LiteNetLib.dll</HintPath>
     </Reference>
+    <Reference Include="NAudio, Version=1.8.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\NAudio.1.8.0\lib\net35\NAudio.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.9.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
       <Private>True</Private>
@@ -79,6 +83,7 @@
     <Compile Include="DataLogic\ICommunicationConnection.cs" />
     <Compile Include="DataLogic\IEnemyConnection.cs" />
     <Compile Include="DataLogic\Lumisoft_edited.cs" />
+    <Compile Include="DataLogic\RealConnection.cs" />
     <Compile Include="DataLogic\SimulatedConnection.cs" />
     <Compile Include="Shared\BattlefieldExtensions.cs" />
     <Compile Include="BusinessLogic\Player\MyRandomPlayerSimulator.cs" />
@@ -86,6 +91,7 @@
     <Compile Include="DataLogic\IGameConnection.cs" />
     <Compile Include="AppLifeCircle.cs" />
     <Compile Include="Program.cs" />
+    <Compile Include="Shared\BattleShipDisconnectReason.cs" />
     <Compile Include="Shared\EventArgs.cs" />
     <Compile Include="Shared\NetClientAndListener.cs" />
     <Compile Include="Shared\StringToIEPExtension.cs" />

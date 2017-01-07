@@ -126,9 +126,11 @@ namespace BattleShip.UserLogic
         {
             if (fullSquares == null)
                 throw new ArgumentNullException(nameof(fullSquares));
-            foreach (var square in fullSquares)
-                EnemyField.Dispatcher.Invoke(() => 
-                    EnemyField[square].SquareStatus = SquareStatus.Full);
+            EnemyField.Dispatcher.Invoke(() =>
+            {
+                foreach (var square in fullSquares)
+                    EnemyField[square].SquareStatus = SquareStatus.Full;
+            });
         }
 
         // ask before closing and trigger interface close event

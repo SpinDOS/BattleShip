@@ -38,8 +38,9 @@ namespace BattleShip
             }
 
             createWindow.Hide();
-            var enemyConnection = new SimulatedConnection(sim_enemy);
-            GameLifeCircle.Start(e.MyField, new GameWindow(), enemyConnection);
+            //var enemyConnection = new SimulatedConnection(sim_enemy);
+            var realenemyConnection = new RealConnection(new ConnectionEstablisher().GetRandomOpponent(CancellationToken.None));
+            GameLifeCircle.Start(e.MyField, new GameWindow(), realenemyConnection);
             createWindow.ShowDialog();
         }
 

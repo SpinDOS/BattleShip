@@ -3,13 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using BattleShip.Shared;
 
 namespace BattleShip.DataLogic
 {
     /// <summary>
     /// Interface to send and receive messages
     /// </summary>
-    public interface ICommunicationConnection
+    public interface ICommunicationConnection : IDisposable
     {
         /// <summary>
         /// Send message to peer
@@ -20,6 +21,6 @@ namespace BattleShip.DataLogic
         /// <summary>
         /// Raised on message from peer received
         /// </summary>
-        event EventHandler<byte[]> MessageReceived;
+        event EventHandler<DataEventArgs> MessageReceived;
     }
 }

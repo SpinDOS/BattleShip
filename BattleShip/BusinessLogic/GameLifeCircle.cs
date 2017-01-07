@@ -37,16 +37,23 @@ namespace BattleShip.BusinessLogic
                 (sender, args) => UI.MarkEnemySquareWithStatus(args.Square, args.SquareStatus);
 
             // provide enfo about game end
-            me.GameEnd += (sender, b) =>
-            {
-                UI.ShowGameEnd(b);
-                if (!b)
-                    UI.ShowEnemyFullSquares(enemy.GetEnemyFullSquares());
-            };
+            me.GameEnd += (sender, b) => UI.ShowGameEnd(b);
+
+            // show enemy full square on UI
+            enemy.EnemySharedFullSquares += (sender, squares) => UI.ShowEnemyFullSquares(squares);
 
             // catch info from form
-            UI.InterfaceForceClose += (sender, args) => me.ForceEndGame(false);
-            UI.GiveUp += (sender, args) => me.ForceEndGame(false);
+            UI.InterfaceForceClose += (sender, args) =>
+            {
+                me.ForceEndGame(false);
+                enemy.Disconnect();
+            };
+
+            UI.GiveUp += (sender, args) =>
+            {
+                me.ForceEndGame(false);
+                enemy.GiveUp();
+            };
 
             // start game
             ThreadPool.QueueUserWorkItem(obj => me.Start());

@@ -8,19 +8,33 @@ using BattleShip.BusinessLogic;
 
 namespace BattleShip.Shared
 {
-
     public class DataEventArgs : EventArgs
     {
+        public byte[] Data { get; }
+
+        public int Offset { get; }
+
+        public int Length { get; }
+
         /// <summary>
         /// Event args with data byte array
         /// </summary>
-        public byte[] Data { get; }
-
-        public DataEventArgs(byte[] data)
+        /// <param name="data">Array with data</param>
+        /// <param name="offset">Position where first byte of data is located</param>
+        /// <param name="length">Length of the data</param>
+        public DataEventArgs(byte[] data, int offset, int length)
         {
             if (data == null)
                 throw new ArgumentNullException(nameof(data));
+            if (offset < 0)
+                throw new ArgumentException(nameof(offset));
+            if (length < 0)
+                throw new ArgumentException(nameof(length));
+            if (offset + length > data.Length)
+                throw new ArgumentException("Length of data is too small for this offset and length");
             Data = data;
+            Offset = offset;
+            Length = length;
         }
     }
 

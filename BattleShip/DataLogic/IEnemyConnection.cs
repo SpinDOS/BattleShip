@@ -10,6 +10,22 @@ namespace BattleShip.DataLogic
     public interface IEnemyConnection : IGameConnection
     {
         /// <summary>
+        /// True, if connected to enemy
+        /// </summary>
+        bool IsConnected { get; }
+
+        /// <summary>
+        /// Report enemy positions of my full squares 
+        /// </summary>
+        /// <param name="fullSquares">collection of full squres</param>
+        void ShareEnemyMyFullSqures(IEnumerable<Square> fullSquares);
+
+        /// <summary>
+        /// Raise when enemy reports its full squares
+        /// </summary>
+        event EventHandler<IEnumerable<Square>> EnemySharedFullSquares;
+
+        /// <summary>
         /// Give up
         /// </summary>
         void GiveUp();
@@ -20,8 +36,13 @@ namespace BattleShip.DataLogic
         event EventHandler EnemyGaveUp;
 
         /// <summary>
-        /// Get not hurt squares of enemy
+        /// Disconnect
         /// </summary>
-        IEnumerable<Square> GetEnemyFullSquares();
+        void Disconnect();
+
+        /// <summary>
+        /// Enemy disconnected
+        /// </summary>
+        event EventHandler<BattleShipDisconnectReason> EnemyDisconnected;
     }
 }

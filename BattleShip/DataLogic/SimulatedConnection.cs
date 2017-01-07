@@ -13,13 +13,12 @@ namespace BattleShip.DataLogic
     /// </summary>
     public sealed class SimulatedConnection : IEnemyConnection
     {
-        private bool disposed = false;
-        private SimulatedPlayer enemy;
+        // single exception for all ObjectDisposedException usages
+        private readonly ObjectDisposedException _disposedException = 
+            new ObjectDisposedException("Connection is closed");
 
-        /// <summary>
-        /// Need to implement IEnemyConnection. This event is never raised
-        /// </summary>
-        public event EventHandler EnemyGaveUp;
+        // enemy to play with
+        private SimulatedPlayer enemy;
 
         /// <summary>
         /// Create connection with simulated player
@@ -32,12 +31,32 @@ namespace BattleShip.DataLogic
         }
 
         /// <summary>
+        /// Need to implement IEnemyConnection. This event is never raised
+        /// </summary>
+        public event EventHandler EnemyGaveUp;
+
+        /// <summary>
+        /// Need to implement IEnemyConnection. This event is never raised
+        /// </summary>
+        public event EventHandler<BattleShipDisconnectReason> EnemyDisconnected;
+
+        /// <summary>
+        /// Raise when enemy reports its full squares
+        /// </summary>
+        public event EventHandler<IEnumerable<Square>> EnemySharedFullSquares;
+
+        /// <summary>
+        /// True if connected to enemy
+        /// </summary>
+        public bool IsConnected { get; private set; } = true; // also indicate disposed state
+
+        /// <summary>
         /// Detect who shot first
         /// </summary>
         public bool IsMeShotFirst()
         {
-            if (disposed)
-                throw new ObjectDisposedException("Connection is closed");
+            if (!IsConnected)
+                throw _disposedException;
             bool realFirst = new Random().Next(2) == 0;
             // report enemy
             enemy.SetMeShotFirst(!realFirst);
@@ -49,8 +68,8 @@ namespace BattleShip.DataLogic
         /// </summary>
         public Square GetShotFromEnemy()
         {
-            if (disposed)
-                throw new ObjectDisposedException("Connection is closed");
+            if (!IsConnected)
+                throw _disposedException;
             return enemy.GetNextShot();
         }
 
@@ -59,9 +78,12 @@ namespace BattleShip.DataLogic
         /// </summary>
         public void SendStatusOfEnemysShot(Square square, SquareStatus result)
         {
-            if (disposed)
-                throw new ObjectDisposedException("Connection is closed");
+            if (!IsConnected)
+                throw _disposedException;
             enemy.GetReportOfMyShot(square, result);
+            // report enemy full squres if needed
+            if (enemy.IsGameEnded)
+                EnemySharedFullSquares?.Invoke(this, enemy.MyField.GetFullSquares());
         }
 
         /// <summary>
@@ -69,9 +91,17 @@ namespace BattleShip.DataLogic
         /// </summary>
         public SquareStatus ShotEnemy(Square square)
         {
-            if (disposed)
-                throw new ObjectDisposedException("Connection is closed");
+            if (!IsConnected)
+                throw _disposedException;
             return enemy.ReportEnemyShotResult(square);
+        }
+
+        /// <summary>
+        /// Do nothing because simulated player does not need your full squares
+        /// </summary>
+        public void ShareEnemyMyFullSqures(IEnumerable<Square> fullSquares)
+        {
+            // do nothing
         }
 
         /// <summary>
@@ -79,27 +109,32 @@ namespace BattleShip.DataLogic
         /// </summary>
         public void GiveUp()
         {
-            if (disposed)
-                throw new ObjectDisposedException("Connection is closed");
+            if (!IsConnected)
+                throw _disposedException;
             enemy.ForceEndGame(true);
+            // report enemy full squres
+            EnemySharedFullSquares?.Invoke(this, enemy.MyField.GetFullSquares());
         }
 
         /// <summary>
-        /// Get not hurt squares of enemy's field
+        /// Disconnect
         /// </summary>
-        public IEnumerable<Square> GetEnemyFullSquares()
-        {
-            if (disposed)
-                throw new ObjectDisposedException("Connection is closed");
-            return enemy.MyField.GetFullSquares();
-        }
+        public void Disconnect() => Dispose();
 
+        /// <summary>
+        /// Close the connection
+        /// </summary>
         public void Dispose()
         {
-            if (!disposed)
-                disposed = true;
-            else
-                enemy = null;
+            if (!IsConnected)
+                return;
+
+            IsConnected = false;
+            // report enemy that he won
+            if (!enemy.IsGameEnded)
+                enemy.ForceEndGame(true);
+            // free memore of enemy object
+            enemy = null;
         }
     }
 }

@@ -402,6 +402,10 @@ namespace BattleShip.UserLogic
                     newtext = "Ready to start";
                     break;
 
+                case ConnectionState.GettingMyPublicIp:
+                    newtext = "Getting your public IP";
+                    break;
+
                 // search started. getting info from server
                 case ConnectionState.GettingInfoFromServer:
                     newtext = "Getting info from server";
