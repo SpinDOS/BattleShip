@@ -16,39 +16,53 @@ namespace BattleShip
     /// </summary>
     public sealed class AppLifeCircle
     {
-        CreatingWindow createWindow = new CreatingWindow();
+        readonly CreatingWindow _createWindow = new CreatingWindow();
+        private RealConnection _realConnection = null;
 
         public AppLifeCircle()
         {
-            createWindow.StartGameEvent += StartGame;
+            _createWindow.StartGameEvent += StartGame;
         }
 
-        public void Start() => createWindow.ShowDialog();
+        public void Start() => _createWindow.ShowDialog();
 
         // handler for start game click in creating form
         private void StartGame(object sender, StartGameEventArgs e)
         {
-            SimulatedPlayer sim_enemy = null;
+            Func<GameWindow> createGameWindow = () => new GameWindow() {Owner = _createWindow};
+            Action startGame = null;
             if (!e.VsHuman)
             {
+                SimulatedPlayer simEnemy;
                 try
-                { sim_enemy = AskDifficulty(e.MyField); }
+                { simEnemy = AskDifficulty(e.MyField); }
                 catch (OperationCanceledException)
                 { return; }
+                var connection = new SimulatedConnection(simEnemy);
+                startGame = () => GameLifeCircle.Start(e.MyField, createGameWindow.Invoke(), connection);
+            }
+            else
+            {
+                if (_realConnection == null || _realConnection.IsConnected)
+                {
+                    var clientAndListener = new ConnectingWindow() {Owner = _createWindow}.Start();
+                    if (clientAndListener == null)
+                        return;
+                    _realConnection = new RealConnection(clientAndListener);
+                }
+                startGame = () => GameLifeCircle.Start(e.MyField, createGameWindow.Invoke(), _realConnection);
             }
 
-            createWindow.Hide();
-            //var enemyConnection = new SimulatedConnection(sim_enemy);
-            var realenemyConnection = new RealConnection(new ConnectionEstablisher().GetRandomOpponent(CancellationToken.None));
-            GameLifeCircle.Start(e.MyField, new GameWindow(), realenemyConnection);
-            createWindow.ShowDialog();
+            _createWindow.Hide();
+            startGame.Invoke();
+            _createWindow.ShowDialog();
         }
 
         // create form and ask user for difficulty level
         private SimulatedPlayer AskDifficulty(MyBattleField myField)
         {
             var difChoose = new DifficultyChoose();
-            difChoose.Owner = createWindow;
+            difChoose.Owner = _createWindow;
             int dif = difChoose.AskDifficulty();
 
             switch (dif)

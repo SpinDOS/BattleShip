@@ -37,11 +37,17 @@ namespace BattleShip.BusinessLogic
                 (sender, args) => UI.MarkEnemySquareWithStatus(args.Square, args.SquareStatus);
 
             // provide enfo about game end
-            me.GameEnd += (sender, b) => UI.ShowGameEnd(b);
+            me.GameEnd += (sender, b) =>
+            {
+                UI.ShowGameEnd(b);
+                var x = me.MyField.GetFullSquares();
+                if (x.Any())
+                    enemy.ShareEnemyMyFullSqures(x);
+            };
 
             // show enemy full square on UI
             enemy.EnemySharedFullSquares += (sender, squares) => UI.ShowEnemyFullSquares(squares);
-
+            enemy.CorruptedPacketReceived += (sender, args) =>  MessageBox.Show("Corrupted");
             // catch info from form
             UI.InterfaceForceClose += (sender, args) =>
             {
@@ -53,6 +59,7 @@ namespace BattleShip.BusinessLogic
             {
                 me.ForceEndGame(false);
                 enemy.GiveUp();
+                enemy.ShareEnemyMyFullSqures(me.MyField.GetFullSquares());
             };
 
             // start game

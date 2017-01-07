@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using BattleShip.BusinessLogic;
 using BattleShip.Shared;
+using LiteNetLib;
 
 namespace BattleShip.DataLogic
 {
@@ -38,7 +39,12 @@ namespace BattleShip.DataLogic
         /// <summary>
         /// Need to implement IEnemyConnection. This event is never raised
         /// </summary>
-        public event EventHandler<BattleShipDisconnectReason> EnemyDisconnected;
+        public event EventHandler<DisconnectReason> EnemyDisconnected;
+
+        /// <summary>
+        /// Need to implement IEnemyConnection. This event is never raised
+        /// </summary>
+        public event EventHandler<DataEventArgs> CorruptedPacketReceived;
 
         /// <summary>
         /// Raise when enemy reports its full squares
@@ -53,7 +59,7 @@ namespace BattleShip.DataLogic
         /// <summary>
         /// Detect who shot first
         /// </summary>
-        public bool IsMeShotFirst()
+        public bool IsMeShootFirst()
         {
             if (!IsConnected)
                 throw _disposedException;

@@ -21,7 +21,6 @@ namespace BattleShip
         [STAThread]
         public static void Main(string[] args)
         {
-            new ConnectingWindow().Start();
             new AppLifeCircle().Start();
         }
     }

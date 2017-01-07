@@ -323,7 +323,7 @@ namespace BattleShip.DataLogic
                 // get opponent's ip
 
                 // Change Connection state
-                ConnectionState = ConnectionState.WaitingForOpponentsIP;
+                ConnectionState = ConnectionState.WaitingForOpponentsIp;
                 
                 // report my public iep and get opponent's public iep
                 string opponentIepString = ReportLobbyGuestIEP(publickey, password, myPublicIep);
@@ -373,7 +373,7 @@ namespace BattleShip.DataLogic
                 // get opponent's ip
 
                 // Change Connection state
-                ConnectionState = ConnectionState.WaitingForOpponentsIP;
+                ConnectionState = ConnectionState.WaitingForOpponentsIp;
 
                 // loop until opponent reports its public iep
                 string opponentIepString;

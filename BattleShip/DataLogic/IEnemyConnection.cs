@@ -4,9 +4,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using BattleShip.Shared;
+using LiteNetLib;
 
 namespace BattleShip.DataLogic
 {
+    /// <summary>
+    /// Connection to the enemy for game control
+    /// </summary>
     public interface IEnemyConnection : IGameConnection
     {
         /// <summary>
@@ -24,6 +28,11 @@ namespace BattleShip.DataLogic
         /// Raise when enemy reports its full squares
         /// </summary>
         event EventHandler<IEnumerable<Square>> EnemySharedFullSquares;
+        
+        /// <summary>
+        /// Raised when received corrupted packet 
+        /// </summary>
+         event EventHandler<DataEventArgs> CorruptedPacketReceived;
 
         /// <summary>
         /// Give up
@@ -43,6 +52,6 @@ namespace BattleShip.DataLogic
         /// <summary>
         /// Enemy disconnected
         /// </summary>
-        event EventHandler<BattleShipDisconnectReason> EnemyDisconnected;
+        event EventHandler<DisconnectReason> EnemyDisconnected;
     }
 }

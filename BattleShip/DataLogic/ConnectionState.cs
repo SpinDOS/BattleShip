@@ -11,7 +11,7 @@ namespace BattleShip.DataLogic
         GettingMyPublicIp,
         GettingInfoFromServer, 
         WaitingForOpponent, 
-        WaitingForOpponentsIP,
+        WaitingForOpponentsIp,
         TryingToConnectP2P,
         Ready,
     }

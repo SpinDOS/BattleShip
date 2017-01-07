@@ -59,7 +59,7 @@ namespace BattleShip.BusinessLogic
         public void Start()
         {
             // decide who first
-            MyTurn = enemy.IsMeShotFirst();
+            MyTurn = enemy.IsMeShootFirst();
             MyTurnInitialized?.Invoke(this, MyTurn);
             while (!IsGameEnded)
             {

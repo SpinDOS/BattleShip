@@ -436,7 +436,7 @@ namespace BattleShip.UserLogic
                     }
                     break;
                 // shared my ip and waiting for opponent's ip
-                case ConnectionState.WaitingForOpponentsIP:
+                case ConnectionState.WaitingForOpponentsIp:
                     newtext = "Waiting for opponent's IP";
                     break;
                 // got opponent's ip and he got my ip - try to connect each other

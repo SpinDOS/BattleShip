@@ -91,7 +91,6 @@
     <Compile Include="DataLogic\IGameConnection.cs" />
     <Compile Include="AppLifeCircle.cs" />
     <Compile Include="Program.cs" />
-    <Compile Include="Shared\BattleShipDisconnectReason.cs" />
     <Compile Include="Shared\EventArgs.cs" />
     <Compile Include="Shared\NetClientAndListener.cs" />
     <Compile Include="Shared\StringToIEPExtension.cs" />

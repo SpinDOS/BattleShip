@@ -8,14 +8,14 @@ using BattleShip.Shared;
 namespace BattleShip.DataLogic
 {
     /// <summary>
-    /// Connection with enemy only for game
+    /// Connection with enemy only for internal game needs
     /// </summary>
     public interface IGameConnection : IDisposable
     {
         /// <summary>
-        /// Detect who shot first
+        /// Detect who shoot first
         /// </summary>
-        bool IsMeShotFirst();
+        bool IsMeShootFirst();
         /// <summary>
         /// Get shot from enemy
         /// </summary>
