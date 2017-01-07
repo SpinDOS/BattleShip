@@ -97,6 +97,8 @@
     <Compile Include="UserLogic\DifficultyChoose.xaml.cs">
       <DependentUpon>DifficultyChoose.xaml</DependentUpon>
     </Compile>
+    <Compile Include="UserLogic\ICommunicationUserInterface.cs" />
+    <Compile Include="UserLogic\IGameUserPvpInterface.cs" />
     <Compile Include="UserLogic\IMyShotSource.cs" />
     <Compile Include="UserLogic\IGameUserInterface.cs" />
     <Compile Include="UserLogic\ButtonStylesResourceDictionary.cs" />
@@ -104,6 +106,9 @@
     <Compile Include="Shared\Ship.cs" />
     <Compile Include="Shared\Square.cs" />
     <Compile Include="Shared\ShipExtensions.cs" />
+    <Compile Include="UserLogic\RoundCornerButton.xaml.cs">
+      <DependentUpon>RoundCornerButton.xaml</DependentUpon>
+    </Compile>
     <Page Include="UserLogic\ConnectingWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -141,6 +146,10 @@
       <DependentUpon>CreatingWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Page Include="UserLogic\RoundCornerButton.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs">

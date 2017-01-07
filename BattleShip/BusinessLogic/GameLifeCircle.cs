@@ -17,54 +17,100 @@ namespace BattleShip.BusinessLogic
     public sealed class GameLifeCircle
     {
         /// <summary>
-        /// Start game
+        /// Start game vs computer
         /// </summary>
-        public static void Start(MyBattleField myField, IGameUserInterface UI, IEnemyConnection enemy)
+        public static void StartPVE(MyBattleField myField, IGameUserInterface GameUI, IEnemyConnection enemyConnection)
         {
-            RealPlayer me = new RealPlayer(myField, enemy, UI);
+            // configure realPlayer, UI and connection to provide info
+            var me = ConfigureRealPlayer(myField, GameUI, enemyConnection);
+
+            // close connection on UI close
+            GameUI.InterfaceForceClose += (sender, args) => enemyConnection.Disconnect();
+
+            // start game
+            ThreadPool.QueueUserWorkItem(obj => me.Start());
+            GameUI.Start(me.MyField.GetFullSquares());
+        }
+
+        public static void StartPVP(MyBattleField myField, IGameUserPvpInterface pvpInterface,
+            IEnemyConnection enemyConnection)
+        {
+            var me = ConfigureRealPlayer(myField, pvpInterface, enemyConnection);
+            enemyConnection.CorruptedPacketReceived += (sender, args) => MessageBox.Show("Corrupted");
+            enemyConnection.EnemyDisconnected += (sender, reason) =>
+            {
+                // me
+                pvpInterface.ShowEnemyDisconnected(reason);
+                
+            };
+            pvpInterface.InterfaceForceClose += (sender, args) =>
+            {
+                if (enemyConnection.IsConnected && pvpInterface.AskIfKeepConnection())
+                    return;
+                enemyConnection.Disconnect();
+            };
+
+
+        }
+
+        public static void StartPVPWithCommunication(MyBattleField myField, IGameUserPvpInterface pvpInterface,
+            IEnemyConnection enemyConnection, ICommunicationUserInterface communicationUserInterface,
+            ICommunicationConnection communicationConnection)
+        {
+            communicationConnection.MessageReceived +=
+                (sender, reader) => communicationUserInterface.ShowMessage(reader);
+            communicationUserInterface.UserSentMessage +=
+                (sender, writer) => communicationConnection.SendMessage(writer);
+            StartPVP(myField, pvpInterface, enemyConnection);
+        }
+
+        private static RealPlayer ConfigureRealPlayer(MyBattleField myField, IGameUserInterface GameUI, IEnemyConnection enemyConnection)
+        {
+            RealPlayer me = new RealPlayer(myField, enemyConnection, GameUI);
             // provide info about first shot
-            me.MyTurnInitialized += (sender, b) => 
-                UI.ShowInfo(b? "You shoot first" : "Enemy shoot first", !b);
+            me.MyTurnInitialized += (sender, b) =>
+                GameUI.ShowInfo(b ? "You shoot first" : "Enemy shoot first", !b);
 
             // provide info about shots
-            me.MyShot += (sender, args) => UI.ShowInfo($"My shot to {args.Square}: {args.SquareStatus}", !me.MyTurn);
-            me.EnemyShot += (sender, args) => UI.ShowInfo($"Enemy's shot to {args.Square}: {args.SquareStatus}", !me.MyTurn);
+            me.MyShot += (sender, args) => GameUI.ShowInfo($"My shot to {args.Square}: {args.SquareStatus}", !me.MyTurn);
+            me.EnemyShot += (sender, args) => GameUI.ShowInfo($"Enemy's shot to {args.Square}: {args.SquareStatus}", !me.MyTurn);
 
             // change squarestatus in form
             me.MyField.SquareStatusChanged +=
-                (sender, args) => UI.MarkMySquareWithStatus(args.Square, args.SquareStatus);
+                (sender, args) => GameUI.MarkMySquareWithStatus(args.Square, args.SquareStatus);
             me.EnemyField.SquareStatusChanged +=
-                (sender, args) => UI.MarkEnemySquareWithStatus(args.Square, args.SquareStatus);
+                (sender, args) => GameUI.MarkEnemySquareWithStatus(args.Square, args.SquareStatus);
 
             // provide enfo about game end
             me.GameEnd += (sender, b) =>
             {
-                UI.ShowGameEnd(b);
-                var x = me.MyField.GetFullSquares();
-                if (x.Any())
-                    enemy.ShareEnemyMyFullSqures(x);
+                // send my full squares is connected
+                var fullSquares = me.MyField.GetFullSquares();
+                if (fullSquares.Any() && enemyConnection.IsConnected)
+                    enemyConnection.SendEnemyMyFullSqures(fullSquares);
+
+                // provide info about end game
+                GameUI.ShowGameEnd(b);
+
             };
 
             // show enemy full square on UI
-            enemy.EnemySharedFullSquares += (sender, squares) => UI.ShowEnemyFullSquares(squares);
-            enemy.CorruptedPacketReceived += (sender, args) =>  MessageBox.Show("Corrupted");
+            enemyConnection.EnemySharedFullSquares += (sender, squares) => GameUI.ShowEnemyFullSquares(squares);
+
             // catch info from form
-            UI.InterfaceForceClose += (sender, args) =>
+            GameUI.InterfaceForceClose += (sender, args) =>
             {
                 me.ForceEndGame(false);
-                enemy.Disconnect();
             };
 
-            UI.GiveUp += (sender, args) =>
+            GameUI.GiveUp += (sender, args) =>
             {
                 me.ForceEndGame(false);
-                enemy.GiveUp();
-                enemy.ShareEnemyMyFullSqures(me.MyField.GetFullSquares());
+                enemyConnection.GiveUp();
+                enemyConnection.SendEnemyMyFullSqures(me.MyField.GetFullSquares());
             };
-
-            // start game
-            ThreadPool.QueueUserWorkItem(obj => me.Start());
-            UI.Start(me.MyField.GetFullSquares());
+            return me;
         }
+
     }
 }

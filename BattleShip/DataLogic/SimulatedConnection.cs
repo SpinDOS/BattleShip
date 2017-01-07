@@ -105,7 +105,7 @@ namespace BattleShip.DataLogic
         /// <summary>
         /// Do nothing because simulated player does not need your full squares
         /// </summary>
-        public void ShareEnemyMyFullSqures(IEnumerable<Square> fullSquares)
+        public void SendEnemyMyFullSqures(IEnumerable<Square> fullSquares)
         {
             // do nothing
         }

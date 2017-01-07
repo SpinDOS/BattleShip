@@ -16,16 +16,18 @@ using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using BattleShip.BusinessLogic;
 using BattleShip.Shared;
+using LiteNetLib;
+using LiteNetLib.Utils;
 
 namespace BattleShip.UserLogic
 {
     /// <summary>
     /// Interaction logic for GameWindow.xaml
     /// </summary>
-    public partial class GameWindow : Window, IGameUserInterface
+    public partial class GameWindow : Window, IGameUserPvpInterface, ICommunicationUserInterface
     {
         // for click handling
-        volatile TaskCompletionSource<Square> tcs = new TaskCompletionSource<Square>();
+        protected volatile TaskCompletionSource<Square> tcs = new TaskCompletionSource<Square>();
 
         /// <summary>
         /// Trigger when user closes window
@@ -149,6 +151,14 @@ namespace BattleShip.UserLogic
             }
         }
 
+        public void ShowChat(bool show)
+        {
+            if (show)
+                ChatColumn.Width = new GridLength(1, GridUnitType.Star);
+            else
+                ChatColumn.Width = new GridLength(0);
+        }
+
         // provide my next shot
         private void EnemyField_Square_Clicked(object sender, SquareEventArgs e)
         { tcs.SetResult(e.Square); }
@@ -163,5 +173,32 @@ namespace BattleShip.UserLogic
             else
                 GiveUp?.Invoke(this, EventArgs.Empty);
         }
+
+        public void ShowEnemyGaveUp()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void ShowError(string message)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void ShowEnemyDisconnected(DisconnectReason reason)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool AskIfKeepConnection()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void ShowMessage(NetDataReader reader)
+        {
+            throw new NotImplementedException();
+        }
+
+        public event EventHandler<NetDataWriter> UserSentMessage;
     }
 }

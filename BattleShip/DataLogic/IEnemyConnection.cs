@@ -22,7 +22,7 @@ namespace BattleShip.DataLogic
         /// Report enemy positions of my full squares 
         /// </summary>
         /// <param name="fullSquares">collection of full squres</param>
-        void ShareEnemyMyFullSqures(IEnumerable<Square> fullSquares);
+        void SendEnemyMyFullSqures(IEnumerable<Square> fullSquares);
 
         /// <summary>
         /// Raise when enemy reports its full squares

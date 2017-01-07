@@ -5,11 +5,11 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:BattleShip.UserLogic"
         mc:Ignorable="d"
-        Title="BattleShip" Height="398" Width="588" Closing="Window_Closing" MinWidth="588" MinHeight="398">
+        Title="BattleShip" Height="398" Width="808" Closing="Window_Closing" MinWidth="808" MinHeight="398">
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition/>
-            <ColumnDefinition Name="ChatColumn" Width="0"/>
+            <ColumnDefinition Width="2.5*"/>
+            <ColumnDefinition Name="ChatColumn" Width="*"/>
         </Grid.ColumnDefinitions>
         <Grid Column="0">
             <Grid.ColumnDefinitions>
@@ -33,10 +33,27 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
                 <Label Grid.Column="0" Name="Infomation" FontSize="16">Deciding who shoot first</Label>
-                <ProgressBar x:Name="ProgressBar" Grid.Column="1" Margin="0,7,2,7" IsIndeterminate="True"></ProgressBar>
+                <ProgressBar x:Name="ProgressBar" Grid.Column="1" Margin="0,7,2,7" IsIndeterminate="True"/>
             </Grid>
         </Grid>
-        <Label Grid.Column="1" Background="Aqua">Чат</Label>
-        <Button x:Name="Btn_GiveUp" HorizontalContentAlignment="Center" FontWeight="Bold" FontStyle="Italic" FontSize="14" Content="Give Up" HorizontalAlignment="Left" Margin="480,6,0,0" VerticalAlignment="Top" Width="75" Click="Btn_GiveUp_Click"/>
+        <Border Grid.Column="1" BorderBrush="Black" BorderThickness="1,0,0,0" >
+            <Grid  Background="White" Margin="10,0,10,10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="70"/>
+                    <ColumnDefinition  />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="35"/>
+                    <RowDefinition/>
+                    <RowDefinition Height="35"/>
+                </Grid.RowDefinitions>
+                <Label Grid.Column="0" Grid.Row="0" Content="Chat" FontWeight="Bold" FontStyle="Italic" FontSize="18" Margin="10,0,0,0"/>
+                <!--<Border Grid.Column="1" Grid.Row="0" ClipToBounds="True" Width="45" Height="25" HorizontalAlignment="Left" Margin="3" CornerRadius="20">
+                    <Button Content="Call"/>
+                </Border>-->
+
+            </Grid>
+        </Border>
+        <Button Grid.Column="0" x:Name="Btn_GiveUp" HorizontalContentAlignment="Center" FontWeight="Bold" FontStyle="Italic" FontSize="14" Content="Give Up" HorizontalAlignment="Right" Margin="0,6,25,0" VerticalAlignment="Top" Width="75" Click="Btn_GiveUp_Click"/>
     </Grid>
 </Window>

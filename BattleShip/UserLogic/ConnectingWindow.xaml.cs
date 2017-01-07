@@ -173,7 +173,7 @@ namespace BattleShip.UserLogic
             // change button text
             MainButton.Content = "Find opponent";
 
-            // deactivate labels and textboxes of lobby info. also clear textboxe
+            // deactivate labels and textboxes of lobby info. also clear textbox
             TxtLobbyId.IsEnabled = TxtPassword.IsEnabled = false;
             LabelPassword.Foreground = LabelLobbyId.Foreground = _grayLabelBrush;
             TxtLobbyId.Text = TxtPassword.Text = string.Empty;
@@ -187,7 +187,7 @@ namespace BattleShip.UserLogic
             // change button text
             MainButton.Content = "Create lobby";
 
-            // deactivate labels and textboxes of lobby info. also clear textboxe
+            // deactivate labels and textboxes of lobby info. also clear textbox
             TxtLobbyId.IsEnabled = TxtPassword.IsEnabled = false;
             LabelPassword.Foreground = LabelLobbyId.Foreground = _grayLabelBrush;
             TxtLobbyId.Text = TxtPassword.Text = string.Empty;

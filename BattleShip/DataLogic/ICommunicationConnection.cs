@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using BattleShip.Shared;
+using LiteNetLib.Utils;
 
 namespace BattleShip.DataLogic
 {
@@ -19,8 +20,14 @@ namespace BattleShip.DataLogic
         void SendMessage(byte[] mesage);
 
         /// <summary>
+        /// Send message to peer
+        /// </summary>
+        /// <param name="netDataWriter">NetDataWriter with message to send</param>
+        void SendMessage(NetDataWriter netDataWriter);
+
+        /// <summary>
         /// Raised on message from peer received
         /// </summary>
-        event EventHandler<DataEventArgs> MessageReceived;
+        event EventHandler<NetDataReader> MessageReceived;
     }
 }
