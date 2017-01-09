@@ -32,7 +32,7 @@
                     <ColumnDefinition Width="2*"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-                <Label Grid.Column="0" Name="Infomation" FontSize="16">Deciding who shoot first</Label>
+                <Label Grid.Column="0" Name="Infomation" FontSize="16">Waiting for opponent</Label>
                 <ProgressBar x:Name="ProgressBar" Grid.Column="1" Margin="0,7,2,7" IsIndeterminate="True"/>
             </Grid>
         </Grid>

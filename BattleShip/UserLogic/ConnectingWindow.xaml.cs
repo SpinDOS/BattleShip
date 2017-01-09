@@ -90,17 +90,48 @@ namespace BattleShip.UserLogic
 
         #endregion
 
-        #region Public entry point - Start()
+        #region Public entry points - Start() and ResetConnection()
 
         /// <summary>
         /// Show UI and return connected NetClientAndListener
         /// </summary>
         /// <returns>Connected NetClientAndListener or null if cancelled</returns>
         public NetClientAndListener Start()
-        { // show dialog and handle events of click
+        { 
+            // if connection has been established
+            if (_result != null)
+                // if connection is alive
+                if (_result.Client.IsConnected)
+                {
+                    return _result;
+                }
+                else // if enemy disconnected but user was not notified
+                {
+                    _result = null;
+                    // notify and ask if user want to establish new connection
+                    if (MessageBox.Show("Previous opponent has disconnected. Do you want to find new opponent?", 
+                        "Do you want to find new opponent?", MessageBoxButton.YesNo, 
+                        MessageBoxImage.Question) == MessageBoxResult.No)
+                        return null;
+                }
+            // show dialog and handle events of click
             this.ShowDialog();
             // when window closes, return result or null (if result is not set before)
             return _result;
+        }
+
+        /// <summary>
+        /// Reset the connection if it exists
+        /// </summary>
+        public void ResetConnection()
+        {
+            // if connection exists
+            if (_result != null)
+            {
+                // disconnect and forget
+                _result.Client.Disconnect();
+                _result = null;
+            }
         }
 
         #endregion
@@ -289,15 +320,20 @@ namespace BattleShip.UserLogic
                     // try get result from task
                     _result = await _task;
                     // if no errors - just close window and return result from Start();
-                    this.Close();
+                    this.Hide();
                 }
                 // if could not establish connection
                 catch (Exception exception)
                 {
                     // prepare form for next search
                     _task = null;
+                    bool cancelled = _cancellationOfSearch.IsCancellationRequested;
                     _cancellationOfSearch = new CancellationTokenSource();
                     ChangeStateOnForm(true);
+
+                    // ignore all exceptions if cancelled
+                    if (cancelled)
+                        return;
 
                     // provide info about error
 
@@ -378,10 +414,26 @@ namespace BattleShip.UserLogic
         }
 
 
-        // cancel current search progress on close
-        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        // cancel current search progress on close and wait
+        private async void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            _cancellationOfSearch.Cancel();
+            // cancel closing because form can be reused
+            e.Cancel = true;
+            // if any operation is in progress
+            if (_task != null)
+            {
+                // if the operation is not cancellation - call cancellation
+                if (MainButton.IsEnabled)
+                    MainButton_Click(null, null);
+                // wait for task to complete
+                try
+                {
+                    await _task;
+                }
+                catch { /*ignored*/ }
+            }
+            // hide form to reuse
+            this.Hide();
         }
 
         #endregion

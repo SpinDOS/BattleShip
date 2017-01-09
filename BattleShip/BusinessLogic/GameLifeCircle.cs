@@ -50,7 +50,9 @@ namespace BattleShip.BusinessLogic
                 enemyConnection.Disconnect();
             };
 
-
+            // start game
+            ThreadPool.QueueUserWorkItem(obj => me.Start());
+            pvpInterface.Start(me.MyField.GetFullSquares());
         }
 
         public static void StartPVPWithCommunication(MyBattleField myField, IGameUserPvpInterface pvpInterface,

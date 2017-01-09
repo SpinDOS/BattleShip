@@ -18,22 +18,24 @@ namespace BattleShip
     public sealed class AppLifeCircle
     {
         // window to configure your field
-        // game starts on event of _createWindow
-        readonly CreatingWindow _createWindow = new CreatingWindow();
+        // game starts on event of CreatingWindow
+        readonly CreatingWindow CreatingWindow = new CreatingWindow();
 
-        // connection to enemy. Can be saved between games 
-        private RealConnection _realConnection = null;
+        // lazy initialized singleton ConnectingWindow
+        private ConnectingWindow _connectingWindow = null;
+        private ConnectingWindow ConnectingWindow => 
+            _connectingWindow ?? (_connectingWindow = new ConnectingWindow() {Owner = CreatingWindow});
 
         public AppLifeCircle()
         {
             // handle starting game
-            _createWindow.StartGameEvent += StartGame;
+            CreatingWindow.StartGameEvent += StartGame;
         }
 
         /// <summary>
         /// Start application life circle
         /// </summary>
-        public void Start() => _createWindow.ShowDialog();
+        public void Start() => CreatingWindow.ShowDialog();
 
         // handler for start game click in creating form
         private void StartGame(object sender, StartGameEventArgs e)
@@ -42,7 +44,7 @@ namespace BattleShip
             Func<bool, GameWindow> createGameWindow = chat =>
             {
                 // create window and center it 
-                var window = new GameWindow {Owner = _createWindow};
+                var window = new GameWindow {Owner = CreatingWindow};
                 // show or hide chat block
                 window.ShowChat(chat);
                 return window;
@@ -54,30 +56,23 @@ namespace BattleShip
             // if pvp
             if (e.VsHuman)
             {
+                // try find enemy
+                var clientAndListener = ConnectingWindow.Start();
+                // if did not fid enemy
+                if (clientAndListener == null)
+                    return;
+                // create RealConnection
+                var connection = new RealConnection(clientAndListener);
                 // create game window with chat
                 var window = createGameWindow.Invoke(true);
-
-                // if connection were saved but enemy disconnected
-                if (_realConnection != null && !_realConnection.IsConnected)
-                {
-                    _realConnection = null;
-                    // todo window.showenemydisconnected
-                }
-                // if there is no alive connection
-                if (_realConnection == null)
-                {
-                    // try establish connetion
-                    var clientAndListener = new ConnectingWindow() {Owner = _createWindow}.Start();
-
-                    // if failed to establish connection - do nothing
-                    if (clientAndListener == null)
-                        return;
-
-                    // create realConnection on the just created connection
-                    _realConnection = new RealConnection(clientAndListener);
-                }
                 // start game as pvp mode with game window with chat
-                startGame = () => GameLifeCircle.StartPVPWithCommunication(e.MyField, window, _realConnection, window, _realConnection);
+                startGame = () =>
+                {
+                    GameLifeCircle.StartPVPWithCommunication(e.MyField, window, connection, window, connection);
+                    // if after game enemy is disconnected - notify ConnectingWindow
+                    if (!connection.IsConnected)
+                        ConnectingWindow.ResetConnection();
+                };
             }
             else // vs computer
             {
@@ -97,15 +92,10 @@ namespace BattleShip
             }
 
             // hide creating window
-            _createWindow.Hide();
+            CreatingWindow.Hide();
             // start game
             startGame.Invoke();
-            // if connection is alive, save it
-            // else - forget
-            if (!_realConnection.IsConnected)
-                _realConnection = null;
-            // show _creatingWindow again
-            _createWindow.ShowDialog();
+            CreatingWindow.ShowDialog();
         }
 
         // create form and ask user for difficulty level
@@ -113,8 +103,8 @@ namespace BattleShip
         private SimulatedPlayer AskDifficulty(MyBattleField myField)
         {
             var difChoose = new DifficultyChoose();
-            // center window on _createWindow
-            difChoose.Owner = _createWindow;
+            // center window on CreatingWindow
+            difChoose.Owner = CreatingWindow;
             int dif = difChoose.AskDifficulty();
 
             switch (dif)
