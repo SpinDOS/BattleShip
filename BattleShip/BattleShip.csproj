@@ -79,7 +79,7 @@
     <Compile Include="BusinessLogic\Player\SimulatedPlayer.cs" />
     <Compile Include="BusinessLogic\Player\SmartPlayerSimulator.cs" />
     <Compile Include="DataLogic\ConnectionEstablisher.cs" />
-    <Compile Include="DataLogic\ConnectionState.cs" />
+    <Compile Include="DataLogic\ConnectionEstablishingState.cs" />
     <Compile Include="DataLogic\ICommunicationConnection.cs" />
     <Compile Include="DataLogic\IEnemyConnection.cs" />
     <Compile Include="DataLogic\Lumisoft_edited.cs" />
@@ -92,6 +92,7 @@
     <Compile Include="AppLifeCircle.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Shared\EventArgs.cs" />
+    <Compile Include="Shared\Exceptions.cs" />
     <Compile Include="Shared\NetClientAndListener.cs" />
     <Compile Include="Shared\StringToIEPExtension.cs" />
     <Compile Include="UserLogic\DifficultyChoose.xaml.cs">

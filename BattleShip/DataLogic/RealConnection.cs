@@ -78,6 +78,11 @@ namespace BattleShip.DataLogic
             Listener.PeerDisconnectedEvent += (peer, reason, code) =>
             {
                 CancelationListning.Cancel();
+                // reprt objects that uses this instance
+                TcsShotFirst.SetException(_disposedException);
+                TcsShotFromEnemy.SetException(_disposedException);
+                TcsResultOfMyShot.SetException(_disposedException);
+                // raise event
                 EnemyDisconnected?.Invoke(this, reason);
             };
 
@@ -256,7 +261,15 @@ namespace BattleShip.DataLogic
         {
             if (!IsConnected)
                 throw _disposedException;
-            Client.Peer.Send(new byte[] { (byte) PacketType.GiveUp }, SendOptions.ReliableUnordered);
+            Client.Peer.Send(new byte[] { (byte) PacketType.GiveUp }, SendOptions.ReliableOrdered);
+            // notify objects that uses this instance that you gave up and prepare this instance for next game
+            GiveUpException gaveUpException = new GiveUpException("You gave up");
+            TcsShotFirst.SetException(gaveUpException);
+            TcsShotFirst = new TaskCompletionSource<int>();
+            TcsResultOfMyShot.SetException(gaveUpException);
+            TcsResultOfMyShot = new TaskCompletionSource<ShotEventArgs>();
+            TcsShotFromEnemy.SetException(gaveUpException);
+            TcsShotFromEnemy = new TaskCompletionSource<Square>();
         }
 
         /// <summary>
@@ -273,6 +286,10 @@ namespace BattleShip.DataLogic
                 return;
             // cancel listening for events of netclient
             CancelationListning.Cancel();
+            // notify objects that uses this instance that connection is dead
+            TcsShotFirst.SetException(_disposedException);
+            TcsResultOfMyShot.SetException(_disposedException);
+            TcsShotFromEnemy.SetException(_disposedException);
             // disconnect
             Client.Disconnect();
         }
@@ -359,6 +376,15 @@ namespace BattleShip.DataLogic
                     // if enemy gave up
                     case PacketType.GiveUp:
                         EnemyGaveUp?.Invoke(this, EventArgs.Empty);
+                        // exception for all pending requests
+                        GiveUpException gaveUpException = new GiveUpException("Enemy gave up");
+                        // notify objects that uses this instance that enemy gave up and prepare this instance for next game
+                        TcsShotFirst.SetException(gaveUpException);
+                        TcsShotFirst = new TaskCompletionSource<int>();
+                        TcsResultOfMyShot.SetException(gaveUpException);
+                        TcsResultOfMyShot = new TaskCompletionSource<ShotEventArgs>();
+                        TcsShotFromEnemy.SetException(gaveUpException);
+                        TcsShotFromEnemy = new TaskCompletionSource<Square>();
                         break;
                     // if enemy sent custom message
                     case PacketType.Message:

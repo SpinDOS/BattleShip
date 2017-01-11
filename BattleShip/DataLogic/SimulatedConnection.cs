@@ -31,6 +31,8 @@ namespace BattleShip.DataLogic
             this.enemy = enemy;
         }
 
+        #pragma warning disable
+
         /// <summary>
         /// Need to implement IEnemyConnection. This event is never raised
         /// </summary>
@@ -45,6 +47,8 @@ namespace BattleShip.DataLogic
         /// Need to implement IEnemyConnection. This event is never raised
         /// </summary>
         public event EventHandler<DataEventArgs> CorruptedPacketReceived;
+
+        #pragma warning restore
 
         /// <summary>
         /// Raise when enemy reports its full squares
@@ -117,9 +121,10 @@ namespace BattleShip.DataLogic
         {
             if (!IsConnected)
                 throw _disposedException;
-            enemy.ForceEndGame(true);
             // report enemy full squres
             EnemySharedFullSquares?.Invoke(this, enemy.MyField.GetFullSquares());
+            // drop connection
+            Disconnect();
         }
 
         /// <summary>

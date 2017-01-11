@@ -15,12 +15,6 @@ namespace BattleShip.UserLogic
         void ShowEnemyGaveUp();
 
         /// <summary>
-        /// Show error preventing game continuation
-        /// </summary>
-        /// <param name="message">message of the error</param>
-        void ShowError(string message);
-
-        /// <summary>
         /// Notificate user that enemy disconnected
         /// </summary>
         /// <param name="reason">reason of disconnect</param>

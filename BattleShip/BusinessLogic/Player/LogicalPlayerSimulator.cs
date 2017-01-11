@@ -55,7 +55,7 @@ namespace BattleShip.BusinessLogic
         {
             // if not my turn
             if (!myTurn.HasValue || !myTurn.Value)
-                throw new AggregateException("Can not shot now");
+                throw new GameStateException("Can not shot now");
 
             // imitate thoughts time
             Thread.Sleep(800);
@@ -165,7 +165,7 @@ namespace BattleShip.BusinessLogic
 
             // if empty
             if (squares.Length == 0)
-                throw new AggregateException("No empty squares");
+                throw new GameStateException("No empty squares");
 
             // return random empty square
             return squares[new Random().Next(squares.Length)];

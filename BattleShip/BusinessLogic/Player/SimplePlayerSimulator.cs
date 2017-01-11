@@ -31,7 +31,7 @@ namespace BattleShip.BusinessLogic
                 for (byte j = 0; j < 10; j++)
                     if (EnemyField[new Square(i, j)] == SquareStatus.Empty)
                         return new Square(i, j);
-            throw new AggregateException("No empty enemy squares");
+            throw new GameStateException("No empty enemy squares");
         }
     }
 }

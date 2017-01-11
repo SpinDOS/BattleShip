@@ -68,7 +68,7 @@ namespace BattleShip
                 // start game as pvp mode with game window with chat
                 startGame = () =>
                 {
-                    GameLifeCircle.StartPVPWithCommunication(e.MyField, window, connection, window, connection);
+                    new GameLifeCircle(e.MyField, window, connection).StartPVPWithCommunication(window, connection);
                     // if after game enemy is disconnected - notify ConnectingWindow
                     if (!connection.IsConnected)
                         ConnectingWindow.ResetConnection();
@@ -87,8 +87,9 @@ namespace BattleShip
                 }
                 // create connection
                 var connection = new SimulatedConnection(simEnemy);
+                var window = createGameWindow.Invoke(false);
                 // start game as pve mode with game window without chat
-                startGame = () => GameLifeCircle.StartPVE(e.MyField, createGameWindow.Invoke(false), connection);
+                startGame = () => new GameLifeCircle(e.MyField, window, connection).StartPVE();
             }
 
             // hide creating window

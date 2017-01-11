@@ -58,6 +58,8 @@ namespace BattleShip.BusinessLogic
 
         public void Start()
         {
+            if (IsGameEnded)
+                throw new GameStateException("The game is ended");
             // decide who first
             MyTurn = enemy.IsMeShootFirst();
             MyTurnInitialized?.Invoke(this, MyTurn);
@@ -117,6 +119,8 @@ namespace BattleShip.BusinessLogic
         /// </summary>
         public override void ForceEndGame(bool win)
         {
+            if (IsGameEnded)
+                return;
             base.ForceEndGame(win);
             GameEnd?.Invoke(this, win);
         }

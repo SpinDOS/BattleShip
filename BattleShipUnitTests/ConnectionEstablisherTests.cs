@@ -18,7 +18,7 @@ namespace BattleShipUnitTests
         {
             // get random opponent for client1 in another thread
             NetClient client1;
-            Task.Delay(2000).ContinueWith(t => client1 = new ConnectionEstablisher().GetRandomOpponent(CancellationToken.None));
+            Task.Delay(2000).ContinueWith(t => client1 = new ConnectionEstablisher().GetRandomOpponent(CancellationToken.None).Client);
             
             // get opponent for client2 in current thread with cancellation if nobody tries to connect him
             CancellationTokenSource cts = new CancellationTokenSource();
@@ -28,7 +28,7 @@ namespace BattleShipUnitTests
             NetClient client2 = null;
             try
             {
-                client2 = new ConnectionEstablisher().GetRandomOpponent(cts.Token);
+                client2 = new ConnectionEstablisher().GetRandomOpponent(cts.Token).Client;
             }
             catch (Exception e)
             {
@@ -47,7 +47,7 @@ namespace BattleShipUnitTests
             var cts1 = new CancellationTokenSource();
             // work of client1 connection will be cancelled after 1 sec after start
             cts1.CancelAfter(2000);
-            var task = Task.Run(() => client1 = new ConnectionEstablisher().GetRandomOpponent(cts1.Token));
+            var task = Task.Run(() => client1 = new ConnectionEstablisher().GetRandomOpponent(cts1.Token).Client);
 
             Thread.Sleep(750);
             // create client2
@@ -59,7 +59,7 @@ namespace BattleShipUnitTests
             try
             {
                 // GetRandomOpponent shoult throw operationCancelledException
-                client2 = new ConnectionEstablisher().GetRandomOpponent(cts2.Token);
+                client2 = new ConnectionEstablisher().GetRandomOpponent(cts2.Token).Client;
                 Assert.Equal(1, 2);
             }
             catch (OperationCanceledException)
@@ -96,7 +96,7 @@ namespace BattleShipUnitTests
                 password = args.Password;
             };
             // create lobby with cancellation after 15 sec
-            var task = Task.Run(() => client1 = establisher1.CreateLobby(cts1.Token));
+            var task = Task.Run(() => client1 = establisher1.CreateLobby(cts1.Token).Client);
 
             CancellationTokenSource cts2 = new CancellationTokenSource();
 
@@ -107,7 +107,7 @@ namespace BattleShipUnitTests
             }
 
             // try connect lobby with cancellation after 10 sec
-            NetClient client2 = new ConnectionEstablisher().ConnectLobby(publickey, password, cts2.Token);
+            NetClient client2 = new ConnectionEstablisher().ConnectLobby(publickey, password, cts2.Token).Client;
             // check if clients are connected
             Assert.True(client2.IsConnected);
         }

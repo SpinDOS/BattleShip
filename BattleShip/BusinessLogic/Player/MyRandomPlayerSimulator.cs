@@ -33,7 +33,7 @@ namespace BattleShip.BusinessLogic
 
             // if empty
             if (squares.Length == 0)
-                throw new AggregateException("No empty squares");
+                throw new GameStateException("No empty squares");
 
             // return random empty square
             return squares[new Random().Next(squares.Length)];

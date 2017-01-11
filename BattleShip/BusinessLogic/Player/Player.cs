@@ -66,11 +66,6 @@ namespace BattleShip.BusinessLogic
         /// <summary>
         /// End game if someone gave up
         /// </summary>
-        public virtual void ForceEndGame(bool win)
-        {
-            if (IsGameEnded)
-                throw new AggregateException("Game ended");
-            IsGameEnded = true;
-        }
+        public virtual void ForceEndGame(bool win) => IsGameEnded = true;
     }
 }

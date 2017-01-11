@@ -441,30 +441,30 @@ namespace BattleShip.UserLogic
         #region GUI control
 
         // eventHandler to provide info to gui about changing status of search
-        private async void WriteInfoAboutConnectionStatus(object sender, ConnectionState connectionState)
+        private async void WriteInfoAboutConnectionStatus(object sender, ConnectionEstablishingState connectionEstablishingState)
         {
             // text of LabelInfo
             string newtext = null;
 
             // set new text of LabelInfo depending on new status of search
-            switch (connectionState)
+            switch (connectionEstablishingState)
             {
                 // ready to start new search
-                case ConnectionState.Ready:
+                case ConnectionEstablishingState.Ready:
                     newtext = "Ready to start";
                     break;
 
-                case ConnectionState.GettingMyPublicIp:
+                case ConnectionEstablishingState.GettingMyPublicIp:
                     newtext = "Getting your public IP";
                     break;
 
                 // search started. getting info from server
-                case ConnectionState.GettingInfoFromServer:
+                case ConnectionEstablishingState.GettingInfoFromServer:
                     newtext = "Getting info from server";
                     break;
 
                 // waiting opponent - depends of kind of search
-                case ConnectionState.WaitingForOpponent:
+                case ConnectionEstablishingState.WaitingForOpponent:
                     switch (_searchMode)
                     {
                         // if search for random opponent
@@ -488,11 +488,11 @@ namespace BattleShip.UserLogic
                     }
                     break;
                 // shared my ip and waiting for opponent's ip
-                case ConnectionState.WaitingForOpponentsIp:
+                case ConnectionEstablishingState.WaitingForOpponentsIp:
                     newtext = "Waiting for opponent's IP";
                     break;
                 // got opponent's ip and he got my ip - try to connect each other
-                case ConnectionState.TryingToConnectP2P:
+                case ConnectionEstablishingState.TryingToConnectP2P:
                     newtext = "Connecting to opponent";
                     break;
                 // unknown state
@@ -581,7 +581,7 @@ namespace BattleShip.UserLogic
                     TxtPassword.Dispatcher.InvokeAsync(() => TxtPassword.Text = args.Password.ToString());
                 };
 
-                // provide changes of ConnectionState
+                // provide changes of ConnectionEstablishingState
                 _connectionEstablisher.ConnectionStateChanged += WriteInfoAboutConnectionStatus;
                 return true;
             }

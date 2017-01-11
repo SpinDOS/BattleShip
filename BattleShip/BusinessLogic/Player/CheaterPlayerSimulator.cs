@@ -52,7 +52,7 @@ namespace BattleShip.BusinessLogic
                     if (++i == EnemySquares.Length)
                         i = 0;
                     if (i == start)
-                        throw new AggregateException("All enemy squares have been shot");
+                        throw new ArgumentException("All enemy squares have been shot");
                 }
                 return EnemySquares[i];
             }

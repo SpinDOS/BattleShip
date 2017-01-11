@@ -32,9 +32,9 @@ namespace BattleShip.BusinessLogic
         public void SetMeShotFirst(bool meFirst)
         {
             if (myTurn.HasValue)
-                throw new AggregateException("Player is already initialized");
+                throw new GameStateException("Player is already initialized");
             if (IsGameEnded)
-                throw new AggregateException("Game ended");
+                throw new GameStateException("Game ended");
             myTurn = meFirst;
         }
 
@@ -45,13 +45,13 @@ namespace BattleShip.BusinessLogic
         /// <param name="status">result of shot</param>
         public virtual void GetReportOfMyShot(Square square, SquareStatus status)
         {
+            if (IsGameEnded)
+                throw new GameStateException("Game ended");
+
             // if i did not shot
             if (!myTurn.HasValue || !myTurn.Value)
-                throw new AggregateException("Can not receive report of my shot now");
-
-            if (IsGameEnded)
-                throw new AggregateException("Game ended");
-
+                throw new GameStateException("Can not receive report of my shot now");
+            
             EnemyField.Shot(square, status, myId);
             if (EnemyField.ShipsAlive == 0)
                 IsGameEnded = true;
@@ -66,12 +66,12 @@ namespace BattleShip.BusinessLogic
         /// <returns></returns>
         public SquareStatus ReportEnemyShotResult(Square square)
         {
+            if (IsGameEnded)
+                throw new GameStateException("Game ended");
+
             // if i must shot
             if (!myTurn.HasValue || myTurn.Value)
-                throw new AggregateException("Can't receive shot now");
-
-            if (IsGameEnded)
-                throw new AggregateException("Game ended");
+                throw new GameStateException("Can't receive shot now");
 
             var status = MyField.Shot(square, myId);
             if (MyField.ShipsAlive == 0)

@@ -35,8 +35,8 @@ namespace BattleShip.DataLogic
         // adress and port of working stun server
         private Tuple<string, int> _goodStunServer = null;
         
-        // backing field for ConnectionState for volatile access
-        private volatile ConnectionState _connectionState = DataLogic.ConnectionState.Ready;
+        // backing field for ConnectionEstablishingState for volatile access
+        private volatile ConnectionEstablishingState _connectionEstablishingState = DataLogic.ConnectionEstablishingState.Ready;
 
         #endregion
 
@@ -118,12 +118,12 @@ namespace BattleShip.DataLogic
         /// <summary>
         /// Return state of finding opponent process
         /// </summary>
-        public ConnectionState ConnectionState
+        public ConnectionEstablishingState ConnectionEstablishingState
         {
-            get { return _connectionState; }
+            get { return _connectionEstablishingState; }
             protected set
             {
-                _connectionState = value;
+                _connectionEstablishingState = value;
                 ConnectionStateChanged?.Invoke(this, value);
             }
         }
@@ -134,7 +134,7 @@ namespace BattleShip.DataLogic
         public TimeSpan RequesInterval { get; set; } = TimeSpan.FromSeconds(7.5);
 
         public event EventHandler<AuthentificationEventArgs> GotLobbyPublicInfo;
-        public event EventHandler<ConnectionState> ConnectionStateChanged;
+        public event EventHandler<ConnectionEstablishingState> ConnectionStateChanged;
 
         #endregion
 
@@ -156,14 +156,14 @@ namespace BattleShip.DataLogic
         public NetClientAndListener GetRandomOpponent(CancellationToken ct)
         {
             // Change Connection state
-            if (ConnectionState != ConnectionState.Ready)
+            if (ConnectionEstablishingState != ConnectionEstablishingState.Ready)
                 throw new AggregateException("Opponent search is already in progress");
-            ConnectionState = ConnectionState.GettingInfoFromServer;
+            ConnectionEstablishingState = ConnectionEstablishingState.GettingInfoFromServer;
 
             // abort request on cancellation
             ct.Register(() => _request?.Abort());
 
-            // reset ConnectionState on exception
+            // reset ConnectionEstablishingState on exception
             try
             {
                 // get response
@@ -204,7 +204,7 @@ namespace BattleShip.DataLogic
 
                     // change connection state to ready 
                     // to pass initial check in ConnectLobby
-                    ConnectionState = ConnectionState.Ready;
+                    ConnectionEstablishingState = ConnectionEstablishingState.Ready;
                     return ConnectLobby(publickey, password, ct);
                 }
                 else
@@ -224,7 +224,7 @@ namespace BattleShip.DataLogic
                 }
 
             }
-            finally { ConnectionState = ConnectionState.Ready;}
+            finally { ConnectionEstablishingState = ConnectionEstablishingState.Ready;}
         }
 
         /// <summary>
@@ -242,14 +242,14 @@ namespace BattleShip.DataLogic
         public NetClientAndListener CreateLobby(CancellationToken ct)
         {
             // Change Connection state
-            if (ConnectionState != ConnectionState.Ready)
+            if (ConnectionEstablishingState != ConnectionEstablishingState.Ready)
                 throw new AggregateException("Opponent is already found");
-            ConnectionState = ConnectionState.GettingInfoFromServer;
+            ConnectionEstablishingState = ConnectionEstablishingState.GettingInfoFromServer;
 
             // abort request on cancellation
             ct.Register(() => _request?.Abort());
 
-            // reset ConnectionState on exception
+            // reset ConnectionEstablishingState on exception
             try
             {
                 dynamic response = MakeRequest(@"/api/lobby/create", "GET", null);
@@ -270,7 +270,7 @@ namespace BattleShip.DataLogic
 
                 return ControlMyLobby(privatekey, ct);
             }
-            finally { ConnectionState = ConnectionState.Ready;}
+            finally { ConnectionEstablishingState = ConnectionEstablishingState.Ready;}
 
         }
 
@@ -291,14 +291,14 @@ namespace BattleShip.DataLogic
         public NetClientAndListener ConnectLobby(int publickey, int password, CancellationToken ct)
         {
             // Change Connection state
-            if (ConnectionState != ConnectionState.Ready)
+            if (ConnectionEstablishingState != ConnectionEstablishingState.Ready)
                 throw new AggregateException("Opponent is already found");
-            ConnectionState = ConnectionState.WaitingForOpponent;
+            ConnectionEstablishingState = ConnectionEstablishingState.WaitingForOpponent;
 
             // abort request on cancellation
             ct.Register(() => _request?.Abort());
 
-            // reset ConnectionState on exception
+            // reset ConnectionEstablishingState on exception
             try
             {
                 ct.ThrowIfCancellationRequested();
@@ -314,7 +314,7 @@ namespace BattleShip.DataLogic
                 // get my public iep
 
                 // Change Connection state
-                ConnectionState = ConnectionState.GettingMyPublicIp;
+                ConnectionEstablishingState = ConnectionEstablishingState.GettingMyPublicIp;
                 // local iep.port for next use
                 int localPort;
                 // get my public iep and local port
@@ -323,7 +323,7 @@ namespace BattleShip.DataLogic
                 // get opponent's ip
 
                 // Change Connection state
-                ConnectionState = ConnectionState.WaitingForOpponentsIp;
+                ConnectionEstablishingState = ConnectionEstablishingState.WaitingForOpponentsIp;
                 
                 // report my public iep and get opponent's public iep
                 string opponentIepString = ReportLobbyGuestIEP(publickey, password, myPublicIep);
@@ -335,10 +335,10 @@ namespace BattleShip.DataLogic
                 ct.ThrowIfCancellationRequested();
 
                 // establish connection
-                ConnectionState = ConnectionState.TryingToConnectP2P;
+                ConnectionEstablishingState = ConnectionEstablishingState.TryingToConnectP2P;
                 return EstablishConnection(localPort, opponentIep, ct);
             }
-            finally { ConnectionState = ConnectionState.Ready; }
+            finally { ConnectionEstablishingState = ConnectionEstablishingState.Ready; }
         }
 
         #endregion
@@ -353,7 +353,7 @@ namespace BattleShip.DataLogic
             try
             {
                 ct.ThrowIfCancellationRequested();
-                ConnectionState = ConnectionState.WaitingForOpponent;
+                ConnectionEstablishingState = ConnectionEstablishingState.WaitingForOpponent;
                 // wait for opponent
                 while (!CheckMyLobby_IsOpponentReady(privatekey))
                 {
@@ -364,7 +364,7 @@ namespace BattleShip.DataLogic
                 // get my public iep
 
                 // Change Connection state
-                ConnectionState = ConnectionState.GettingMyPublicIp;
+                ConnectionEstablishingState = ConnectionEstablishingState.GettingMyPublicIp;
                 // local iep.port for next use
                 int localPort;
                 // get my public iep and local port
@@ -373,7 +373,7 @@ namespace BattleShip.DataLogic
                 // get opponent's ip
 
                 // Change Connection state
-                ConnectionState = ConnectionState.WaitingForOpponentsIp;
+                ConnectionEstablishingState = ConnectionEstablishingState.WaitingForOpponentsIp;
 
                 // loop until opponent reports its public iep
                 string opponentIepString;
@@ -395,7 +395,7 @@ namespace BattleShip.DataLogic
                     throw _formatException;
 
                 // establish connection
-                ConnectionState = ConnectionState.TryingToConnectP2P;
+                ConnectionEstablishingState = ConnectionEstablishingState.TryingToConnectP2P;
                 return EstablishConnection(localPort, opponentIep, ct);
             }
             finally

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace BattleShip.DataLogic
 {
-    public enum ConnectionState : byte
+    public enum ConnectionEstablishingState : byte
     {
         GettingMyPublicIp,
         GettingInfoFromServer, 

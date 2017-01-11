@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,6 +9,8 @@ using System.Windows;
 using BattleShip.DataLogic;
 using BattleShip.Shared;
 using BattleShip.UserLogic;
+using LiteNetLib;
+using LiteNetLib.Utils;
 
 namespace BattleShip.BusinessLogic
 {
@@ -16,103 +19,252 @@ namespace BattleShip.BusinessLogic
     /// </summary>
     public sealed class GameLifeCircle
     {
+        // UnSubscribeConnection - for unsubsribe connection events to prevent handling event on closed form
+        // UnSubscribeGameEnd - for unsubsribe gameend events to prevent displaying multiple notifications about game end
+        private Action UnSubscribeConnection, UnSubscribeGameEnd;
+
+        /// <summary>
+        /// Create GameLifeCircle for starting game
+        /// </summary>
+        /// <param name="yourField">Field with your ship squares</param>
+        /// <param name="gameUI">User interface to provide info and get your shots</param>
+        /// <param name="enemyConnection">Connection to the enemy</param>
+        public GameLifeCircle(MyBattleField yourField, IGameUserInterface gameUI, IEnemyConnection enemyConnection)
+        {
+            // save parameters to properties for next use
+            GameUI = gameUI;
+            EnemyConnection = enemyConnection;
+
+            // create player
+            RealPlayer = new RealPlayer(yourField, enemyConnection, gameUI);
+
+            // REALPLAYER EVENTS
+            //**********************************************************************************************************************************
+
+            // provide info about first shot
+            RealPlayer.MyTurnInitialized += (sender, b) =>
+                gameUI.ShowInfo(b ? "You shoot first" : "Enemy shoot first", !b);
+
+            // provide info about shots
+            RealPlayer.MyShot += (sender, args) => 
+                gameUI.ShowInfo($"My shot to {args.Square}: {args.SquareStatus}", !RealPlayer.MyTurn);
+            RealPlayer.EnemyShot += (sender, args) => 
+                gameUI.ShowInfo($"Enemy's shot to {args.Square}: {args.SquareStatus}", !RealPlayer.MyTurn);
+
+            // change squarestatus in form
+            RealPlayer.MyField.SquareStatusChanged += (sender, args) => gameUI.MarkMySquareWithStatus(args.Square, args.SquareStatus);
+            RealPlayer.EnemyField.SquareStatusChanged += (sender, args) => gameUI.MarkEnemySquareWithStatus(args.Square, args.SquareStatus);
+
+            // if enemy is connected, send him my full squares
+            // this action check connection.isConnected, so there is no need to unsubscribe it
+            RealPlayer.GameEnd += (sender, b) =>
+            {
+                // send my full squares is connected
+                var fullSquares = RealPlayer.MyField.GetFullSquares();
+                if (fullSquares.Any() && enemyConnection.IsConnected)
+                    enemyConnection.SendEnemyMyFullSqures(fullSquares);
+            };
+            // provide enfo about game end
+            EventHandler<bool> gameEnd = (sender, b) => gameUI.ShowGameEnd(b);
+            RealPlayer.GameEnd += gameEnd;
+
+            // CONNECTION EVENTS
+            //**********************************************************************************************************************************
+
+            // show enemy full square on UI
+            EventHandler<IEnumerable<Square>> enemySharedFullSquares = (sender, squares) => gameUI.ShowEnemyFullSquares(squares);
+            enemyConnection.EnemySharedFullSquares += enemySharedFullSquares;
+
+            // USER INTERFACE EVENTS
+            //**********************************************************************************************************************************
+
+            // on interface close
+            gameUI.InterfaceForceClose += (sender, args) =>
+            {
+                // not provide info to form and forget connection
+                UnSubscribeConnection();
+                // report realPlayer that you gave up
+                if (!RealPlayer.IsGameEnded)
+                    RealPlayer.ForceEndGame(false);
+            };
+
+            // when you want to give up
+            EventHandler giveUp = (sender, args) =>
+            {
+                // not provide info about game end
+                UnSubscribeGameEnd();
+                // report realPlayer that you gave up
+                RealPlayer.ForceEndGame(false);
+                // send info to enemy if connected
+                if (enemyConnection.IsConnected)
+                {
+                    enemyConnection.GiveUp();
+                    enemyConnection.SendEnemyMyFullSqures(RealPlayer.MyField.GetFullSquares());
+                }
+            };
+            gameUI.GiveUp += giveUp;
+
+
+            // Unsubscribe section
+            UnSubscribeConnection = () =>
+            {
+                // on every connection drop, info to form is provided by special method
+                // no need to provide info about game end when connection is dropped
+                UnSubscribeGameEnd();
+                enemyConnection.EnemySharedFullSquares -= enemySharedFullSquares;
+            };
+            UnSubscribeGameEnd = () =>
+            {
+                // if game ended, forget about realPlayer.GameEnd and user give up
+                RealPlayer.GameEnd -= gameEnd;
+                gameUI.GiveUp -= giveUp;
+            };
+        }
+
+        public RealPlayer RealPlayer { get; }
+        public IGameUserInterface GameUI { get; }
+        public IEnemyConnection EnemyConnection { get; }
+
         /// <summary>
         /// Start game vs computer
         /// </summary>
-        public static void StartPVE(MyBattleField myField, IGameUserInterface GameUI, IEnemyConnection enemyConnection)
+        public void StartPVE()
         {
-            // configure realPlayer, UI and connection to provide info
-            var me = ConfigureRealPlayer(myField, GameUI, enemyConnection);
-
             // close connection on UI close
-            GameUI.InterfaceForceClose += (sender, args) => enemyConnection.Disconnect();
-
-            // start game
-            ThreadPool.QueueUserWorkItem(obj => me.Start());
-            GameUI.Start(me.MyField.GetFullSquares());
+            GameUI.InterfaceForceClose += (sender, args) => EnemyConnection.Disconnect();
+            Start();
         }
 
-        public static void StartPVP(MyBattleField myField, IGameUserPvpInterface pvpInterface,
-            IEnemyConnection enemyConnection)
+        /// <summary>
+        /// Start game vs another player on the internet
+        /// </summary>
+        public void StartPVP()
         {
-            var me = ConfigureRealPlayer(myField, pvpInterface, enemyConnection);
-            enemyConnection.CorruptedPacketReceived += (sender, args) => MessageBox.Show("Corrupted");
-            enemyConnection.EnemyDisconnected += (sender, reason) =>
+            // check parameter
+            var pvpInterface = GameUI as IGameUserPvpInterface;
+            if (pvpInterface == null)
+                throw new ArgumentException("GameUI can not be used for pvp game");
+
+            // on enemy gave up
+            EventHandler enemyGaveUp = (sender, args) =>
             {
-                // me
-                pvpInterface.ShowEnemyDisconnected(reason);
-                
+                // prevent another notifications and notify RealPlayer and pvpInterface
+                UnSubscribeGameEnd();
+                RealPlayer.ForceEndGame(true);
+                pvpInterface.ShowEnemyGaveUp();
             };
+            EnemyConnection.EnemyGaveUp += enemyGaveUp;
+
+            // on getting corrupted packet - notify user and disconnect
+            EventHandler<DataEventArgs> corruptedPacketReceived = (sender, args) =>
+            {
+                // drop connection
+                UnSubscribeConnection();
+                EnemyConnection.Disconnect();
+                RealPlayer.ForceEndGame(false);
+                // provide info about error
+                pvpInterface.ShowError("Some error occured in the connection to the opponent. " + 
+                    "The connection will be dropped and the game is ended");
+            };
+            EnemyConnection.CorruptedPacketReceived += corruptedPacketReceived;
+
+            // on enemy disconnected
+            EventHandler<DisconnectReason> enemyDisconnected = (sender, reason) =>
+            {
+                // don't show new notification of game end and forget connection
+                UnSubscribeConnection();
+                // if disconnect is not made by you
+                if (reason != DisconnectReason.DisconnectCalled)
+                {
+                    // you win
+                    RealPlayer.ForceEndGame(true);
+                    // provide info to UI
+                    pvpInterface.ShowEnemyDisconnected(reason);
+                }
+                else
+                {
+                    // you give up
+                    RealPlayer.ForceEndGame(false);
+                }
+            };
+            EnemyConnection.EnemyDisconnected += enemyDisconnected;
+
+            // on interface close - ask if keep connection
             pvpInterface.InterfaceForceClose += (sender, args) =>
             {
-                if (enemyConnection.IsConnected && pvpInterface.AskIfKeepConnection())
-                    return;
-                enemyConnection.Disconnect();
+                // if connected - ask if user wants to drop connection or not
+                if (EnemyConnection.IsConnected)
+                {
+                    // ask if to keep connection
+                    var keepConnection = pvpInterface.AskIfKeepConnection();
+                    // check again if enemy has disconnected while pvpInterface.AskIfKeepConnection()
+                    if (!EnemyConnection.IsConnected)
+                        return;
+                    // if interface closes before game end
+                    if (!RealPlayer.IsGameEnded)
+                    {
+                        // report enemy my full squares 
+                        EnemyConnection.SendEnemyMyFullSqures(RealPlayer.MyField.GetFullSquares());
+                    }
+                    if (keepConnection)
+                            EnemyConnection.GiveUp();
+                    else // if want to disconnect
+                        EnemyConnection.Disconnect();
+                }
             };
 
-            // start game
-            ThreadPool.QueueUserWorkItem(obj => me.Start());
-            pvpInterface.Start(me.MyField.GetFullSquares());
+            // update unSubscribe actions
+            UnSubscribeGameEnd += () =>
+            {
+                EnemyConnection.EnemyGaveUp -= enemyGaveUp;
+                EnemyConnection.CorruptedPacketReceived -= corruptedPacketReceived;
+            };
+            
+            // other handlers are called in UnSubscribeGameEnd
+            UnSubscribeConnection += () =>EnemyConnection.EnemyDisconnected -= enemyDisconnected;
+
+            Start();
         }
 
-        public static void StartPVPWithCommunication(MyBattleField myField, IGameUserPvpInterface pvpInterface,
-            IEnemyConnection enemyConnection, ICommunicationUserInterface communicationUserInterface,
+        /// <summary>
+        /// Start game vs another player on the internet with ability to communicate
+        /// </summary>
+        /// <param name="communicationUserInterface">UI to get and show messages</param>
+        /// <param name="communicationConnection">Connection to receive and send messages</param>
+        public void StartPVPWithCommunication(ICommunicationUserInterface communicationUserInterface,
             ICommunicationConnection communicationConnection)
         {
-            communicationConnection.MessageReceived +=
-                (sender, reader) => communicationUserInterface.ShowMessage(reader);
-            communicationUserInterface.UserSentMessage +=
-                (sender, writer) => communicationConnection.SendMessage(writer);
-            StartPVP(myField, pvpInterface, enemyConnection);
+            // subscribe to send and receive messages
+            EventHandler<NetDataReader> messageReceive = (sender, reader) => communicationUserInterface.ShowMessage(reader);
+            EventHandler<NetDataWriter> sendMessage = (sender, writer) => communicationConnection.SendMessage(writer);
+            communicationConnection.MessageReceived += messageReceive;
+            communicationUserInterface.UserSentMessage += sendMessage;
+            // Add tu UnSubscribeConnection these handlers
+            UnSubscribeConnection += () =>
+            {
+                communicationConnection.MessageReceived -= messageReceive;
+                communicationUserInterface.UserSentMessage -= sendMessage;
+            };
+            Start();
         }
 
-        private static RealPlayer ConfigureRealPlayer(MyBattleField myField, IGameUserInterface GameUI, IEnemyConnection enemyConnection)
+        // Start the game and show UI
+        private void Start()
         {
-            RealPlayer me = new RealPlayer(myField, enemyConnection, GameUI);
-            // provide info about first shot
-            me.MyTurnInitialized += (sender, b) =>
-                GameUI.ShowInfo(b ? "You shoot first" : "Enemy shoot first", !b);
-
-            // provide info about shots
-            me.MyShot += (sender, args) => GameUI.ShowInfo($"My shot to {args.Square}: {args.SquareStatus}", !me.MyTurn);
-            me.EnemyShot += (sender, args) => GameUI.ShowInfo($"Enemy's shot to {args.Square}: {args.SquareStatus}", !me.MyTurn);
-
-            // change squarestatus in form
-            me.MyField.SquareStatusChanged +=
-                (sender, args) => GameUI.MarkMySquareWithStatus(args.Square, args.SquareStatus);
-            me.EnemyField.SquareStatusChanged +=
-                (sender, args) => GameUI.MarkEnemySquareWithStatus(args.Square, args.SquareStatus);
-
-            // provide enfo about game end
-            me.GameEnd += (sender, b) =>
-            {
-                // send my full squares is connected
-                var fullSquares = me.MyField.GetFullSquares();
-                if (fullSquares.Any() && enemyConnection.IsConnected)
-                    enemyConnection.SendEnemyMyFullSqures(fullSquares);
-
-                // provide info about end game
-                GameUI.ShowGameEnd(b);
-
-            };
-
-            // show enemy full square on UI
-            enemyConnection.EnemySharedFullSquares += (sender, squares) => GameUI.ShowEnemyFullSquares(squares);
-
-            // catch info from form
-            GameUI.InterfaceForceClose += (sender, args) =>
-            {
-                me.ForceEndGame(false);
-            };
-
-            GameUI.GiveUp += (sender, args) =>
-            {
-                me.ForceEndGame(false);
-                enemyConnection.GiveUp();
-                enemyConnection.SendEnemyMyFullSqures(me.MyField.GetFullSquares());
-            };
-            return me;
+            // start game and check exception if thrown
+            Task.Run(() => RealPlayer.Start())
+                .ContinueWith(t => // handle exceptions
+                {   // if any exception except objectDisposedException( on connection disconnect) and giveUpException
+                    if (t.Exception.InnerExceptions.Any(exception => !(exception is ObjectDisposedException || exception is GiveUpException)))
+                    {
+                        // end game and provide info to user
+                        UnSubscribeGameEnd();
+                        RealPlayer.ForceEndGame(false);
+                        GameUI.ShowError("Some error occured during the game. The game is ended");
+                    }
+                }, TaskContinuationOptions.OnlyOnFaulted);
+            GameUI.Start(RealPlayer.MyField.GetFullSquares());
         }
-
     }
 }
+

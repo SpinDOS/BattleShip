@@ -33,7 +33,7 @@ namespace BattleShip.BusinessLogic
             // get empty square
             var squares = EnemyField.GetEmptySquares();
             if (!squares.Any())
-                throw new AggregateException("No empty squares in enemy field");
+                throw new GameStateException("No empty squares in enemy field");
 
             // find max rating
             int max = squares.Max(Rating);

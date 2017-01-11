@@ -48,6 +48,12 @@ namespace BattleShip.UserLogic
         /// Trigger when player wants to give up
         /// </summary>
         event EventHandler GiveUp;
+        
+        /// <summary>
+        /// Show error preventing game continuation
+        /// </summary>
+        /// <param name="message">message of the error</param>
+        void ShowError(string message);
 
         /// <summary>
         /// Trigger when user closes window
