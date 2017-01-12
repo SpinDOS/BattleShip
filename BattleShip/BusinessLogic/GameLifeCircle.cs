@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -11,6 +12,7 @@ using BattleShip.Shared;
 using BattleShip.UserLogic;
 using LiteNetLib;
 using LiteNetLib.Utils;
+using Newtonsoft.Json;
 
 namespace BattleShip.BusinessLogic
 {
@@ -239,13 +241,13 @@ namespace BattleShip.BusinessLogic
             EventHandler<NetDataWriter> sendMessage = (sender, writer) => communicationConnection.SendMessage(writer);
             communicationConnection.MessageReceived += messageReceive;
             communicationUserInterface.UserSentMessage += sendMessage;
-            // Add tu UnSubscribeConnection these handlers
+            // Add these handlers to UnSubscribeConnection 
             UnSubscribeConnection += () =>
             {
                 communicationConnection.MessageReceived -= messageReceive;
                 communicationUserInterface.UserSentMessage -= sendMessage;
             };
-            Start();
+            StartPVP();
         }
 
         // Start the game and show UI
@@ -254,8 +256,8 @@ namespace BattleShip.BusinessLogic
             // start game and check exception if thrown
             Task.Run(() => RealPlayer.Start())
                 .ContinueWith(t => // handle exceptions
-                {   // if any exception except objectDisposedException( on connection disconnect) and giveUpException
-                    if (t.Exception.InnerExceptions.Any(exception => !(exception is ObjectDisposedException || exception is GiveUpException)))
+                {   // if exception is not caused by disconnect or give up
+                    if (!CheckException(t.Exception))
                     {
                         // end game and provide info to user
                         UnSubscribeGameEnd();
@@ -264,6 +266,25 @@ namespace BattleShip.BusinessLogic
                     }
                 }, TaskContinuationOptions.OnlyOnFaulted);
             GameUI.Start(RealPlayer.MyField.GetFullSquares());
+        }
+
+        // check exception if it contains any not ObjectDisposedException and not GiveUpException exceptions
+        // true, if does not contain
+        private bool CheckException(Exception exception)
+        {
+            var asAggregate = exception as AggregateException;
+            // if the exception is not the task-exception, that contains another exceptions
+            if (asAggregate == null || !asAggregate.InnerExceptions.Any())
+                return exception is ObjectDisposedException || exception is GiveUpException;
+
+            // check all inner exceptions
+            foreach (var inner in asAggregate.InnerExceptions)
+            {
+                // if any bad - return false
+                if (!CheckException(inner))
+                    return false;
+            }
+            return true;
         }
     }
 }

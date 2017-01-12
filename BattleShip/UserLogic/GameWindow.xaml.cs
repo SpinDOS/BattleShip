@@ -26,8 +26,8 @@ namespace BattleShip.UserLogic
     /// </summary>
     public partial class GameWindow : Window, IGameUserPvpInterface, ICommunicationUserInterface
     {
-        // for click handling
-        protected volatile TaskCompletionSource<Square> tcs = new TaskCompletionSource<Square>();
+        // for click handling to get my shot
+        protected volatile TaskCompletionSource<Square> MyShotSource = new TaskCompletionSource<Square>();
 
         /// <summary>
         /// Trigger when user closes window
@@ -54,8 +54,8 @@ namespace BattleShip.UserLogic
         public Square GetMyShot()
         {
             // get square by event of click
-            Square square = tcs.Task.Result;
-            tcs = new TaskCompletionSource<Square>();
+            Square square = MyShotSource.Task.Result;
+            MyShotSource = new TaskCompletionSource<Square>();
             return square;
         }
 
@@ -161,7 +161,7 @@ namespace BattleShip.UserLogic
 
         // provide my next shot
         private void EnemyField_Square_Clicked(object sender, SquareEventArgs e)
-        { tcs.SetResult(e.Square); }
+        { MyShotSource.SetResult(e.Square); }
 
         // trigger gave up event
         private void Btn_GiveUp_Click(object sender, RoutedEventArgs e)
@@ -176,27 +176,27 @@ namespace BattleShip.UserLogic
 
         public void ShowEnemyGaveUp()
         {
-            throw new NotImplementedException();
+            MessageBox.Show("Enemy gave up");
         }
 
         public void ShowError(string message)
         {
-            throw new NotImplementedException();
+            MessageBox.Show("Error: " + message);
         }
 
         public void ShowEnemyDisconnected(DisconnectReason reason)
         {
-            throw new NotImplementedException();
+            MessageBox.Show("Enemy disconnected");
         }
 
         public bool AskIfKeepConnection()
         {
-            throw new NotImplementedException();
+            return MessageBox.Show("Keep connection?", "Keep connection?", MessageBoxButton.YesNoCancel, MessageBoxImage.Asterisk) != MessageBoxResult.No;
         }
 
         public void ShowMessage(NetDataReader reader)
         {
-            throw new NotImplementedException();
+            MessageBox.Show("Message: " + reader.GetString(10));
         }
 
         public event EventHandler<NetDataWriter> UserSentMessage;

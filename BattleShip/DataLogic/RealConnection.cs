@@ -79,9 +79,21 @@ namespace BattleShip.DataLogic
             {
                 CancelationListning.Cancel();
                 // reprt objects that uses this instance
-                TcsShotFirst.SetException(_disposedException);
-                TcsShotFromEnemy.SetException(_disposedException);
-                TcsResultOfMyShot.SetException(_disposedException);
+                if (!TcsShotFirst.TrySetException(_disposedException))
+                {
+                    TcsShotFirst = new TaskCompletionSource<int>();
+                    TcsShotFirst.SetException(_disposedException);
+                }
+                if (!TcsShotFromEnemy.TrySetException(_disposedException))
+                {
+                    TcsShotFromEnemy = new TaskCompletionSource<Square>();
+                    TcsShotFromEnemy.SetException(_disposedException);
+                }
+                if (!TcsResultOfMyShot.TrySetException(_disposedException))
+                {
+                    TcsResultOfMyShot = new TaskCompletionSource<ShotEventArgs>();
+                    TcsResultOfMyShot.SetException(_disposedException);
+                }
                 // raise event
                 EnemyDisconnected?.Invoke(this, reason);
             };

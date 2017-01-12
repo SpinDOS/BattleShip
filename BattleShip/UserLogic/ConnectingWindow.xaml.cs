@@ -45,7 +45,7 @@ namespace BattleShip.UserLogic
         protected ConnectionEstablisher _connectionEstablisher;
 
         // reference to set result of the operation from event handler
-        private volatile NetClientAndListener _result;
+        private volatile RealConnection _result;
 
         // task of establishing connection. Need to wait it on cancellation
         private volatile Task<NetClientAndListener> _task;
@@ -96,12 +96,12 @@ namespace BattleShip.UserLogic
         /// Show UI and return connected NetClientAndListener
         /// </summary>
         /// <returns>Connected NetClientAndListener or null if cancelled</returns>
-        public NetClientAndListener Start()
+        public RealConnection Start()
         { 
             // if connection has been established
             if (_result != null)
                 // if connection is alive
-                if (_result.Client.IsConnected)
+                if (_result.IsConnected)
                 {
                     return _result;
                 }
@@ -318,8 +318,9 @@ namespace BattleShip.UserLogic
                     // run establishing connection in task and save it to _task for cancellation delay
                     _task = Task.Run(function);
                     // try get result from task
-                    _result = await _task;
-                    // if no errors - just close window and return result from Start();
+                    _result = new RealConnection(await _task);
+                    // if no errors - prepare interface for next use and return result from Start();
+                    MainButton_Click(null, null); // to cancel
                     this.Hide();
                 }
                 // if could not establish connection

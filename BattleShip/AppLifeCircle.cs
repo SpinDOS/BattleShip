@@ -57,12 +57,11 @@ namespace BattleShip
             if (e.VsHuman)
             {
                 // try find enemy
-                var clientAndListener = ConnectingWindow.Start();
+                var connection = ConnectingWindow.Start();
                 // if did not fid enemy
-                if (clientAndListener == null)
+                if (connection == null)
                     return;
-                // create RealConnection
-                var connection = new RealConnection(clientAndListener);
+
                 // create game window with chat
                 var window = createGameWindow.Invoke(true);
                 // start game as pvp mode with game window with chat
