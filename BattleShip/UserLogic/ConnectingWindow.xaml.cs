@@ -129,7 +129,7 @@ namespace BattleShip.UserLogic
             if (_result != null)
             {
                 // disconnect and forget
-                _result.Client.Disconnect();
+                _result.Disconnect();
                 _result = null;
             }
         }
@@ -301,11 +301,12 @@ namespace BattleShip.UserLogic
                 // if operation is cancelled, return witout any error reports or search
                 if (currectCancellationTokerSource.IsCancellationRequested)
                     return;
-
+                
                 // if connectionEstablisher is not ready, report error
                 if (!connectionEstablisherReady)
                 {
                     // unblock form and show error
+                    _task = null;
                     ChangeStateOnForm(true);
                     MessageBox.Show("Could not find info about working server. Check ServerInfo.json",
                         "Error getting server for finding opponent", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -351,12 +352,12 @@ namespace BattleShip.UserLogic
                     } // timeout of request to the server has expired
                     else if (exception is TimeoutException)
                     {
-                        MessageBox.Show("Server does not respond in defined timeout", "Server error", MessageBoxButton.OK,
-                            MessageBoxImage.Error);
+                        MessageBox.Show("Server does not respond in defined timeout. You can try restart the application", 
+                            "Server error", MessageBoxButton.OK, MessageBoxImage.Error);
                     } // server is unavailable
                     else if (exception is ArgumentException)
                     {
-                        MessageBox.Show("Server is unavailable. Check ServerInfo.json", "Server is unavailable", 
+                        MessageBox.Show("Server is unavailable. Check ServerInfo.json", "Server is unavailable",
                             MessageBoxButton.OK, MessageBoxImage.Error);
                     } // search cancelled
                     else if (exception is OperationCanceledException)
@@ -365,7 +366,7 @@ namespace BattleShip.UserLogic
                     } // relative url of connectionEstablisher causes 404 Not Found
                     else if (exception is DirectoryNotFoundException)
                     {
-                        MessageBox.Show("Pre-defined url is not found on the server. Check version of the BattleShip application", 
+                        MessageBox.Show("Pre-defined url is not found on the server. Check version of the BattleShip application",
                             "Version dismatch", MessageBoxButton.OK, MessageBoxImage.Error);
                     } // invalid privatekey, publickey or password
                     else if (exception is AuthenticationException)
@@ -374,12 +375,12 @@ namespace BattleShip.UserLogic
                         if (_searchMode == SearchMode.ConnectLobby)
                             MessageBox.Show("Lobby id with password are not found", "Invalid lobby info",
                                 MessageBoxButton.OK, MessageBoxImage.Error);
-                        else if (_searchMode == SearchMode.CreateLobby )// privatekey not found - internal error
+                        else if (_searchMode == SearchMode.CreateLobby)// privatekey not found - internal error
                             MessageBox.Show("Your lobby has been removed by the server", "Lobby not found",
                                 MessageBoxButton.OK, MessageBoxImage.Exclamation);
                         else if (_searchMode == SearchMode.RandomOpponent) // your opponent was found, but left the search
-                            MessageBox.Show("Server has found opponent but he has left the search. " + 
-                                "Try start new search for random opponent or crate lobby " + 
+                            MessageBox.Show("Server has found opponent but he has left the search. " +
+                                "Try start new search for random opponent or crate lobby " +
                                 "and tell someone its LobbyId and password", "Opponent left",
                                 MessageBoxButton.OK, MessageBoxImage.Exclamation);
                     }

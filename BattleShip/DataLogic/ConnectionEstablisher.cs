@@ -524,7 +524,7 @@ namespace BattleShip.DataLogic
             _request.Headers.Add(HttpRequestHeader.AcceptCharset, "utf-8");
             _request.Headers.Add(HttpRequestHeader.AcceptEncoding, "utf-8");
             _request.Headers.Add(HttpRequestHeader.ContentEncoding, "utf-8");
-            _request.Timeout = 30000;
+            _request.Timeout = 15000;
 
             // write content to request stream
             if (string.IsNullOrWhiteSpace(content)) // if no content

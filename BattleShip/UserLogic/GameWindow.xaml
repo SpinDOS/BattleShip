@@ -32,7 +32,7 @@
                     <ColumnDefinition Width="2*"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-                <Label Grid.Column="0" Name="Infomation" FontSize="16">Waiting for opponent</Label>
+                <TextBox Grid.Column="0" Name="Infomation" FontSize="16" Focusable="False" IsReadOnly="True" HorizontalScrollBarVisibility="Auto" BorderThickness="0">Waiting for opponent</TextBox>
                 <ProgressBar x:Name="ProgressBar" Grid.Column="1" Margin="0,7,2,7" IsIndeterminate="True"/>
             </Grid>
         </Grid>

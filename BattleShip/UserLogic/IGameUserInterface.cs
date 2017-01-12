@@ -14,7 +14,8 @@ namespace BattleShip.UserLogic
         /// Start game
         /// </summary>
         /// <param name="shipSquares">Squares of my ships</param>
-        void Start(IEnumerable<Square> shipSquares);
+        /// <param name="pvp">true, if game vs human</param>
+        void Start(IEnumerable<Square> shipSquares, bool pvp);
 
         /// <summary>
         /// Mark square in enemy field

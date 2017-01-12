@@ -263,7 +263,7 @@ namespace BattleShip.DataLogic
                 arr[i++] = square.Y;
             }
             // send squares
-            Client.Peer.Send(arr, SendOptions.ReliableUnordered);
+            Client.Peer.Send(arr, SendOptions.ReliableOrdered);
         }
 
         /// <summary>

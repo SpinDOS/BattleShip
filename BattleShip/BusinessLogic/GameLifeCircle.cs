@@ -57,17 +57,15 @@ namespace BattleShip.BusinessLogic
             RealPlayer.MyField.SquareStatusChanged += (sender, args) => gameUI.MarkMySquareWithStatus(args.Square, args.SquareStatus);
             RealPlayer.EnemyField.SquareStatusChanged += (sender, args) => gameUI.MarkEnemySquareWithStatus(args.Square, args.SquareStatus);
 
-            // if enemy is connected, send him my full squares
-            // this action check connection.isConnected, so there is no need to unsubscribe it
-            RealPlayer.GameEnd += (sender, b) =>
-            {
-                // send my full squares is connected
-                var fullSquares = RealPlayer.MyField.GetFullSquares();
-                if (fullSquares.Any() && enemyConnection.IsConnected)
-                    enemyConnection.SendEnemyMyFullSqures(fullSquares);
-            };
             // provide enfo about game end
-            EventHandler<bool> gameEnd = (sender, b) => gameUI.ShowGameEnd(b);
+            EventHandler<bool> gameEnd = (sender, b) =>
+            {
+                UnSubscribeGameEnd();
+                // send my full squares and show game end
+                if (enemyConnection.IsConnected)
+                    enemyConnection.SendEnemyMyFullSqures(RealPlayer.MyField.GetFullSquares());
+                gameUI.ShowGameEnd(b);
+            };
             RealPlayer.GameEnd += gameEnd;
 
             // CONNECTION EVENTS
@@ -134,7 +132,7 @@ namespace BattleShip.BusinessLogic
         {
             // close connection on UI close
             GameUI.InterfaceForceClose += (sender, args) => EnemyConnection.Disconnect();
-            Start();
+            Start(false);
         }
 
         /// <summary>
@@ -176,7 +174,7 @@ namespace BattleShip.BusinessLogic
                 // don't show new notification of game end and forget connection
                 UnSubscribeConnection();
                 // if disconnect is not made by you
-                if (reason != DisconnectReason.DisconnectCalled)
+                if (reason != DisconnectReason.DisconnectCalled && reason != DisconnectReason.DisconnectPeerCalled)
                 {
                     // you win
                     RealPlayer.ForceEndGame(true);
@@ -202,14 +200,14 @@ namespace BattleShip.BusinessLogic
                     // check again if enemy has disconnected while pvpInterface.AskIfKeepConnection()
                     if (!EnemyConnection.IsConnected)
                         return;
-                    // if interface closes before game end
-                    if (!RealPlayer.IsGameEnded)
+ 
+                    // if keep connection - imitate my give up
+                    if (keepConnection)
                     {
-                        // report enemy my full squares 
+                        // imitate give up
+                        EnemyConnection.GiveUp();
                         EnemyConnection.SendEnemyMyFullSqures(RealPlayer.MyField.GetFullSquares());
                     }
-                    if (keepConnection)
-                            EnemyConnection.GiveUp();
                     else // if want to disconnect
                         EnemyConnection.Disconnect();
                 }
@@ -225,7 +223,7 @@ namespace BattleShip.BusinessLogic
             // other handlers are called in UnSubscribeGameEnd
             UnSubscribeConnection += () =>EnemyConnection.EnemyDisconnected -= enemyDisconnected;
 
-            Start();
+            Start(true);
         }
 
         /// <summary>
@@ -251,7 +249,7 @@ namespace BattleShip.BusinessLogic
         }
 
         // Start the game and show UI
-        private void Start()
+        private void Start(bool pvp)
         {
             // start game and check exception if thrown
             Task.Run(() => RealPlayer.Start())
@@ -265,7 +263,7 @@ namespace BattleShip.BusinessLogic
                         GameUI.ShowError("Some error occured during the game. The game is ended");
                     }
                 }, TaskContinuationOptions.OnlyOnFaulted);
-            GameUI.Start(RealPlayer.MyField.GetFullSquares());
+            GameUI.Start(RealPlayer.MyField.GetFullSquares(), pvp);
         }
 
         // check exception if it contains any not ObjectDisposedException and not GiveUpException exceptions
