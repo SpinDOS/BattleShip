@@ -321,9 +321,9 @@ namespace BattleShip.DataLogic
             if (!IsConnected)
                 throw _disposedException;
             // add message flag and message data to new arra
-            byte[] arr = new byte[data.Length + 1];
+            byte[] arr = new byte[data.Count + 1];
             arr[0] = (byte) PacketType.Message;
-            Array.ConstrainedCopy(data.Data, data.Offset, arr, 1, data.Length);
+            Array.ConstrainedCopy(data.Data, data.Offset, arr, 1, data.Count);
             // send this array
             Client.Peer.Send(arr, SendOptions.ReliableOrdered);
         }

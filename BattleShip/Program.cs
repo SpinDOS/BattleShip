@@ -22,8 +22,6 @@ namespace BattleShip
         [STAThread]
         public static void Main(string[] args)
         {
-            //new GameWindow().Start(new Square[1], true);
-            //return;
             // try start game
             try
             {

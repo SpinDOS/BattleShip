@@ -242,7 +242,7 @@ namespace BattleShip.UserLogic
             // create message based on reason
             var message = reason == BattleShipConnectionDisconnectReason.EnemyDisconnected
                 ? "Enemy disconnected"
-                : "Connection problems";
+                : "Connection problems. Enemy Disconnected";
 
             BlockFormConnectionProblems(message);
             MessageBox.Show(message, "Lost connection to the enemy", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -267,7 +267,7 @@ namespace BattleShip.UserLogic
 
         public void ShowMessage(DataEventArgs data)
         {
-            var text = "Opponent: " + Encoding.Unicode.GetString(data.Data, data.Offset, data.Length) + Environment.NewLine;
+            var text = "Opponent: " + Encoding.Unicode.GetString(data.Data, data.Offset, data.Count) + Environment.NewLine;
             ChatWindow.Dispatcher.Invoke(() => ChatWindow.Text += text);
         }
 

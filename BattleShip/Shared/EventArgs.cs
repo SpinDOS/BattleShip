@@ -14,7 +14,7 @@ namespace BattleShip.Shared
 
         public int Offset { get; }
 
-        public int Length { get; }
+        public int Count { get; }
 
         /// <summary>
         /// Event args with data byte array
@@ -26,27 +26,27 @@ namespace BattleShip.Shared
                 throw new ArgumentNullException(nameof(data));
             Data = data;
             Offset = 0;
-            Length = data.Length;
+            Count = data.Length;
         }
         /// <summary>
         /// Event args with data byte array
         /// </summary>
         /// <param name="data">Array with data</param>
         /// <param name="offset">Position where first byte of data is located</param>
-        /// <param name="length">Length of the data</param>
-        public DataEventArgs(byte[] data, int offset, int length)
+        /// <param name="count">Length of the data</param>
+        public DataEventArgs(byte[] data, int offset, int count)
         {
             if (data == null)
                 throw new ArgumentNullException(nameof(data));
             if (offset < 0)
                 throw new ArgumentException(nameof(offset));
-            if (length < 0)
-                throw new ArgumentException(nameof(length));
-            if (offset + length > data.Length)
-                throw new ArgumentException("Length of data is too small for this offset and length");
+            if (count < 0)
+                throw new ArgumentException(nameof(count));
+            if (offset + count > data.Length)
+                throw new ArgumentException("Length of data is too small for this offset and count");
             Data = data;
             Offset = offset;
-            Length = length;
+            Count = count;
         }
     }
 
