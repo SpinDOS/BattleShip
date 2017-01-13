@@ -27,7 +27,18 @@ namespace BattleShip.UserLogic
     /// </summary>
     public partial class GameWindow : Window, IGameUserPvpInterface, ICommunicationUserInterface
     {
-        #region Fields
+        #region Fields and private class
+        
+        // enum with type of message
+        protected enum MessageType : byte
+        {
+            CallInitialization,
+            CallInitializationAnswer,
+            TextMessage,
+            AudioMessage,
+            EndCallRequest,
+            Quit
+        }
 
         // for click handling to get my shot
         protected volatile TaskCompletionSource<Square> MyShotSource = new TaskCompletionSource<Square>();
@@ -37,6 +48,9 @@ namespace BattleShip.UserLogic
 
         // prevent actions after enemy disconnected
         protected volatile bool Disconnected = false;
+
+        // encoding for text messages of chat
+        protected readonly Encoding TextMessagesEncoding = Encoding.Unicode;
 
         #endregion
 
@@ -276,10 +290,32 @@ namespace BattleShip.UserLogic
         /// </summary>
         public event EventHandler<DataEventArgs> UserSentMessage;
 
+        /// <summary>
+        /// Show message to user
+        /// </summary>
+        /// <param name="data">array with message</param>
         public void ShowMessage(DataEventArgs data)
         {
-            var text = "Opponent: " + Encoding.Unicode.GetString(data.Data, data.Offset, data.Count) + Environment.NewLine;
-            ChatWindow.Dispatcher.Invoke(() => ChatWindow.Text += text);
+            // get message type
+            var messageType = (MessageType) data.Data[data.Offset];
+            switch (messageType)
+            {
+                case MessageType.AudioMessage:
+                    break;
+                case MessageType.TextMessage: // if text message - show it ChatWindow
+                    // decode message without first byte (used to check message type)
+                    var text = "Opponent: " + TextMessagesEncoding.GetString(data.Data, data.Offset + 1, data.Count - 1) 
+                        + Environment.NewLine;
+                    // add to chat window
+                    ChatWindow.Dispatcher.Invoke(() => ChatWindow.Text += text);
+                    break;
+                case MessageType.Quit: // if enemy quit - block chat
+                    ChatColumn.Dispatcher.Invoke(BlockChat);
+                    break;
+                default:
+                    throw new AggregateException("Unknown message type of GameWindow");
+            }
+            
         }
 
         // handle send click
@@ -292,8 +328,33 @@ namespace BattleShip.UserLogic
             TxtBxMessage.Text = string.Empty;
             // copy text to chat window
             ChatWindow.Text += "You: " + text + Environment.NewLine;
-            // raise event of message sending
-            UserSentMessage?.Invoke(this, new DataEventArgs(Encoding.Unicode.GetBytes(text)));
+            // configure message and send it
+            byte[] arr = new byte[TextMessagesEncoding.GetByteCount(text) + 1];
+            arr[0] = (byte) MessageType.TextMessage;
+            TextMessagesEncoding.GetBytes(text, 0, text.Length, arr, 1);
+            SendMessage(new DataEventArgs(arr));
+        }
+
+        // send message and handle exception if enemy disconnected
+        private void SendMessage(DataEventArgs data)
+        {
+            if (Disconnected)
+                return;
+            try // try send
+            {
+                UserSentMessage?.Invoke(this, data);
+            }
+            catch (ObjectDisposedException) // if enemy disconnected
+            {
+                // if the form is marked as disconnected
+                if (Disconnected)
+                    return;
+                // if not - wait a bit and check again
+                Thread.Sleep(3000);
+                // if still not marked - show error
+                if (!Disconnected)
+                    ShowError("Can not send message. Enemy disconnected");
+            }
         }
 
         #endregion
@@ -312,8 +373,11 @@ namespace BattleShip.UserLogic
                 e.Cancel = true;
                 return;
             }
-            // show info and call event
+            // show info
             BlockFormEndGame("You decided to quit");
+            // notify opponent that you close form
+            SendMessage(new DataEventArgs(new byte[] {(byte) MessageType.Quit}));
+            // raise event
             InterfaceForceClose?.Invoke(this, EventArgs.Empty);
         }
 
@@ -363,12 +427,23 @@ namespace BattleShip.UserLogic
             // hide progress bar
             ProgressBar.Visibility = Visibility.Collapsed;
             // cancel my shot source due to end game
-            var disposedException = new ObjectDisposedException("The game on the form was marked as ended");
-            if (!MyShotSource.TrySetException(disposedException))
+            var gameStateException = new GameStateException("The game on the form was marked as ended");
+            if (!MyShotSource.TrySetException(gameStateException))
             {
                 MyShotSource = new TaskCompletionSource<Square>();
-                MyShotSource.SetException(disposedException);
+                MyShotSource.SetException(gameStateException);
             }
+        }
+
+        // block chat
+        private void BlockChat()
+        {
+            // if already blocked
+            if (!BtnSendMessage.IsEnabled)
+                return;
+            // block chat textbox, send button, call button
+            BtnSendMessage.IsEnabled = TxtBxMessage.IsEnabled = BtnCall.IsEnabled = false;
+            ChatWindow.Text += "Opponent quit";
         }
 
         // blocks form due to game end
@@ -381,8 +456,20 @@ namespace BattleShip.UserLogic
             // end game
             BlockFormEndGame(message);
             // block chat
-            BtnSendMessage.IsEnabled = TxtBxMessage.IsEnabled = false;
+            BlockChat();
         }
+
+        #endregion
+
+        #region Audio messaging
+
+        private void BtnCall_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void EndCall()
+        { }
 
         #endregion
 
