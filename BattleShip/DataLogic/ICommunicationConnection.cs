@@ -16,18 +16,12 @@ namespace BattleShip.DataLogic
         /// <summary>
         /// Send message to peer
         /// </summary>
-        /// <param name="mesage">message to send</param>
-        void SendMessage(byte[] mesage);
-
-        /// <summary>
-        /// Send message to peer
-        /// </summary>
-        /// <param name="netDataWriter">NetDataWriter with message to send</param>
-        void SendMessage(NetDataWriter netDataWriter);
+        /// <param name="data">array with message to send</param>
+        void SendMessage(DataEventArgs data);
 
         /// <summary>
         /// Raised on message from peer received
         /// </summary>
-        event EventHandler<NetDataReader> MessageReceived;
+        event EventHandler<DataEventArgs> MessageReceived;
     }
 }

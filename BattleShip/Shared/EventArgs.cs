@@ -20,6 +20,18 @@ namespace BattleShip.Shared
         /// Event args with data byte array
         /// </summary>
         /// <param name="data">Array with data</param>
+        public DataEventArgs(byte[] data)
+        {
+            if (data == null)
+                throw new ArgumentNullException(nameof(data));
+            Data = data;
+            Offset = 0;
+            Length = data.Length;
+        }
+        /// <summary>
+        /// Event args with data byte array
+        /// </summary>
+        /// <param name="data">Array with data</param>
         /// <param name="offset">Position where first byte of data is located</param>
         /// <param name="length">Length of the data</param>
         public DataEventArgs(byte[] data, int offset, int length)

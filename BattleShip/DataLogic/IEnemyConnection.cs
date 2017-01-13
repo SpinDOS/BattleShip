@@ -52,6 +52,6 @@ namespace BattleShip.DataLogic
         /// <summary>
         /// Enemy disconnected
         /// </summary>
-        event EventHandler<DisconnectReason> EnemyDisconnected;
+        event EventHandler<BattleShipConnectionDisconnectReason> EnemyDisconnected;
     }
 }

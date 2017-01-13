@@ -169,12 +169,12 @@ namespace BattleShip.BusinessLogic
             EnemyConnection.CorruptedPacketReceived += corruptedPacketReceived;
 
             // on enemy disconnected
-            EventHandler<DisconnectReason> enemyDisconnected = (sender, reason) =>
+            EventHandler<BattleShipConnectionDisconnectReason> enemyDisconnected = (sender, reason) =>
             {
                 // don't show new notification of game end and forget connection
                 UnSubscribeConnection();
                 // if disconnect is not made by you
-                if (reason != DisconnectReason.DisconnectCalled && reason != DisconnectReason.DisconnectPeerCalled)
+                if (reason != BattleShipConnectionDisconnectReason.MeDisconnected)
                 {
                     // you win
                     RealPlayer.ForceEndGame(true);
@@ -235,8 +235,8 @@ namespace BattleShip.BusinessLogic
             ICommunicationConnection communicationConnection)
         {
             // subscribe to send and receive messages
-            EventHandler<NetDataReader> messageReceive = (sender, reader) => communicationUserInterface.ShowMessage(reader);
-            EventHandler<NetDataWriter> sendMessage = (sender, writer) => communicationConnection.SendMessage(writer);
+            EventHandler<DataEventArgs> messageReceive = (sender, data) => communicationUserInterface.ShowMessage(data);
+            EventHandler<DataEventArgs> sendMessage = (sender, data) => communicationConnection.SendMessage(data);
             communicationConnection.MessageReceived += messageReceive;
             communicationUserInterface.UserSentMessage += sendMessage;
             // Add these handlers to UnSubscribeConnection 

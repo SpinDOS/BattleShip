@@ -37,17 +37,21 @@
             </Grid>
         </Grid>
         <Border Grid.Column="1" BorderBrush="Black" BorderThickness="1,0,0,0" >
-            <Grid  Background="White" Margin="10,0,10,10">
+            <Grid  Background="White" Margin="10,0,10,7">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="70"/>
-                    <ColumnDefinition  />
+                    <ColumnDefinition />
                 </Grid.ColumnDefinitions>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="35"/>
                     <RowDefinition/>
-                    <RowDefinition Height="35"/>
+                    <RowDefinition Height="50"/>
+                    <RowDefinition Height="22"/>
                 </Grid.RowDefinitions>
                 <Label Grid.Column="0" Grid.Row="0" Content="Chat" FontWeight="Bold" FontStyle="Italic" FontSize="18" Margin="10,0,0,0"/>
+                <TextBox Name="ChatWindow" Height="100" Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="1" IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" Margin="0,0,0,10" SelectionBrush="#FFABADB3" Background="{x:Null}"/>
+                <TextBox Name="TextBoxMessage" Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="2" Margin="0,0,0,10"></TextBox>
+                <Button Name="ButtonSendMessage" Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="3" IsDefault="True" Click="ButtonSendMessage_Click">Send</Button>
                 <!--<Border Grid.Column="1" Grid.Row="0" ClipToBounds="True" Width="45" Height="25" HorizontalAlignment="Left" Margin="3" CornerRadius="20">
                     <Button Content="Call"/>
                 </Border>-->

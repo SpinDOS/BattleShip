@@ -434,6 +434,9 @@ namespace BattleShip.UserLogic
                 }
                 catch { /*ignored*/ }
             }
+
+            // reset to random for next opening
+            RandomOpponent_Checked(null, null);
             // hide form to reuse
             this.Hide();
         }

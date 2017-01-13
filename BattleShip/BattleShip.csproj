@@ -78,6 +78,7 @@
     <Compile Include="BusinessLogic\Player\SimplePlayerSimulator.cs" />
     <Compile Include="BusinessLogic\Player\SimulatedPlayer.cs" />
     <Compile Include="BusinessLogic\Player\SmartPlayerSimulator.cs" />
+    <Compile Include="DataLogic\BattleShipConnectionDisconnectReason.cs" />
     <Compile Include="DataLogic\ConnectionEstablisher.cs" />
     <Compile Include="DataLogic\ConnectionEstablishingState.cs" />
     <Compile Include="DataLogic\ICommunicationConnection.cs" />

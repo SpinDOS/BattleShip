@@ -15,6 +15,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using BattleShip.BusinessLogic;
+using BattleShip.DataLogic;
 using BattleShip.Shared;
 using LiteNetLib;
 using LiteNetLib.Utils;
@@ -229,17 +230,17 @@ namespace BattleShip.UserLogic
         /// Show info that enemy disconnected
         /// </summary>
         /// <param name="reason">reason of the disconnect</param>
-        public void ShowEnemyDisconnected(DisconnectReason reason)
+        public void ShowEnemyDisconnected(BattleShipConnectionDisconnectReason reason)
         {
             if (Disconnected)
                 return;
             // if i disconnected (not enemy) - do nothing
-            if (reason == DisconnectReason.DisconnectCalled || reason == DisconnectReason.DisconnectPeerCalled)
+            if (reason == BattleShipConnectionDisconnectReason.MeDisconnected)
                 return;
             if (!IsPvp)
                 throw new AggregateException("Local enemy can not disconnect");
             // create message based on reason
-            var message = reason == DisconnectReason.RemoteConnectionClose
+            var message = reason == BattleShipConnectionDisconnectReason.EnemyDisconnected
                 ? "Enemy disconnected"
                 : "Connection problems";
 
@@ -264,12 +265,23 @@ namespace BattleShip.UserLogic
 
         #region ICommunicationUserInterface
 
-        public void ShowMessage(NetDataReader reader)
+        public void ShowMessage(DataEventArgs data)
         {
-            MessageBox.Show("Message: " + reader.GetString(10));
+            var text = "Opponent: " + Encoding.Unicode.GetString(data.Data, data.Offset, data.Length) + Environment.NewLine;
+            ChatWindow.Dispatcher.Invoke(() => ChatWindow.Text += text);
         }
 
-        public event EventHandler<NetDataWriter> UserSentMessage;
+        public event EventHandler<DataEventArgs> UserSentMessage;
+
+        private void ButtonSendMessage_Click(object sender, RoutedEventArgs e)
+        {
+            var text = TextBoxMessage.Text;
+            TextBoxMessage.Text = string.Empty;
+            if (string.IsNullOrWhiteSpace(text))
+                return;
+            ChatWindow.Text += "You: " + text + Environment.NewLine;
+            UserSentMessage?.Invoke(this, new DataEventArgs(Encoding.Unicode.GetBytes(text)));
+        }
 
         #endregion
 
@@ -360,5 +372,6 @@ namespace BattleShip.UserLogic
         }
 
         #endregion
+
     }
 }

@@ -41,7 +41,7 @@ namespace BattleShip.DataLogic
         /// <summary>
         /// Need to implement IEnemyConnection. This event is never raised
         /// </summary>
-        public event EventHandler<DisconnectReason> EnemyDisconnected;
+        public event EventHandler<BattleShipConnectionDisconnectReason> EnemyDisconnected;
 
         /// <summary>
         /// Need to implement IEnemyConnection. This event is never raised

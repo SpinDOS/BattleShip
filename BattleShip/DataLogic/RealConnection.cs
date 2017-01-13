@@ -95,7 +95,7 @@ namespace BattleShip.DataLogic
                     TcsResultOfMyShot.SetException(_disposedException);
                 }
                 // raise event
-                EnemyDisconnected?.Invoke(this, reason);
+                EnemyDisconnected?.Invoke(this, reason.ToBattleShipDisconnectReason());
             };
 
             // start collecting events until cancelled
@@ -131,7 +131,7 @@ namespace BattleShip.DataLogic
         /// <summary>
         /// Opponent sent custom message
         /// </summary>
-        public event EventHandler<NetDataReader> MessageReceived;
+        public event EventHandler<DataEventArgs> MessageReceived;
 
         /// <summary>
         /// Raised when received packet that can not be succesfully interpreted
@@ -146,7 +146,7 @@ namespace BattleShip.DataLogic
         /// <summary>
         /// Enemy Disconnected
         /// </summary>
-        public event EventHandler<DisconnectReason> EnemyDisconnected;
+        public event EventHandler<BattleShipConnectionDisconnectReason> EnemyDisconnected;
 
         /// <summary>
         /// Is connection is still established
@@ -313,32 +313,19 @@ namespace BattleShip.DataLogic
         /// <summary>
         /// Send message to enemy
         /// </summary>
-        /// <param name="mesage"></param>
-        public void SendMessage(byte[] mesage)
+        /// <param name="data">array with message to send</param>
+        public void SendMessage(DataEventArgs data)
         {
-            if (mesage == null)
-                throw new ArgumentNullException(nameof(mesage));
+            if (data == null)
+                throw new ArgumentNullException(nameof(data));
             if (!IsConnected)
                 throw _disposedException;
-            // add message flag and message data to netdatawriter
-            NetDataWriter wr = new NetDataWriter();
-            wr.Put((byte) PacketType.Message);
-            wr.Put(mesage, 0, mesage.Length);
-            // send netdatawriter
-            Client.Peer.Send(wr, SendOptions.ReliableOrdered);
-        }
-
-        /// <summary>
-        /// Send message to peer
-        /// </summary>
-        /// <param name="netDataWriter">NetDataWriter with message to send</param>
-        public void SendMessage(NetDataWriter netDataWriter)
-        {
-            if (netDataWriter == null)
-                throw new ArgumentNullException(nameof(netDataWriter));
-            if (!IsConnected)
-                throw _disposedException;
-            Client.Peer.Send(netDataWriter, SendOptions.ReliableOrdered);
+            // add message flag and message data to new arra
+            byte[] arr = new byte[data.Length + 1];
+            arr[0] = (byte) PacketType.Message;
+            Array.ConstrainedCopy(data.Data, data.Offset, arr, 1, data.Length);
+            // send this array
+            Client.Peer.Send(arr, SendOptions.ReliableOrdered);
         }
 
         #endregion
@@ -400,7 +387,7 @@ namespace BattleShip.DataLogic
                         break;
                     // if enemy sent custom message
                     case PacketType.Message:
-                        MessageReceived?.Invoke(this, reader);
+                        MessageReceived?.Invoke(this, new DataEventArgs(reader.Data, 1, reader.Data.Length - 1));
                         break;
                     default:
                         throw new AggregateException("Corrupted message recieved");

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using BattleShip.Shared;
 using LiteNetLib.Utils;
 
 namespace BattleShip.UserLogic
@@ -12,12 +13,12 @@ namespace BattleShip.UserLogic
         /// <summary>
         /// Show message to user
         /// </summary>
-        /// <param name="reader">NetDataReader with message to show</param>
-        void ShowMessage(NetDataReader reader);
+        /// <param name="data">array with data to send</param>
+        void ShowMessage(DataEventArgs data);
 
         /// <summary>
         /// Raise when user sends message
         /// </summary>
-        event EventHandler<NetDataWriter> UserSentMessage;
+        event EventHandler<DataEventArgs> UserSentMessage;
     }
 }

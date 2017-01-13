@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using BattleShip.DataLogic;
 using LiteNetLib;
 
 namespace BattleShip.UserLogic
@@ -18,7 +19,7 @@ namespace BattleShip.UserLogic
         /// Notificate user that enemy disconnected
         /// </summary>
         /// <param name="reason">reason of disconnect</param>
-        void ShowEnemyDisconnected(DisconnectReason reason);
+        void ShowEnemyDisconnected(BattleShipConnectionDisconnectReason reason);
 
         /// <summary>
         /// Ask user if he wants to keep connection with this enemy
