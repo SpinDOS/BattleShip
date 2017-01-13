@@ -263,7 +263,7 @@ namespace BattleShip.BusinessLogic
                         GameUI.ShowError("Some error occured during the game. The game is ended");
                     }
                 }, TaskContinuationOptions.OnlyOnFaulted);
-            GameUI.Start(RealPlayer.MyField.GetFullSquares(), pvp);
+            GameUI.Start(RealPlayer.MyField.GetFullSquares());
         }
 
         // check exception if it contains any not ObjectDisposedException and not GiveUpException exceptions

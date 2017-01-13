@@ -109,7 +109,7 @@ namespace BattleShip.UserLogic
                 {
                     _result = null;
                     // notify and ask if user want to establish new connection
-                    if (MessageBox.Show("Previous opponent has disconnected. Do you want to find new opponent?", 
+                    if (MessageBox.Show(this, "Previous opponent has disconnected. Do you want to find new opponent?", 
                         "Do you want to find new opponent?", MessageBoxButton.YesNo, 
                         MessageBoxImage.Question) == MessageBoxResult.No)
                         return null;
@@ -267,7 +267,7 @@ namespace BattleShip.UserLogic
                         if (string.IsNullOrWhiteSpace(TxtLobbyId.Text) || string.IsNullOrWhiteSpace(TxtPassword.Text))
                         {
                             // show error and return
-                            MessageBox.Show("Enter lobby id and password",
+                            MessageBox.Show(this, "Enter lobby id and password",
                                 "Invalid lobby info", MessageBoxButton.OK, MessageBoxImage.Error);
                             return;
                         }
@@ -308,7 +308,7 @@ namespace BattleShip.UserLogic
                     // unblock form and show error
                     _task = null;
                     ChangeStateOnForm(true);
-                    MessageBox.Show("Could not find info about working server. Check ServerInfo.json",
+                    MessageBox.Show(this, "Could not find info about working server. Check ServerInfo.json",
                         "Error getting server for finding opponent", MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
                 }
@@ -342,22 +342,22 @@ namespace BattleShip.UserLogic
                     // another search is in progress
                     if (exception is AggregateException)
                     {
-                        MessageBox.Show("Another search is in process", "Search state error", MessageBoxButton.OK,
+                        MessageBox.Show(this, "Another search is in process", "Search state error", MessageBoxButton.OK,
                             MessageBoxImage.Error);
                     } // server return bad formatted response
                     else if (exception is FormatException)
                     {
-                        MessageBox.Show("Server responded with invalid message", "Server error", MessageBoxButton.OK,
+                        MessageBox.Show(this, "Server responded with invalid message", "Server error", MessageBoxButton.OK,
                             MessageBoxImage.Error);
                     } // timeout of request to the server has expired
                     else if (exception is TimeoutException)
                     {
-                        MessageBox.Show("Server does not respond in defined timeout. You can try restart the application", 
+                        MessageBox.Show(this, "Server does not respond in defined timeout. You can try restart the application", 
                             "Server error", MessageBoxButton.OK, MessageBoxImage.Error);
                     } // server is unavailable
                     else if (exception is ArgumentException)
                     {
-                        MessageBox.Show("Server is unavailable. Check ServerInfo.json", "Server is unavailable",
+                        MessageBox.Show(this, "Server is unavailable. Check ServerInfo.json", "Server is unavailable",
                             MessageBoxButton.OK, MessageBoxImage.Error);
                     } // search cancelled
                     else if (exception is OperationCanceledException)
@@ -366,20 +366,20 @@ namespace BattleShip.UserLogic
                     } // relative url of connectionEstablisher causes 404 Not Found
                     else if (exception is DirectoryNotFoundException)
                     {
-                        MessageBox.Show("Pre-defined url is not found on the server. Check version of the BattleShip application",
+                        MessageBox.Show(this, "Pre-defined url is not found on the server. Check version of the BattleShip application",
                             "Version dismatch", MessageBoxButton.OK, MessageBoxImage.Error);
                     } // invalid privatekey, publickey or password
                     else if (exception is AuthenticationException)
                     {
                         // if try connect to lobby - bad lobbyId or password
                         if (_searchMode == SearchMode.ConnectLobby)
-                            MessageBox.Show("Lobby id with password are not found", "Invalid lobby info",
+                            MessageBox.Show(this, "Lobby id with password are not found", "Invalid lobby info",
                                 MessageBoxButton.OK, MessageBoxImage.Error);
                         else if (_searchMode == SearchMode.CreateLobby)// privatekey not found - internal error
-                            MessageBox.Show("Your lobby has been removed by the server", "Lobby not found",
+                            MessageBox.Show(this, "Your lobby has been removed by the server", "Lobby not found",
                                 MessageBoxButton.OK, MessageBoxImage.Exclamation);
                         else if (_searchMode == SearchMode.RandomOpponent) // your opponent was found, but left the search
-                            MessageBox.Show("Server has found opponent but he has left the search. " +
+                            MessageBox.Show(this, "Server has found opponent but he has left the search. " +
                                 "Try start new search for random opponent or crate lobby " +
                                 "and tell someone its LobbyId and password", "Opponent left",
                                 MessageBoxButton.OK, MessageBoxImage.Exclamation);

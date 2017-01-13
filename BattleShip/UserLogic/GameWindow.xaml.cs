@@ -65,7 +65,7 @@ namespace BattleShip.UserLogic
         /// Start game
         /// </summary>
         /// <param name="shipSquares">squares of my ships</param>
-        public void Start(IEnumerable<Square> shipSquares, bool pvp)
+        public void Start(IEnumerable<Square> shipSquares)
         {
             // check parameter
             if (shipSquares == null)
@@ -74,7 +74,6 @@ namespace BattleShip.UserLogic
             if (GameEnded)
                 throw new AggregateException("The game of this window has ended");
 
-            IsPvp = pvp;
             // show my ships
             foreach (var square in shipSquares)
                 MyField[square].SquareStatus = SquareStatus.Full;
@@ -101,12 +100,6 @@ namespace BattleShip.UserLogic
                 ChatColumn.Width = new GridLength(0);
             }
         }
-
-
-        /// <summary>
-        /// True, if game vs real human
-        /// </summary>
-        public bool IsPvp { get; private set; }
 
         #endregion
 
@@ -169,8 +162,12 @@ namespace BattleShip.UserLogic
             if (GameEnded)
                 return;
             string message = "You " + (win ? "win!)" : "lost!(");
-            BlockFormEndGame(message);
-            MessageBox.Show(message, "End game", MessageBoxButton.OK, MessageBoxImage.Information);
+            // block form and show messageBox
+            this.Dispatcher.Invoke(() =>
+            {
+                BlockFormEndGame(message);
+                MessageBox.Show(this, message, "End game", MessageBoxButton.OK, MessageBoxImage.Information);
+            });
         }
 
         /// <summary>
@@ -198,8 +195,12 @@ namespace BattleShip.UserLogic
                 return;
             if (string.IsNullOrWhiteSpace(message))
                 throw new ArgumentNullException(nameof(message));
-            BlockFormConnectionProblems(message);
-            MessageBox.Show(message);
+            // block form and show messageBox
+            this.Dispatcher.Invoke(() =>
+            {
+                BlockFormConnectionProblems(message);
+                MessageBox.Show(this, message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            });
         }
 
         #endregion
@@ -221,9 +222,12 @@ namespace BattleShip.UserLogic
                 MyShotSource = new TaskCompletionSource<Square>();
                 MyShotSource.SetException(giveUpException);
             }
-            // block form and show info
-            BlockFormEndGame(message);
-            MessageBox.Show(message, "End game", MessageBoxButton.OK, MessageBoxImage.Information);
+            // block form and show messageBox
+            this.Dispatcher.Invoke(() =>
+            {
+                BlockFormEndGame(message);
+                MessageBox.Show(this, message, "End game", MessageBoxButton.OK, MessageBoxImage.Information);
+            });
         }
 
         /// <summary>
@@ -237,15 +241,17 @@ namespace BattleShip.UserLogic
             // if i disconnected (not enemy) - do nothing
             if (reason == BattleShipConnectionDisconnectReason.MeDisconnected)
                 return;
-            if (!IsPvp)
-                throw new AggregateException("Local enemy can not disconnect");
             // create message based on reason
             var message = reason == BattleShipConnectionDisconnectReason.EnemyDisconnected
                 ? "Enemy disconnected"
                 : "Connection problems. Enemy Disconnected";
-
-            BlockFormConnectionProblems(message);
-            MessageBox.Show(message, "Lost connection to the enemy", MessageBoxButton.OK, MessageBoxImage.Information);
+            // block form and show messageBox
+            this.Dispatcher.Invoke(() =>
+            {
+                BlockFormConnectionProblems(message);
+                MessageBox.Show(this, message, "Lost connection to the enemy", MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+            });
         }
 
         /// <summary>
@@ -257,13 +263,18 @@ namespace BattleShip.UserLogic
             // if already disconnected - return false
             if (Disconnected)
                 return false;
-            return MessageBox.Show("Keep connection to this enemy for next game?", 
-                "Keep connection?", MessageBoxButton.YesNo, MessageBoxImage.Asterisk) == MessageBoxResult.Yes;
+            return this.Dispatcher.Invoke(() => MessageBox.Show(this, "Keep connection to this enemy for next game?", 
+                "Keep connection?", MessageBoxButton.YesNo, MessageBoxImage.Asterisk) == MessageBoxResult.Yes);
         }
 
         #endregion
 
         #region ICommunicationUserInterface
+
+        /// <summary>
+        /// Raised when user sends message
+        /// </summary>
+        public event EventHandler<DataEventArgs> UserSentMessage;
 
         public void ShowMessage(DataEventArgs data)
         {
@@ -271,15 +282,17 @@ namespace BattleShip.UserLogic
             ChatWindow.Dispatcher.Invoke(() => ChatWindow.Text += text);
         }
 
-        public event EventHandler<DataEventArgs> UserSentMessage;
-
-        private void ButtonSendMessage_Click(object sender, RoutedEventArgs e)
+        // handle send click
+        private void BtnSendMessage_Click(object sender, RoutedEventArgs e)
         {
-            var text = TextBoxMessage.Text;
-            TextBoxMessage.Text = string.Empty;
+            // get text from textbox and clear the textbox
+            var text = TxtBxMessage.Text;
             if (string.IsNullOrWhiteSpace(text))
                 return;
+            TxtBxMessage.Text = string.Empty;
+            // copy text to chat window
             ChatWindow.Text += "You: " + text + Environment.NewLine;
+            // raise event of message sending
             UserSentMessage?.Invoke(this, new DataEventArgs(Encoding.Unicode.GetBytes(text)));
         }
 
@@ -291,7 +304,7 @@ namespace BattleShip.UserLogic
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
             // ask the confirmation
-            if (!GameEnded && MessageBox.Show("Are you sure want to quit?",
+            if (!GameEnded && MessageBox.Show(this, "Are you sure want to quit?",
                     "Are your sure want to quit?",
                     MessageBoxButton.OKCancel, MessageBoxImage.Question) == MessageBoxResult.Cancel)
             {
@@ -309,10 +322,10 @@ namespace BattleShip.UserLogic
         private void EnemyField_Square_Clicked(object sender, SquareEventArgs e) =>  MyShotSource.TrySetResult(e.Square);
 
         // trigger gave up event
-        private void Btn_GiveUp_Click(object sender, RoutedEventArgs e)
+        private void BtnGiveUp_Click(object sender, RoutedEventArgs e)
         {
             // ask for confirmation
-            if (!GameEnded && MessageBox.Show("Are you sure want to give up?",
+            if (!GameEnded && MessageBox.Show(this, "Are you sure want to give up?",
                     "Are your sure want to give up?",
                     MessageBoxButton.OKCancel, MessageBoxImage.Question) == MessageBoxResult.Cancel)
             {
@@ -342,13 +355,13 @@ namespace BattleShip.UserLogic
             // mark end game
             GameEnded = true;
             // block give up
-            Btn_GiveUp.Dispatcher.Invoke(() => Btn_GiveUp.IsEnabled = false);
+            BtnGiveUp.IsEnabled = false;
             // block shot
-            EnemyField.Dispatcher.Invoke(() => EnemyField.IsEnabled = false);
+            EnemyField.IsEnabled = false;
             // show message
-            Infomation.Dispatcher.Invoke(() => Infomation.Text = message);
+            Infomation.Text = message;
             // hide progress bar
-            ProgressBar.Dispatcher.Invoke(() => ProgressBar.Visibility = Visibility.Collapsed);
+            ProgressBar.Visibility = Visibility.Collapsed;
             // cancel my shot source due to end game
             var disposedException = new ObjectDisposedException("The game on the form was marked as ended");
             if (!MyShotSource.TrySetException(disposedException))
@@ -368,7 +381,7 @@ namespace BattleShip.UserLogic
             // end game
             BlockFormEndGame(message);
             // block chat
-            ChatColumn.Dispatcher.Invoke(() => ChatColumn.IsEnabled = false);
+            BtnSendMessage.IsEnabled = TxtBxMessage.IsEnabled = false;
         }
 
         #endregion

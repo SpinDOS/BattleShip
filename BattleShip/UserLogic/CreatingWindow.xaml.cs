@@ -56,7 +56,7 @@ namespace BattleShip.UserLogic
                                  '\u2022' + " three 2-square ships" + Environment.NewLine +
                                  '\u2022' + " four 1-square ships" + Environment.NewLine +
                                  "Thay must not stay close to each other";
-                MessageBox.Show(message, "Can not create field", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show(this, message, "Can not create field", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
             StartGameEvent?.Invoke(this, new StartGameEventArgs(

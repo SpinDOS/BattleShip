@@ -30,7 +30,6 @@ namespace BattleShip.DataLogic
                 case DisconnectReason.SocketSendError:
                 case DisconnectReason.Timeout:
                     return BattleShipConnectionDisconnectReason.NetworkError;
-                    break;
                 default:
                     throw new AggregateException("Unknown disconnect reason of LitenetLib");
             }
