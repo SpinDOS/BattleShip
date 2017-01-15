@@ -323,7 +323,7 @@ namespace BattleShip.DataLogic
             // add message flag and message data to new arra
             byte[] arr = new byte[data.Count + 1];
             arr[0] = (byte) PacketType.Message;
-            Array.ConstrainedCopy(data.Data, data.Offset, arr, 1, data.Count);
+            Array.Copy(data.Data, data.Offset, arr, 1, data.Count);
             // send this array
             Client.Peer.Send(arr, SendOptions.ReliableOrdered);
         }

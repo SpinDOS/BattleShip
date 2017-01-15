@@ -51,7 +51,7 @@
                 </Grid.RowDefinitions>
                 <Label Grid.Column="0" Grid.Row="0" Content="Chat" FontWeight="Bold" FontStyle="Italic" FontSize="18" Margin="10,0,0,0"/>
                 <Button Name="BtnCall" Grid.Column="1" Grid.Row="0" Margin="0,6,0,6" Content="Call" Click="BtnCall_Click"/>
-                <Label Name="LblCall" Grid.Column="2" Grid.Row="0" Margin="7,4,0,6"/>
+                <Label Name="LblCall" Grid.Column="2" Grid.Row="0" Margin="7,4,0,0"/>
                 <Border Grid.Column="0" Grid.ColumnSpan="3" Grid.Row="1" Margin="0,0,0,10" BorderBrush="#FFABADB3" BorderThickness="1">
                     <TextBox Name="ChatWindow"  IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" BorderThickness="0"/>
                 </Border>

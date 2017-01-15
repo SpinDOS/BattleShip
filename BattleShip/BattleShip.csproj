@@ -96,6 +96,9 @@
     <Compile Include="Shared\Exceptions.cs" />
     <Compile Include="Shared\NetClientAndListener.cs" />
     <Compile Include="Shared\StringToIEPExtension.cs" />
+    <Compile Include="UserLogic\CallNotificationWindow.xaml.cs">
+      <DependentUpon>CallNotificationWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="UserLogic\DifficultyChoose.xaml.cs">
       <DependentUpon>DifficultyChoose.xaml</DependentUpon>
     </Compile>
@@ -108,6 +111,10 @@
     <Compile Include="Shared\Ship.cs" />
     <Compile Include="Shared\Square.cs" />
     <Compile Include="Shared\ShipExtensions.cs" />
+    <Page Include="UserLogic\CallNotificationWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="UserLogic\ConnectingWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

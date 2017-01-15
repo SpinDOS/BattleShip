@@ -19,6 +19,7 @@ using BattleShip.DataLogic;
 using BattleShip.Shared;
 using LiteNetLib;
 using LiteNetLib.Utils;
+using NAudio.Wave;
 
 namespace BattleShip.UserLogic
 {
@@ -33,11 +34,18 @@ namespace BattleShip.UserLogic
         protected enum MessageType : byte
         {
             CallInitialization,
-            CallInitializationAnswer,
             TextMessage,
             AudioMessage,
             EndCallRequest,
             Quit
+        }
+        
+        // enum with state of call
+        private enum CallState : byte
+        {
+            Ready,
+            Calling,
+            InProgress
         }
 
         // for click handling to get my shot
@@ -51,6 +59,31 @@ namespace BattleShip.UserLogic
 
         // encoding for text messages of chat
         protected readonly Encoding TextMessagesEncoding = Encoding.Unicode;
+
+        // CALL SECTION
+        //************************************************************************************************************************************
+
+        // backing field for CallNotificationWindow
+        private CallNotificationWindow _callNotificationWindow;
+
+        // get or create new CallNotificationWindow
+        protected CallNotificationWindow CallNotificationWindow => 
+            _callNotificationWindow ?? (_callNotificationWindow = this.Dispatcher.Invoke(() => new CallNotificationWindow() {Owner = this}));
+
+        // bool to detect if the form of asking user to accept or decline call was closed by endCallRequest
+        private volatile bool _callCancelled = false;
+
+        // bool to indicate current call state
+        private volatile CallState _currentCallState = CallState.Ready;
+
+        // bufer for adding frames to play
+        private readonly BufferedWaveProvider _waveBufer;
+        // waveout to play and pause received frames
+        private readonly WaveOut _waveOut;
+        // wavein to record microphone and send recorded frames
+        private readonly WaveInEvent _waveIn;
+        // timer to increase call duration every second
+        private Timer _callDuraionTimer;
 
         #endregion
 
@@ -71,6 +104,29 @@ namespace BattleShip.UserLogic
         public GameWindow()
         {
             InitializeComponent();
+
+            // initialize sound recorder and player
+            // same format for record and play
+            WaveFormat format = new WaveFormat();
+
+            // initialize player
+            _waveBufer = new BufferedWaveProvider(format);
+            _waveOut = new WaveOut();
+            _waveOut.Init(_waveBufer);
+
+            // initialize recorder
+            _waveIn = new WaveInEvent {WaveFormat = format};
+
+            // send recorded packets
+            _waveIn.DataAvailable += (sender, args) =>
+            {
+                // create formatted message
+                byte[] arr = new byte[args.BytesRecorded + 1];
+                arr[0] = (byte) MessageType.AudioMessage;
+                Array.Copy(args.Buffer, 0, arr, 1, args.BytesRecorded);
+                // send the message
+                this.UserSentMessage?.Invoke(this, new DataEventArgs(arr));
+            };
         }
 
         #region Public entry points
@@ -257,13 +313,13 @@ namespace BattleShip.UserLogic
                 return;
             // create message based on reason
             var message = reason == BattleShipConnectionDisconnectReason.EnemyDisconnected
-                ? "Enemy disconnected"
-                : "Connection problems. Enemy Disconnected";
+                ? "Opponent disconnected"
+                : "Connection problems. Opponent Disconnected";
             // block form and show messageBox
             this.Dispatcher.Invoke(() =>
             {
                 BlockFormConnectionProblems(message);
-                MessageBox.Show(this, message, "Lost connection to the enemy", MessageBoxButton.OK,
+                MessageBox.Show(this, message, "Lost connection to the opponent", MessageBoxButton.OK,
                     MessageBoxImage.Information);
             });
         }
@@ -277,8 +333,17 @@ namespace BattleShip.UserLogic
             // if already disconnected - return false
             if (Disconnected)
                 return false;
-            return this.Dispatcher.Invoke(() => MessageBox.Show(this, "Keep connection to this enemy for next game?", 
+            var result = this.Dispatcher.Invoke(() => MessageBox.Show(this, "Keep connection to this opponent for next game?", 
                 "Keep connection?", MessageBoxButton.YesNo, MessageBoxImage.Asterisk) == MessageBoxResult.Yes);
+
+            // if opponent has disconnected while user was answering the previous question
+            if (Disconnected)
+            {
+                this.Dispatcher.Invoke(() => MessageBox.Show(this, "Anyway opponent has disconnected",
+                    "Opponent has disconnected", MessageBoxButton.OK, MessageBoxImage.Exclamation));
+                return false;
+            }
+            return result;
         }
 
         #endregion
@@ -294,24 +359,95 @@ namespace BattleShip.UserLogic
         /// Show message to user
         /// </summary>
         /// <param name="data">array with message</param>
-        public void ShowMessage(DataEventArgs data)
+        public async void ShowMessage(DataEventArgs data)
         {
             // get message type
             var messageType = (MessageType) data.Data[data.Offset];
             switch (messageType)
             {
-                case MessageType.AudioMessage:
+                // if starting call or got accept for my call
+                case MessageType.CallInitialization:
+                    // decide what to do based on current call state
+                    switch (_currentCallState)
+                    {
+                        // if user is waiting for call
+                        case CallState.Ready:
+                            // ask user if he wants to accept call
+                            _callCancelled = false;
+                            bool accept = await this.Dispatcher.InvokeAsync(() => CallNotificationWindow.GetAnswer()); // show window
+                            // if the window was closed by cancel request - do nothing
+                            if (_callCancelled)
+                                break;
+                            // else - send answer and start call if need
+                            if (accept)
+                            {// try report accept. if success - start call
+                                if (SendMessage(new DataEventArgs(new byte[] {(byte) MessageType.CallInitialization})))
+                                    StartCall();
+                            }
+                            else // report decline
+                                SendMessage(new DataEventArgs(new byte[] {(byte) MessageType.EndCallRequest}));
+
+                            break;
+                        // if user is already calling and opponent accepted the call
+                        case CallState.Calling:
+                            StartCall();
+                            break;
+                        // if call is in progress - do nothing
+                        case CallState.InProgress:
+                            break;
+                    }
                     break;
+
+                // got audio message
+                case MessageType.AudioMessage:
+                    // if call is not in progress - do nothing
+                    if (_currentCallState == CallState.InProgress)
+                        PlaySound(new DataEventArgs(data.Data, data.Offset + 1, data.Count - 1));
+                    break;
+                // got text message
+
                 case MessageType.TextMessage: // if text message - show it ChatWindow
                     // decode message without first byte (used to check message type)
                     var text = "Opponent: " + TextMessagesEncoding.GetString(data.Data, data.Offset + 1, data.Count - 1) 
                         + Environment.NewLine;
                     // add to chat window
-                    ChatWindow.Dispatcher.Invoke(() => ChatWindow.Text += text);
+                    await ChatWindow.Dispatcher.InvokeAsync(() => ChatWindow.Text += text);
                     break;
+                // if opponent sent a request to end call or declined my call
+
+
+                case MessageType.EndCallRequest:
+                    switch (_currentCallState)
+                    {
+                        // if user is waiting for call
+                        case CallState.Ready:
+                            // if window to ask to accept or decline call is shown
+                            if (CallNotificationWindow.IsVisible)
+                            {
+                                // mark as canceled and close window
+                                _callCancelled = true;
+                                CallNotificationWindow.Dispatcher.Invoke(CallNotificationWindow.Hide);
+                            }
+                            // else - do nothing
+                            break;
+                        // if i am calling and opponent declined my call
+                        case CallState.Calling:
+                            ShowCallDeclined();
+                            break;
+                        // if call is in progress - end it
+                        case CallState.InProgress:
+                            EndCall();
+                            break;
+                    }
+                    break;
+
+
+                // if opponent quit the game window
                 case MessageType.Quit: // if enemy quit - block chat
-                    ChatColumn.Dispatcher.Invoke(BlockChat);
+                    ChatColumn.Dispatcher.Invoke(() => BlockChat(false));
                     break;
+
+
                 default:
                     throw new AggregateException("Unknown message type of GameWindow");
             }
@@ -336,24 +472,27 @@ namespace BattleShip.UserLogic
         }
 
         // send message and handle exception if enemy disconnected
-        private void SendMessage(DataEventArgs data)
+        // return if the message was sent
+        private bool SendMessage(DataEventArgs data)
         {
             if (Disconnected)
-                return;
+                return false;
             try // try send
             {
                 UserSentMessage?.Invoke(this, data);
+                return true;
             }
             catch (ObjectDisposedException) // if enemy disconnected
             {
                 // if the form is marked as disconnected
                 if (Disconnected)
-                    return;
+                    return false;
                 // if not - wait a bit and check again
                 Thread.Sleep(3000);
                 // if still not marked - show error
                 if (!Disconnected)
                     ShowError("Can not send message. Enemy disconnected");
+                return false;
             }
         }
 
@@ -373,8 +512,12 @@ namespace BattleShip.UserLogic
                 e.Cancel = true;
                 return;
             }
+            // report the player that you gave up if game is not ended
+            if (!GameEnded)
+                MyShotSource.TrySetException(new GiveUpException("Form closed so you gave up"));
             // show info
             BlockFormEndGame("You decided to quit");
+            BlockChat(true);
             // notify opponent that you close form
             SendMessage(new DataEventArgs(new byte[] {(byte) MessageType.Quit}));
             // raise event
@@ -436,14 +579,35 @@ namespace BattleShip.UserLogic
         }
 
         // block chat
-        private void BlockChat()
+        // me is true, if blocking case is my decision to quit
+        private void BlockChat(bool me)
         {
             // if already blocked
             if (!BtnSendMessage.IsEnabled)
                 return;
             // block chat textbox, send button, call button
             BtnSendMessage.IsEnabled = TxtBxMessage.IsEnabled = BtnCall.IsEnabled = false;
-            ChatWindow.Text += "Opponent quit";
+
+            // if enemy calls me - cancel asking user to accept or decline
+            if (CallNotificationWindow.IsVisible)
+            {
+                _callCancelled = true;
+                CallNotificationWindow.Dispatcher.Invoke(CallNotificationWindow.Close);
+            }
+
+            // cancel calling or end call
+            if (_currentCallState == CallState.Calling)
+            { // cancel calling
+                _currentCallState = CallState.Ready;
+                BtnCall.Content = "Call";
+            }
+            else if (_currentCallState == CallState.InProgress) // end call
+                EndCall();
+            
+            // provide info that enemy quit
+            LblCall.Content = string.Empty;
+            if (!me)
+                ChatWindow.Text += "Opponent quit";
         }
 
         // blocks form due to game end
@@ -456,20 +620,122 @@ namespace BattleShip.UserLogic
             // end game
             BlockFormEndGame(message);
             // block chat
-            BlockChat();
+            BlockChat(false);
         }
 
         #endregion
 
         #region Audio messaging
 
+        // handle btnCall click to start call, cancel calling or end call
         private void BtnCall_Click(object sender, RoutedEventArgs e)
         {
+            // if call is not started - change state and send call initialization message
+            if (_currentCallState == CallState.Ready)
+            {
+                _currentCallState = CallState.Calling;
+                BtnCall.Content = "Cancel";
+                LblCall.Content = "Calling...";
+                SendMessage(new DataEventArgs(new byte[] {(byte) MessageType.CallInitialization}));
+            }
+            // if call is in calling state or in progress - send cancel or end call request and show on form
+            else
+            {
+                SendMessage(new DataEventArgs(new byte[] {(byte) MessageType.EndCallRequest}));
 
+                // if calling - cancel of form
+                if (_currentCallState == CallState.Calling)
+                {
+                    _currentCallState = CallState.Ready;
+                    BtnCall.Content = "Call";
+                    LblCall.Content = string.Empty;
+                }
+                // if call is in progress - end it on forn
+                else if (_currentCallState == CallState.InProgress)
+                    EndCall();
+            }
         }
 
+        // show on form end call and stop recording and playing
         private void EndCall()
-        { }
+        {
+            if (_currentCallState != CallState.InProgress)
+                throw new AggregateException("Can not stop call because it is not started");
+            // mark call state as ready for call
+            _currentCallState = CallState.Ready;
+
+            // end call
+            _waveIn.StopRecording();
+            if (_waveOut.PlaybackState == PlaybackState.Playing)
+                _waveOut.Pause();
+            _callDuraionTimer?.Dispose();
+
+            // show call end on form
+            BtnCall.Dispatcher.Invoke(() => BtnCall.Content = "Call");
+            // show call ended
+            LblCall.Dispatcher.Invoke(() => LblCall.Content = "Call ended");
+
+            // wait 5 secs and if the state has not changed, remove the message
+            Task.Delay(5000).ContinueWith(t => LblCall.Dispatcher.Invoke(() =>
+            {
+                if ("Call ended".Equals(LblCall.Content))
+                    LblCall.Content = string.Empty;
+            }));
+        }
+
+        // show on form that opponent declined call
+        private void ShowCallDeclined()
+        {
+            if (_currentCallState != CallState.Calling)
+                throw new AggregateException("Call can not be declined because user is not calling");
+            // mark call state as ready for call
+            _currentCallState = CallState.Ready;
+            BtnCall.Dispatcher.Invoke(() => BtnCall.Content = "Call");
+
+            // show declined
+            LblCall.Dispatcher.Invoke(() => LblCall.Content = "Declined");
+            // wait 5 secs and if the state has not changed, remove the message
+            Task.Delay(5000).ContinueWith(t => LblCall.Dispatcher.Invoke(() =>
+            {
+                if ("Declined".Equals(LblCall.Content))
+                    LblCall.Content = string.Empty;
+            }));
+        }
+        
+        // show call started on form and start recording and playing
+        private void StartCall()
+        {
+            if (_currentCallState == CallState.InProgress)
+                throw new AggregateException("Call is already in progress");
+            // mark call state as in progress
+            _currentCallState = CallState.InProgress;
+            BtnCall.Dispatcher.Invoke(() =>BtnCall.Content = "End call");
+
+            // create long-life variable for duration of the call
+            var duration = TimeSpan.Zero;
+            // start timer that shows on the form duration of the call
+            _callDuraionTimer = new Timer(o => 
+            {
+                // decide if to show hours
+                string hour = duration.Hours == 0 ? "" : duration.Hours.ToString("D2") + ":";
+                // show on form
+                LblCall.Dispatcher.Invoke(() => LblCall.Content = $"{hour}{duration.Minutes:D2}:{duration.Seconds:D2}");
+                // increase duration
+                duration += TimeSpan.FromSeconds(1);
+            }, null, TimeSpan.Zero, TimeSpan.FromSeconds(1));
+
+            // clear all packets that been received while not playing them
+            _waveBufer.ClearBuffer();
+            // play received messages
+            if (_waveOut.PlaybackState == PlaybackState.Stopped)
+                _waveOut.Play();
+            else if (_waveOut.PlaybackState == PlaybackState.Paused)
+                _waveOut.Resume();
+            _waveIn.StartRecording();
+        }
+
+        // play sound - add to waveBufer
+        private void PlaySound(DataEventArgs data) => _waveBufer.AddSamples(data.Data, data.Offset, data.Count);
 
         #endregion
 
