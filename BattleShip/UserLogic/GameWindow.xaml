@@ -36,6 +36,7 @@
                 <ProgressBar x:Name="ProgressBar" Grid.Column="1" Margin="0,7,2,7" IsIndeterminate="True"/>
             </Grid>
         </Grid>
+        <Button Grid.Column="0" x:Name="BtnGiveUp" HorizontalContentAlignment="Center" FontWeight="Bold" FontStyle="Italic" FontSize="14" Content="Give Up" HorizontalAlignment="Right" Margin="0,6,25,0" VerticalAlignment="Top" Width="75" Click="BtnGiveUp_Click"/>
         <Border Grid.Column="1" BorderBrush="Black" BorderThickness="1,0,0,0" >
             <Grid Background="White" Margin="10,0,10,7">
                 <Grid.ColumnDefinitions>
@@ -45,6 +46,7 @@
                 </Grid.ColumnDefinitions>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="35"/>
+                    <RowDefinition Height="27"/>
                     <RowDefinition/>
                     <RowDefinition Height="50"/>
                     <RowDefinition Height="22"/>
@@ -52,13 +54,14 @@
                 <Label Grid.Column="0" Grid.Row="0" Content="Chat" FontWeight="Bold" FontStyle="Italic" FontSize="18" Margin="10,0,0,0"/>
                 <Button Name="BtnCall" Grid.Column="1" Grid.Row="0" Margin="0,6,0,6" Content="Call" Click="BtnCall_Click"/>
                 <Label Name="LblCall" Grid.Column="2" Grid.Row="0" Margin="7,4,0,0"/>
-                <Border Grid.Column="0" Grid.ColumnSpan="3" Grid.Row="1" Margin="0,0,0,10" BorderBrush="#FFABADB3" BorderThickness="1">
+                <Label Grid.Column="0" Grid.Row="1" FontSize="14" Margin="0,-4,0,0">Volume</Label>
+                <Slider Name="SliderVolume" Grid.Column="1" Grid.ColumnSpan="2" Grid.Row="1" Margin="0,3,0,0" ValueChanged="SliderVolume_ValueChanged" Maximum="100" SmallChange="1" Value="50"/>
+                <Border Grid.Column="0" Grid.ColumnSpan="3" Grid.Row="2" Margin="0,0,0,10" BorderBrush="#FFABADB3" BorderThickness="1">
                     <TextBox Name="ChatWindow"  IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" BorderThickness="0"/>
                 </Border>
-                <TextBox Name="TxtBxMessage" Grid.Column="0" Grid.ColumnSpan="3" Grid.Row="2" Margin="0,0,0,10"></TextBox>
-                <Button Name="BtnSendMessage" Grid.Column="0" Grid.ColumnSpan="3" Grid.Row="3" IsDefault="True" Click="BtnSendMessage_Click">Send</Button>
+                <TextBox Name="TxtBxMessage" Grid.Column="0" Grid.ColumnSpan="3" Grid.Row="3" Margin="0,0,0,10"></TextBox>
+                <Button Name="BtnSendMessage" Grid.Column="0" Grid.ColumnSpan="3" Grid.Row="4" IsDefault="True" Click="BtnSendMessage_Click">Send</Button>
             </Grid>
         </Border>
-        <Button Grid.Column="0" x:Name="BtnGiveUp" HorizontalContentAlignment="Center" FontWeight="Bold" FontStyle="Italic" FontSize="14" Content="Give Up" HorizontalAlignment="Right" Margin="0,6,25,0" VerticalAlignment="Top" Width="75" Click="BtnGiveUp_Click"/>
     </Grid>
 </Window>

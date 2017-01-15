@@ -111,7 +111,7 @@ namespace BattleShip.UserLogic
 
             // initialize player
             _waveBufer = new BufferedWaveProvider(format);
-            _waveOut = new WaveOut();
+            _waveOut = new WaveOut() {Volume = 0.5f}; // default volume - 0.5
             _waveOut.Init(_waveBufer);
 
             // initialize recorder
@@ -127,6 +127,7 @@ namespace BattleShip.UserLogic
                 // send the message
                 this.UserSentMessage?.Invoke(this, new DataEventArgs(arr));
             };
+
         }
 
         #region Public entry points
@@ -585,8 +586,9 @@ namespace BattleShip.UserLogic
             // if already blocked
             if (!BtnSendMessage.IsEnabled)
                 return;
-            // block chat textbox, send button, call button
-            BtnSendMessage.IsEnabled = TxtBxMessage.IsEnabled = BtnCall.IsEnabled = false;
+            // block chat textbox, send button, call button, volume slider
+            BtnSendMessage.IsEnabled = TxtBxMessage.IsEnabled = 
+                BtnCall.IsEnabled = SliderVolume.IsEnabled = false;
 
             // if enemy calls me - cancel asking user to accept or decline
             if (CallNotificationWindow.IsVisible)
@@ -626,6 +628,14 @@ namespace BattleShip.UserLogic
         #endregion
 
         #region Audio messaging
+
+
+        // change waveOut volume on slider volume changed
+        private void SliderVolume_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (_waveOut != null)
+                _waveOut.Volume = (float) (e.NewValue / SliderVolume.Maximum);
+        }
 
         // handle btnCall click to start call, cancel calling or end call
         private void BtnCall_Click(object sender, RoutedEventArgs e)
@@ -738,6 +748,5 @@ namespace BattleShip.UserLogic
         private void PlaySound(DataEventArgs data) => _waveBufer.AddSamples(data.Data, data.Offset, data.Count);
 
         #endregion
-
     }
 }

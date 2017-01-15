@@ -543,7 +543,7 @@ namespace BattleShip.UserLogic
                 TxtLobbyId.IsEnabled = TxtPassword.IsEnabled = false;
                 // enable progress bar and show LabelInfo
                 IndeterminateProgressBar.Visibility = Visibility.Visible;
-                this.Height = 270;
+                this.Height = 268;
                 // change button text to cancel
                 MainButton.Content = "Cancel";
             }
@@ -571,10 +571,19 @@ namespace BattleShip.UserLogic
                         {RequesInterval = TimeSpan.FromSeconds(5)};
                     // set shorter requestInterval for faster cancellation
                 }
-                // if error occurs - return false
+                // if error occurs - try default server adress
                 catch (Exception exc) when (exc is FileLoadException || exc is InvalidOperationException)
                 {
-                    return false;
+                    try
+                    {
+                        _connectionEstablisher = new ConnectionEstablisher("http://battleshiprendezvousserver.apphb.com")
+                        { RequesInterval = TimeSpan.FromSeconds(5) };
+                    } 
+                    // if both adress sources fail, return false
+                    catch (InvalidOperationException)
+                    {
+                        return false;
+                    }
                 }
 
                 // if everything is ok, set up events
