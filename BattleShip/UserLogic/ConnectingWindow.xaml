@@ -13,7 +13,7 @@
         <Label x:Name="LabelPassword" Content="Password:" HorizontalAlignment="Left" Margin="108,74,0,0" VerticalAlignment="Top" FontSize="14" RenderTransformOrigin="0.894,0.431"/>
         <TextBox x:Name="TxtLobbyId" HorizontalAlignment="Left" Height="21" Margin="10,103,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="73" Grid.ColumnSpan="2" FontSize="14" MaxLength="8" TabIndex="4" TextChanged="TxtLobbyId_TextChanged"/>
         <TextBox x:Name="TxtPassword" HorizontalAlignment="Left" Height="21" Margin="108,103,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="73" FontSize="14" MaxLength="8" TabIndex="5" TextChanged="TxtLobbyId_TextChanged"/>
-        <Button x:Name="MainButton" Content="" HorizontalAlignment="Center" Margin="0,136,0,0" VerticalAlignment="Top" Width="112" FontSize="14" IsDefault="True" TabIndex="6" Click="MainButton_Click"/>
+        <Button x:Name="MainButton" Content="Find opponent" HorizontalAlignment="Center" Margin="0,136,0,0" VerticalAlignment="Top" Width="112" FontSize="14" IsDefault="True" TabIndex="6" Click="MainButton_Click"/>
         <RadioButton x:Name="RandomOpponent" Content="Find random opponent" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" IsChecked="True" FontSize="14" TabIndex="1" Checked="RandomOpponent_Checked"/>
         <RadioButton x:Name="CreateLobby" Content="Create lobby" HorizontalAlignment="Left" Margin="10,33,0,0" VerticalAlignment="Top" FontSize="14" TabIndex ="2" Checked="CreateLobby_Checked"/>
         <RadioButton x:Name="ConnectLobby" Content="Connect exising lobby" HorizontalAlignment="Left" Margin="10,56,0,0" VerticalAlignment="Top" FontSize="14" TabIndex="3" Checked="ConnectLobby_Checked"/>

@@ -88,6 +88,11 @@
     <Compile Include="DataLogic\Lumisoft_edited.cs" />
     <Compile Include="DataLogic\RealConnection.cs" />
     <Compile Include="DataLogic\SimulatedConnection.cs" />
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
     <Compile Include="Shared\BattlefieldExtensions.cs" />
     <Compile Include="BusinessLogic\Player\MyRandomPlayerSimulator.cs" />
     <Compile Include="BusinessLogic\Player\Player.cs" />
@@ -113,6 +118,7 @@
     <Compile Include="Shared\Ship.cs" />
     <Compile Include="Shared\Square.cs" />
     <Compile Include="Shared\ShipExtensions.cs" />
+    <Compile Include="UserLogic\SoundController.cs" />
     <Page Include="UserLogic\CallNotificationWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -159,11 +165,6 @@
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Properties\Resources.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>Resources.resx</DependentUpon>
-    </Compile>
     <Compile Include="Properties\Settings.Designer.cs">
       <AutoGen>True</AutoGen>
       <DependentUpon>Settings.settings</DependentUpon>
@@ -196,6 +197,18 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="FodyWeavers.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Sounds\BeepSound.mp3" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Sounds\BeepSound.wav" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Sounds\EndCallSound.wav" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Sounds\OpponentCallsSound.wav" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\Fody.1.29.4\build\dotnet\Fody.targets" Condition="Exists('..\packages\Fody.1.29.4\build\dotnet\Fody.targets')" />

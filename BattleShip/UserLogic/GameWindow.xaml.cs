@@ -76,14 +76,11 @@ namespace BattleShip.UserLogic
         // bool to indicate current call state
         private volatile CallState _currentCallState = CallState.Ready;
 
-        // bufer for adding frames to play
-        private readonly BufferedWaveProvider _waveBufer;
-        // waveout to play and pause received frames
-        private readonly WaveOut _waveOut;
-        // wavein to record microphone and send recorded frames
-        private readonly WaveInEvent _waveIn;
         // timer to increase call duration every second
         private Timer _callDuraionTimer;
+        
+        // object that controlls all sounds
+        private readonly SoundController _soundController = new SoundController();
 
         #endregion
 
@@ -105,20 +102,10 @@ namespace BattleShip.UserLogic
         {
             InitializeComponent();
 
-            // initialize sound recorder and player
-            // same format for record and play
-            WaveFormat format = new WaveFormat();
-
-            // initialize player
-            _waveBufer = new BufferedWaveProvider(format);
-            _waveOut = new WaveOut() {Volume = 0.5f}; // default volume - 0.5
-            _waveOut.Init(_waveBufer);
-
-            // initialize recorder
-            _waveIn = new WaveInEvent {WaveFormat = format};
-
+            // default volume is 0.5
+            _soundController.Volume = 0.5f;
             // send recorded packets
-            _waveIn.DataAvailable += (sender, args) =>
+            _soundController.SoundRecorded += (sender, args) =>
             {
                 // create formatted message
                 byte[] arr = new byte[args.BytesRecorded + 1];
@@ -127,7 +114,6 @@ namespace BattleShip.UserLogic
                 // send the message
                 this.UserSentMessage?.Invoke(this, new DataEventArgs(arr));
             };
-
         }
 
         #region Public entry points
@@ -285,7 +271,7 @@ namespace BattleShip.UserLogic
         {
             if (GameEnded)
                 return;
-            var message = "Enemy gave up";
+            var message = "Opponent gave up";
             // cancel my shot source due enemy gave up
             var giveUpException = new GiveUpException(message);
             if (!MyShotSource.TrySetException(giveUpException))
@@ -375,7 +361,12 @@ namespace BattleShip.UserLogic
                         case CallState.Ready:
                             // ask user if he wants to accept call
                             _callCancelled = false;
+                            _soundController.PlayRingtone();
                             bool accept = await this.Dispatcher.InvokeAsync(() => CallNotificationWindow.GetAnswer()); // show window
+                            // if call was not accepted
+                            if (_callCancelled || !accept)
+                                if (!_soundController.IsDisposed) // if the cancel was not caused by enemy quit
+                                    _soundController.PlayEndCallSound();
                             // if the window was closed by cancel request - do nothing
                             if (_callCancelled)
                                 break;
@@ -492,7 +483,7 @@ namespace BattleShip.UserLogic
                 Thread.Sleep(3000);
                 // if still not marked - show error
                 if (!Disconnected)
-                    ShowError("Can not send message. Enemy disconnected");
+                    ShowError("Can not send message. Opponent disconnected");
                 return false;
             }
         }
@@ -597,14 +588,14 @@ namespace BattleShip.UserLogic
                 CallNotificationWindow.Dispatcher.Invoke(CallNotificationWindow.Close);
             }
 
-            // cancel calling or end call
+            // cancel calling or end call on form
             if (_currentCallState == CallState.Calling)
-            { // cancel calling
-                _currentCallState = CallState.Ready;
-                BtnCall.Content = "Call";
-            }
+                CancelCalling();
             else if (_currentCallState == CallState.InProgress) // end call
                 EndCall();
+            
+            // disable sounds
+            _soundController.Dispose();
             
             // provide info that enemy quit
             LblCall.Content = string.Empty;
@@ -632,10 +623,7 @@ namespace BattleShip.UserLogic
 
         // change waveOut volume on slider volume changed
         private void SliderVolume_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-        {
-            if (_waveOut != null)
-                _waveOut.Volume = (float) (e.NewValue / SliderVolume.Maximum);
-        }
+            => _soundController.Volume = (float) (e.NewValue / SliderVolume.Maximum);
 
         // handle btnCall click to start call, cancel calling or end call
         private void BtnCall_Click(object sender, RoutedEventArgs e)
@@ -646,6 +634,10 @@ namespace BattleShip.UserLogic
                 _currentCallState = CallState.Calling;
                 BtnCall.Content = "Cancel";
                 LblCall.Content = "Calling...";
+
+                // play sound
+                _soundController.PlayBeeps();
+                // send message
                 SendMessage(new DataEventArgs(new byte[] {(byte) MessageType.CallInitialization}));
             }
             // if call is in calling state or in progress - send cancel or end call request and show on form
@@ -655,11 +647,7 @@ namespace BattleShip.UserLogic
 
                 // if calling - cancel of form
                 if (_currentCallState == CallState.Calling)
-                {
-                    _currentCallState = CallState.Ready;
-                    BtnCall.Content = "Call";
-                    LblCall.Content = string.Empty;
-                }
+                    CancelCalling();
                 // if call is in progress - end it on forn
                 else if (_currentCallState == CallState.InProgress)
                     EndCall();
@@ -675,9 +663,7 @@ namespace BattleShip.UserLogic
             _currentCallState = CallState.Ready;
 
             // end call
-            _waveIn.StopRecording();
-            if (_waveOut.PlaybackState == PlaybackState.Playing)
-                _waveOut.Pause();
+            _soundController.EndCall();
             _callDuraionTimer?.Dispose();
 
             // show call end on form
@@ -693,6 +679,21 @@ namespace BattleShip.UserLogic
             }));
         }
 
+        // cancel calling on form
+        private void CancelCalling()
+        {
+            if (_currentCallState != CallState.Calling)
+                throw new AggregateException("Call can not be cancelled because user is not calling");
+            _currentCallState = CallState.Ready;
+
+            // update form
+            BtnCall.Content = "Call";
+            LblCall.Content = string.Empty;
+
+            // stop beeping and play end call sound
+            _soundController.PlayEndCallSound();
+        }
+
         // show on form that opponent declined call
         private void ShowCallDeclined()
         {
@@ -704,6 +705,10 @@ namespace BattleShip.UserLogic
 
             // show declined
             LblCall.Dispatcher.Invoke(() => LblCall.Content = "Declined");
+
+            // stop beeping and play end call sound
+            _soundController.PlayEndCallSound();
+
             // wait 5 secs and if the state has not changed, remove the message
             Task.Delay(5000).ContinueWith(t => LblCall.Dispatcher.Invoke(() =>
             {
@@ -734,18 +739,12 @@ namespace BattleShip.UserLogic
                 duration += TimeSpan.FromSeconds(1);
             }, null, TimeSpan.Zero, TimeSpan.FromSeconds(1));
 
-            // clear all packets that been received while not playing them
-            _waveBufer.ClearBuffer();
-            // play received messages
-            if (_waveOut.PlaybackState == PlaybackState.Stopped)
-                _waveOut.Play();
-            else if (_waveOut.PlaybackState == PlaybackState.Paused)
-                _waveOut.Resume();
-            _waveIn.StartRecording();
+            // stop beeping or ringtone if played and start call
+            _soundController.StartCall();
         }
 
         // play sound - add to waveBufer
-        private void PlaySound(DataEventArgs data) => _waveBufer.AddSamples(data.Data, data.Offset, data.Count);
+        private void PlaySound(DataEventArgs data) => _soundController.PlaySound(data);
 
         #endregion
     }

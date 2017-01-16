@@ -61,29 +61,57 @@ namespace BattleShip.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized resource of type System.IO.UnmanagedMemoryStream similar to System.IO.MemoryStream.
+        /// </summary>
+        internal static System.IO.UnmanagedMemoryStream BeepSound1 {
+            get {
+                return ResourceManager.GetStream("BeepSound1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.IO.UnmanagedMemoryStream similar to System.IO.MemoryStream.
+        /// </summary>
+        internal static System.IO.UnmanagedMemoryStream EndCallSound {
+            get {
+                return ResourceManager.GetStream("EndCallSound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.IO.UnmanagedMemoryStream similar to System.IO.MemoryStream.
+        /// </summary>
+        internal static System.IO.UnmanagedMemoryStream OpponentCallsSound {
+            get {
+                return ResourceManager.GetStream("OpponentCallsSound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to stun.a-mm.tv:3478
-        ///stun.jappix.com:3478
         ///stun.rounds.com:3478
         ///stun.sipnet.net:3478
-        ///numb.viagenie.ca:3478
-        ///stun.12connect.com:3478
-        ///stun.12voip.com:3478
-        ///stun.1und1.de:3478
-        ///stun.2talk.co.nz:3478
-        ///stun.2talk.com:3478
-        ///stun.3clogic.com:3478
-        ///stun.advfn.com:3478
-        ///stun.aeta.com:3478
-        ///stun.aeta-audio.com:3478
-        ///stun.awt.be:3478
-        ///stun.b2b2c.ca:3478
-        ///stun.bluesip.net:3478
-        ///stun.budgetphone.nl:3478
-        ///stun.cablenet-as.net:3478
-        ///stun.callwithus.com:3478
-        ///stun.cheapvoip.com:3478
-        ///stun.cloopen.com:3478
-        ///stun.comfi.com: [rest of string was truncated]&quot;;.
+        ///stun.voip.blackberry.com:3478
+        ///stun.sipnet.ru:3478
+        ///stun.petcube.com:3478
+        ///stun.twt.it:3478
+        ///stun.srce.hr:3478
+        ///stun.sysadminman.net:3478
+        ///stun.telbo.com:3478
+        ///stun.telefacil.com:3478
+        ///stun.tng.de:3478
+        ///stun.ucw.cz:3478
+        ///stun.u-blox.com:3478
+        ///stun.ucallweconn.net:3478
+        ///stun.solnet.ch:3478
+        ///stun.vivox.com:3478
+        ///stun.vline.com:3478
+        ///stun.vo.lu:3478
+        ///stun.sonetel.com:3478
+        ///stun.smsdiscount.com:3478
+        ///stun.solcon.nl:3478
+        ///stun.snafu.de:3478
+        ///stun.voi [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string StunServers {
             get {
