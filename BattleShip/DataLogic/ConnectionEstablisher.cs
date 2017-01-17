@@ -631,22 +631,22 @@ namespace BattleShip.DataLogic
                 socket.ExclusiveAddressUse = false;
                 socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
 
-                // randomize localport while socket can not bind the localPort
-                Random rnd = new Random();
-                do
-                {
-                    // randomize localPort
-                    localPort = rnd.Next(8000, 8500);
-                    // try bind
-                    try
-                    {
-                        socket.Bind(new IPEndPoint(IPAddress.Any, localPort));
-                    } // if can not bind - indicate the error 
-                    catch (Exception e) when (e is SocketException || e is SecurityException)
-                    {
-                        localPort = -1;
-                    }
-                } while (localPort < 0);
+                //// randomize localport while socket can not bind the localPort
+                //Random rnd = new Random();
+                //do
+                //{
+                //    // randomize localPort
+                //    localPort = rnd.Next(8000, 8500);
+                //    // try bind
+                //    try
+                //    {
+                //        socket.Bind(new IPEndPoint(IPAddress.Any, localPort));
+                //    } // if can not bind - indicate the error 
+                //    catch (Exception e) when (e is SocketException || e is SecurityException)
+                //    {
+                //        localPort = -1;
+                //    }
+                //} while (localPort < 0);
 
 
                 // try get iep from _goodStunServer
@@ -657,7 +657,10 @@ namespace BattleShip.DataLogic
                 {
                     result = LumiSoft_edited.STUN_Client.GetPublicEP(_goodStunServer.Item1, _goodStunServer.Item2, socket);
                     if (result != null) // if server reported my iep
+                    {
+                        localPort = (socket.LocalEndPoint as IPEndPoint).Port;
                         return result;
+                    }
                     else // forget this server because it is not working
                         _goodStunServer = null;
                 }
@@ -690,6 +693,7 @@ namespace BattleShip.DataLogic
                     }
                 }
                 file.Close();
+                localPort = (socket.LocalEndPoint as IPEndPoint).Port;
                 return result; 
             }
         }

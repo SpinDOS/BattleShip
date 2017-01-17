@@ -15,6 +15,8 @@ namespace BattleShip.Shared
         /// <returns>IPEndPoint if s contains IPEndPoint, else return null</returns>
         public static IPEndPoint ToIpEndPoint(this string s)
         {
+            if (string.IsNullOrWhiteSpace(s))
+                return null;
             // get ip and port as strings
             string[] ipIPort = s.Split(':');
             int port;

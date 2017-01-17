@@ -251,12 +251,16 @@ namespace BattleShip.BusinessLogic
         // Start the game and show UI
         private void Start(bool pvp)
         {
+            // exception to remember exception from task
+            Exception exception = null;
             // start game and check exception if thrown
             Task.Run(() => RealPlayer.Start())
                 .ContinueWith(t => // handle exceptions
                 {   // if exception is not caused by disconnect or give up
                     if (!CheckException(t.Exception))
                     {
+                        // save exception
+                        exception = t.Exception;
                         // end game and provide info to user
                         UnSubscribeGameEnd();
                         RealPlayer.ForceEndGame(false);
@@ -264,6 +268,9 @@ namespace BattleShip.BusinessLogic
                     }
                 }, TaskContinuationOptions.OnlyOnFaulted);
             GameUI.Start(RealPlayer.MyField.GetFullSquares());
+            // if some error occured - throw
+            if (exception != null)
+                throw exception;
         }
 
         // check exception if it contains any not ObjectDisposedException and not GiveUpException exceptions

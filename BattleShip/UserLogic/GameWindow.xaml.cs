@@ -562,11 +562,11 @@ namespace BattleShip.UserLogic
             // hide progress bar
             ProgressBar.Visibility = Visibility.Collapsed;
             // cancel my shot source due to end game
-            var gameStateException = new GameStateException("The game on the form was marked as ended");
-            if (!MyShotSource.TrySetException(gameStateException))
+            var disposedException = new ObjectDisposedException("The game on the form was marked as ended");
+            if (!MyShotSource.TrySetException(disposedException))
             {
                 MyShotSource = new TaskCompletionSource<Square>();
-                MyShotSource.SetException(gameStateException);
+                MyShotSource.SetException(disposedException);
             }
         }
 

@@ -23,6 +23,8 @@ namespace BattleShip.DataLogic
         // type of data in send and receive packet
         protected enum PacketType : byte
         {
+            // no data, packet is a notification that enemy is ready to start new game
+            ReadyForNewGameRequest,
             // data is int for determining who shot first
             DecisionWhoShotFirst,
             // data is square of enemy's shot
@@ -37,6 +39,7 @@ namespace BattleShip.DataLogic
             Message,
         }
 
+        protected volatile TaskCompletionSource<bool> TcsWaitForEnemyReadyForNewGame = new TaskCompletionSource<bool>();
         // taskcompletionsource to wait for opponent send int to decide who shot first
         protected volatile TaskCompletionSource<int> TcsShotFirst = new TaskCompletionSource<int>();
         // taskcompletionsource to wait for opponent send its shot
@@ -45,6 +48,7 @@ namespace BattleShip.DataLogic
         protected volatile TaskCompletionSource<ShotEventArgs> TcsResultOfMyShot = new TaskCompletionSource<ShotEventArgs>();
         // cancellationTokenSource to cancel listenting to events of Client
         protected readonly CancellationTokenSource CancelationListning = new CancellationTokenSource();
+
 
         // single exception for any operation after disconnect
         private readonly ObjectDisposedException _disposedException = new ObjectDisposedException("Connection is closed");
@@ -77,6 +81,8 @@ namespace BattleShip.DataLogic
             // stop listening for new events and raise event
             Listener.PeerDisconnectedEvent += (peer, reason, code) =>
             {
+                if (reason.ToBattleShipDisconnectReason() == BattleShipConnectionDisconnectReason.MeDisconnected)
+                    ;
                 CancelationListning.Cancel();
                 // reprt objects that uses this instance
                 if (!TcsShotFirst.TrySetException(_disposedException))
@@ -93,6 +99,11 @@ namespace BattleShip.DataLogic
                 {
                     TcsResultOfMyShot = new TaskCompletionSource<ShotEventArgs>();
                     TcsResultOfMyShot.SetException(_disposedException);
+                }
+                if (!TcsWaitForEnemyReadyForNewGame.TrySetException(_disposedException))
+                {
+                    TcsWaitForEnemyReadyForNewGame = new TaskCompletionSource<bool>();
+                    TcsWaitForEnemyReadyForNewGame.SetException(_disposedException);
                 }
                 // raise event
                 EnemyDisconnected?.Invoke(this, reason.ToBattleShipDisconnectReason());
@@ -155,6 +166,19 @@ namespace BattleShip.DataLogic
 
         #endregion
 
+        /// <summary>
+        /// Notify opponent that i am ready for new game
+        /// </summary>
+        /// <returns>Task that completes when opponent is ready</returns>
+        public Task StartNewGame()
+        {
+            Client.Peer.Send(new byte[] {(byte) PacketType.ReadyForNewGameRequest}, SendOptions.ReliableOrdered);
+            return // return task that initialize new TcsWaitForEnemyReadyForNewGame when game starts
+                TcsWaitForEnemyReadyForNewGame.Task.ContinueWith(
+                    t => TcsWaitForEnemyReadyForNewGame = new TaskCompletionSource<bool>(),
+                    TaskContinuationOptions.OnlyOnRanToCompletion);
+        }
+
         #region IEnemyConnection implementation
 
         /// <summary>
@@ -176,7 +200,7 @@ namespace BattleShip.DataLogic
                 NetDataWriter writer = new NetDataWriter();
                 writer.Put((byte) PacketType.DecisionWhoShotFirst);
                 writer.Put(myint);
-                Client.Peer.Send(writer, SendOptions.ReliableUnordered);
+                Client.Peer.Send(writer, SendOptions.ReliableOrdered);
                 // wait for event of enemy's int sharing
                 enemyint = TcsShotFirst.Task.Result;
                 // create new TcsShotFirst for next usages
@@ -340,24 +364,28 @@ namespace BattleShip.DataLogic
             {
                 switch ((PacketType) reader.GetByte())
                 {
+                    case PacketType.ReadyForNewGameRequest:
+                        // new game starts - update all taskCompletionSources
+                        TcsShotFirst = new TaskCompletionSource<int>();
+                        TcsShotFromEnemy = new TaskCompletionSource<Square>();
+                        TcsResultOfMyShot = new TaskCompletionSource<ShotEventArgs>();
+                        TcsWaitForEnemyReadyForNewGame.SetResult(true);
+                        break;
                     // provide int from packet to task of tcsShotFirst
                     case PacketType.DecisionWhoShotFirst:
-                        // wait while main thread create new tcsShotFirst and set result of int from packet
-                        while (!TcsShotFirst.TrySetResult(reader.GetInt()))
-                            Thread.Sleep(250);
+                        //set result of int from packet
+                        TcsShotFirst.TrySetResult(reader.GetInt());
                         break;
                     // if enemy shoot me, provide square from packet to task of tcsShotFromEnemy
                     case PacketType.ShotSquare:
-                        // wait while main thread create new tcsShotFromEnemy and set result of square from packet
-                        while (!TcsShotFromEnemy.TrySetResult(new Square(reader.GetByte(), reader.GetByte())))
-                            Thread.Sleep(250);
+                        //set result of square from packet
+                        TcsShotFromEnemy.TrySetResult(new Square(reader.GetByte(), reader.GetByte()));
                         break;
                     // if enemy reports result of my shot, provide square and status from packet to task of tcsResultOfMyShot
                     case PacketType.ResultOfShot:
-                        // wait while main thread create new tcsResultOfMyShot and set result of square from packet
-                        while (!TcsResultOfMyShot.TrySetResult(new ShotEventArgs(new Square(reader.GetByte(), reader.GetByte()),
-                            (SquareStatus) reader.GetByte())))
-                            Thread.Sleep(250);
+                        //set result of shot from packet
+                        TcsResultOfMyShot.TrySetResult(new ShotEventArgs(new Square(reader.GetByte(), reader.GetByte()),
+                            (SquareStatus) reader.GetByte()));
                         break;
                     // if enemy shares its full squres
                     case PacketType.SharingFullSquares:

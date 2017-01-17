@@ -103,6 +103,7 @@
     <Compile Include="Shared\Exceptions.cs" />
     <Compile Include="Shared\NetClientAndListener.cs" />
     <Compile Include="Shared\StringToIEPExtension.cs" />
+    <Compile Include="Shared\TaskWithCancellation.cs" />
     <Compile Include="UserLogic\CallNotificationWindow.xaml.cs">
       <DependentUpon>CallNotificationWindow.xaml</DependentUpon>
     </Compile>

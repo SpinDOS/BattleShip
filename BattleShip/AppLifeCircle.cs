@@ -56,9 +56,9 @@ namespace BattleShip
             // if pvp
             if (e.VsHuman)
             {
-                // try find enemy
+                // try find enemy and wait hes ready
                 var connection = ConnectingWindow.Start();
-                // if did not fid enemy
+                // if did not find enemy
                 if (connection == null)
                     return;
 
