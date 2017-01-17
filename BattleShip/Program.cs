@@ -16,7 +16,6 @@ using Newtonsoft.Json;
 
 namespace BattleShip
 {
-    // bug : if server is placed on the internet, after some request cancellation, server can stop responding. All is OK, if the server is localhost
     class Program
     {
         [STAThread]

@@ -28,9 +28,6 @@ namespace BattleShip.DataLogic
 
         // readonly exception for any server response format error
         private readonly FormatException _formatException = new FormatException("Bad format of server response");
-
-        // volatile field for multi-thread cancellation of request
-        protected volatile HttpWebRequest _request;
         
         // adress and port of working stun server
         private Tuple<string, int> _goodStunServer = null;
@@ -155,19 +152,17 @@ namespace BattleShip.DataLogic
         /// and server delete created lobby or another server authentification error</exception>
         public NetClientAndListener GetRandomOpponent(CancellationToken ct)
         {
+            ct.ThrowIfCancellationRequested();
             // Change Connection state
             if (ConnectionEstablishingState != ConnectionEstablishingState.Ready)
                 throw new AggregateException("Opponent search is already in progress");
             ConnectionEstablishingState = ConnectionEstablishingState.GettingInfoFromServer;
 
-            // abort request on cancellation
-            ct.Register(() => _request?.Abort());
-
             // reset ConnectionEstablishingState on exception
             try
             {
                 // get response
-                var response = MakeRequest(@"/api/randomOpponent", "GET", null);
+                var response = MakeRequest(@"/api/randomOpponent", "GET", null, ct);
 
                 // check if cancelled
                 ct.ThrowIfCancellationRequested();
@@ -241,18 +236,16 @@ namespace BattleShip.DataLogic
         /// <exception cref="AuthenticationException">thrown if RequestInterval is too large and server delete created lobby</exception>
         public NetClientAndListener CreateLobby(CancellationToken ct)
         {
+            ct.ThrowIfCancellationRequested();
             // Change Connection state
             if (ConnectionEstablishingState != ConnectionEstablishingState.Ready)
                 throw new AggregateException("Opponent is already found");
             ConnectionEstablishingState = ConnectionEstablishingState.GettingInfoFromServer;
 
-            // abort request on cancellation
-            ct.Register(() => _request?.Abort());
-
             // reset ConnectionEstablishingState on exception
             try
             {
-                dynamic response = MakeRequest(@"/api/lobby/create", "GET", null);
+                dynamic response = MakeRequest(@"/api/lobby/create", "GET", null, ct);
                 Guid privatekey;
                 int publickey, password;
                 try
@@ -290,25 +283,20 @@ namespace BattleShip.DataLogic
         /// <exception cref="AuthenticationException">thrown if publickey or password are not found in the server</exception>
         public NetClientAndListener ConnectLobby(int publickey, int password, CancellationToken ct)
         {
+            ct.ThrowIfCancellationRequested();
             // Change Connection state
             if (ConnectionEstablishingState != ConnectionEstablishingState.Ready)
                 throw new AggregateException("Opponent is already found");
             ConnectionEstablishingState = ConnectionEstablishingState.WaitingForOpponent;
 
-            // abort request on cancellation
-            ct.Register(() => _request?.Abort());
-
             // reset ConnectionEstablishingState on exception
             try
             {
-                ct.ThrowIfCancellationRequested();
-
                 // report owner that i am ready
-                while (!ReportGuestReady(publickey, password))
+                while (!ReportGuestReady(publickey, password, ct))
                 {
                     // check owner answer with small delay
                     Thread.Sleep(500);
-                    ct.ThrowIfCancellationRequested();
                 }
 
                 // get my public iep
@@ -326,11 +314,7 @@ namespace BattleShip.DataLogic
                 ConnectionEstablishingState = ConnectionEstablishingState.WaitingForOpponentsIp;
                 
                 // report my public iep and get opponent's public iep
-                string opponentIepString = ReportLobbyGuestIEP(publickey, password, myPublicIep);
-                IPEndPoint opponentIep = opponentIepString?.ToIpEndPoint();
-                // check opponent's public iep is not null as server reported that owner has reported its iep
-                if (opponentIep == null)
-                    throw _formatException;
+                IPEndPoint opponentIep = ReportLobbyGuestIEP(publickey, password, myPublicIep, ct);
 
                 ct.ThrowIfCancellationRequested();
 
@@ -348,16 +332,14 @@ namespace BattleShip.DataLogic
         // check lobby until opponent come and then connect him
         protected NetClientAndListener ControlMyLobby(Guid privatekey, CancellationToken ct)
         {
-            ct.Register(() => _request?.Abort());
             // delete lobby on any error
             try
             {
                 ct.ThrowIfCancellationRequested();
                 ConnectionEstablishingState = ConnectionEstablishingState.WaitingForOpponent;
                 // wait for opponent
-                while (!CheckMyLobby_IsOpponentReady(privatekey))
+                while (!CheckMyLobby_IsOpponentReady(privatekey, ct))
                 {
-                    ct.ThrowIfCancellationRequested();
                     Thread.Sleep(RequesInterval);
                 }
 
@@ -376,23 +358,17 @@ namespace BattleShip.DataLogic
                 ConnectionEstablishingState = ConnectionEstablishingState.WaitingForOpponentsIp;
 
                 // loop until opponent reports its public iep
-                string opponentIepString;
+                IPEndPoint opponentIep;
                 while (true)
                 {
                     // get my iep, report it to server and try get opponent's iep
-                    opponentIepString = ReportLobbyOwnerIEP(privatekey, myPublicIep);
+                    opponentIep = ReportLobbyOwnerIEP(privatekey, myPublicIep, ct);
                     // if got opponent's iep
-                    if (opponentIepString != null)
+                    if (opponentIep != null)
                         break;
                     // wait a small delay
-                    ct.ThrowIfCancellationRequested();
                     Thread.Sleep(500);
                 }
-
-                // try get IPEndPoint. if any format error, throw exception
-                IPEndPoint opponentIep = opponentIepString.ToIpEndPoint();
-                if (opponentIep == null)
-                    throw _formatException;
 
                 // establish connection
                 ConnectionEstablishingState = ConnectionEstablishingState.TryingToConnectP2P;
@@ -400,11 +376,8 @@ namespace BattleShip.DataLogic
             }
             finally
             {
-                try
-                {
-                    MakeRequest("/api/lobby/delete/" + privatekey, "DELETE", null);
-                }
-                catch (Exception) { /*ignored*/ }
+                ThreadPool.QueueUserWorkItem(o => MakeRequest("/api/lobby/delete/" + privatekey, "DELETE", null,
+                    CancellationToken.None));
             }
         }
 
@@ -413,56 +386,69 @@ namespace BattleShip.DataLogic
         #region Protected methods to communicate with server
 
         // check my lobby if opponent has arrived
-        protected bool CheckMyLobby_IsOpponentReady(Guid privatekey)
+        protected bool CheckMyLobby_IsOpponentReady(Guid privatekey, CancellationToken ct)
         {
+            ct.ThrowIfCancellationRequested();
             // make request to server
-            var response = MakeRequest(@"/api/lobby/checkMyLobby/" + privatekey, "GET", null);
+            var response = MakeRequest(@"/api/lobby/checkMyLobby/" + privatekey, "GET", null, ct);
             if (response == null)
                 throw _formatException;
             // try get data from response
-            bool opponentReady;
             try
             {
-                opponentReady = response.guestReady;
+                return (bool) response.guestReady;
             }
             catch (RuntimeBinderException)
             {
                 throw _formatException;
             }
-            return opponentReady;
         }
 
         // report owner iep and return guest iep or null
-        protected string ReportLobbyOwnerIEP(Guid privatekey, IPEndPoint publicIep)
+        protected IPEndPoint ReportLobbyOwnerIEP(Guid privatekey, IPEndPoint publicIep, CancellationToken ct)
         {
+            ct.ThrowIfCancellationRequested();
             // encode owner iep
             string content = JsonConvert.SerializeObject(new { ownerIEP = publicIep.ToString() });
             // report it to server
-            var response = MakeRequest(@"/api/lobby/reportOwnerIEP/" + privatekey, "PUT", content);
+            var response = MakeRequest(@"/api/lobby/reportOwnerIEP/" + privatekey, "PUT", content, ct);
             // check response
             if (response == null)
                 throw _formatException;
-            // return guestIEP or null
-            return response.guestIEP;
+            // parse response
+            string str = response.guestIEP;
+            IPEndPoint iep = str.ToIpEndPoint();
+            // if got data but its not IpEndPoint
+            if (str != null && iep == null)
+                throw _formatException;
+            return iep;
         }
 
         // report guest iep and return owner iep
-        protected string ReportLobbyGuestIEP(int publickey, int password, IPEndPoint publicIep)
+        protected IPEndPoint ReportLobbyGuestIEP(int publickey, int password, IPEndPoint publicIep, CancellationToken ct)
         {
+            ct.ThrowIfCancellationRequested();
             // encode guest iep
             string content = JsonConvert.SerializeObject(new { guestIEP = publicIep.ToString() });
             // report it to server
             var response = MakeRequest($@"/api/lobby/reportGuestIEP/?publickey={publickey}&password={password}",
-                "PUT", content);
-            return response?.ownerIEP;
+                "PUT", content, ct);
+            // parse response
+            // check opponent's public iep is not null as server reported that owner has reported its iep
+            string str = response?.ownerIEP;
+            var iep = str.ToIpEndPoint();
+            if (iep == null)
+                throw _formatException;
+            return iep;
         }
 
         // report guest is ready and return if owner has reported its iep
-        protected bool ReportGuestReady(int publickey, int password)
+        protected bool ReportGuestReady(int publickey, int password, CancellationToken ct)
         {
+            ct.ThrowIfCancellationRequested();
             // report i am ready and get response
             dynamic response = MakeRequest($@"/api/lobby/reportGuestReady/?publickey={publickey}&password={password}",
-                "PUT", null);
+                "PUT", null, ct);
 
             // check response format
             if (response == null)
@@ -484,6 +470,7 @@ namespace BattleShip.DataLogic
         // establish connection from socket on localPort to enemy on enemyIep
         protected NetClientAndListener EstablishConnection(int localPort, IPEndPoint enemyIep, CancellationToken ct)
         {
+            ct.ThrowIfCancellationRequested();
             // create listener and client
             EventBasedNetListener listener = new EventBasedNetListener();
             NetClient client = new NetClient(listener, "Battleship")
@@ -510,21 +497,22 @@ namespace BattleShip.DataLogic
         #region Utils
 
         // make request to the server and return response content
-        // return string.empty, if NoContent
+        // return null, if NoContent
         // throws AggregateException (on multiple requests), TimeoutException, 
         // ArgumentException (bad _serverAdress), OperationCancelledException, 
         // DirectoryNotFoundException (bad relative url), 
         // AuthentificationException (bad password), FormatException(bad format of server response)
-        protected dynamic MakeRequest(string relativeUri, string method, string content)
+        protected dynamic MakeRequest(string relativeUri, string method, string content, CancellationToken ct)
         {
-            _request = WebRequest.CreateHttp(ServerAdress + relativeUri);
-            _request.Method = method;
-            _request.Accept = "application/json";
-            _request.ContentType = "application/json";
-            _request.Headers.Add(HttpRequestHeader.AcceptCharset, "utf-8");
-            _request.Headers.Add(HttpRequestHeader.AcceptEncoding, "utf-8");
-            _request.Headers.Add(HttpRequestHeader.ContentEncoding, "utf-8");
-            _request.Timeout = 15000;
+            ct.ThrowIfCancellationRequested();
+            var request = WebRequest.CreateHttp(ServerAdress + relativeUri);
+            request.Method = method;
+            request.Accept = "application/json";
+            request.ContentType = "application/json";
+            request.Headers.Add(HttpRequestHeader.AcceptCharset, "utf-8");
+            request.Headers.Add(HttpRequestHeader.AcceptEncoding, "utf-8");
+            request.Headers.Add(HttpRequestHeader.ContentEncoding, "utf-8");
+            request.Timeout = 15000;
 
             // write content to request stream
             if (string.IsNullOrWhiteSpace(content)) // if no content
@@ -532,7 +520,7 @@ namespace BattleShip.DataLogic
                 // if method is neither GET nor HEAD, set ContentLength to 0
                 // else - do nothing
                 if (method != "GET" && method != "HEAD")
-                    _request.ContentLength = 0;
+                    request.ContentLength = 0;
             }
             else
             {
@@ -540,18 +528,41 @@ namespace BattleShip.DataLogic
                 byte[] contentArr = Encoding.UTF8.GetBytes(content);
 
                 // write content to stream
-                _request.ContentLength = contentArr.Length;
-                using (var stream = _request.GetRequestStream())
+                request.ContentLength = contentArr.Length;
+                using (var stream = request.GetRequestStream())
                 {
                     stream.Write(contentArr, 0, contentArr.Length);
                 }
             }
 
-            // try get response
-            HttpWebResponse response = null;
+            // try get response and rethrow exceptions
             try
             {
-                response = (HttpWebResponse) _request.GetResponse();
+                using (ct.Register(() => request.Abort()))
+                {
+                    using (var response = (HttpWebResponse) request.GetResponse())
+                    {
+                        // if no content, return null
+                        if (response.StatusCode == HttpStatusCode.NoContent)
+                            return null;
+
+                        // try decode content
+                        try
+                        {
+                            string text;
+                            using (var reader = new StreamReader(response.GetResponseStream(), Encoding.UTF8))
+                            {
+                                text = reader.ReadToEnd();
+                            }
+                            return JsonConvert.DeserializeObject(text);
+                        }
+                        catch (Exception e) when (e is ArgumentException || e is JsonException || e is IOException)
+                        {
+                            // if response stream can not be read or its content is not json-serialized object
+                            throw _formatException;
+                        }
+                    }
+                }
             }
 
             // rethrow webexception as specific exception
@@ -575,7 +586,7 @@ namespace BattleShip.DataLogic
             }
             catch (WebException e)
                 when ( // if server return notfound, predefined urls 
-                       //in this class are not supported by the server
+                    //in this class are not supported by the server
                     e.Status == WebExceptionStatus.ProtocolError &&
                     HttpStatusCode.NotFound.Equals((e.Response as HttpWebResponse)?.StatusCode))
             {
@@ -589,65 +600,17 @@ namespace BattleShip.DataLogic
             {
                 throw new AuthenticationException("Lobby with defined id and password not found");
             }
-
-            finally
-            { // tell the system that request handling has ended
-                _request = null;
-            }
-
-            // if no content, return string empty
-            if (response.StatusCode == HttpStatusCode.NoContent)
-            {
-                return null;
-            }
-
-            // try decode content
-            try
-            {
-                string text;
-                using (var reader = new StreamReader(response.GetResponseStream(), Encoding.UTF8))
-                {
-                    text = reader.ReadToEnd();
-                }
-                return JsonConvert.DeserializeObject(text);
-            }
-            catch (Exception e) when (e is ArgumentException || e is JsonException || e is IOException)
-            {
-                // if response stream can not be read or its content is not json-serialized object
-                throw _formatException;
-            }
-            finally
-            {
-                response.Close();
-            }
         }
 
         // return public endpoint of socket in the localIep
         protected IPEndPoint GetMyIEP(CancellationToken ct, out int localPort)
         {
+            ct.ThrowIfCancellationRequested();
             // create socket to find its public iep
             using (Socket socket = new Socket(SocketType.Dgram, ProtocolType.Udp))
             {
                 socket.ExclusiveAddressUse = false;
                 socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
-
-                //// randomize localport while socket can not bind the localPort
-                //Random rnd = new Random();
-                //do
-                //{
-                //    // randomize localPort
-                //    localPort = rnd.Next(8000, 8500);
-                //    // try bind
-                //    try
-                //    {
-                //        socket.Bind(new IPEndPoint(IPAddress.Any, localPort));
-                //    } // if can not bind - indicate the error 
-                //    catch (Exception e) when (e is SocketException || e is SecurityException)
-                //    {
-                //        localPort = -1;
-                //    }
-                //} while (localPort < 0);
-
 
                 // try get iep from _goodStunServer
                 IPEndPoint result = null;
