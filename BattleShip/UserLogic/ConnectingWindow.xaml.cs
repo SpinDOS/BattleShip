@@ -105,9 +105,10 @@ namespace BattleShip.UserLogic
         /// <summary>
         /// Show UI and return realConnection to enemy that is ready for game
         /// </summary>
-        /// <returns>realConnection to enemy that is ready for game or null if cancelled</returns>
-        public RealConnection Start()
-        { 
+        /// <param name="communicationConnection">ICommunicationConnection if communication is available. Else null</param>
+        /// <returns>IEnemyConnection to enemy that is ready for game or null if cancelled</returns>
+        public IEnemyConnection Start(out ICommunicationConnection communicationConnection)
+        {
             // if connection has been established
             if (_connection != null)
                 // // if enemy disconnected but user was not notified
@@ -115,12 +116,16 @@ namespace BattleShip.UserLogic
                 {
                     // get ready for new search
                     _connection = null;
+                    communicationConnection = null;
                     ChangeFormState(SearchProgress.ReadyToStart);
                     // notify and ask if user want to establish new connection
-                    if (MessageBox.Show(this, "Previous opponent has disconnected. Do you want to find new opponent?", 
-                        "Do you want to find new opponent?", MessageBoxButton.YesNo, 
-                        MessageBoxImage.Question) == MessageBoxResult.No)
+                    if (MessageBox.Show(this, "Previous opponent has disconnected. Do you want to find new opponent?",
+                            "Do you want to find new opponent?", MessageBoxButton.YesNo,
+                            MessageBoxImage.Question) == MessageBoxResult.No)
+                    {
+                        communicationConnection = null;
                         return null;
+                    }
                 }
                 else
                 {
@@ -128,13 +133,17 @@ namespace BattleShip.UserLogic
                     var task = _connection.StartNewGame();
                     // check if opponent is ready now
                     if (task.IsCompleted)
-                        return _connection; // return without form show
+                    {// return without form show
+                        communicationConnection = _connection;
+                        return _connection; 
+                    }
                     // if opponent is not ready - show form and start waiting for opponent
                     Task.Delay(500).ContinueWith(t => this.Dispatcher.Invoke(() => WaitForOpponentReady(task)));
                 }
             // show dialog and handle events of click
             this.ShowDialog();
             // when window closes, return result or null (if result is not set before)
+            communicationConnection = _connection;
             return _connection;
         }
 
@@ -396,11 +405,21 @@ namespace BattleShip.UserLogic
                         MessageBoxImage.Error);
                 } // timeout of request to the server has expired
                 else if (exception is TimeoutException)
-                {// server error - forget server
-                    ConnectionEstablisher = null;
+                {// check if exception is caused by server or opponent not responding
+                    string cause; // who is cause of the error
+                    // if opponent left the search
+                    if (exception.InnerException == null)
+                        cause = "Opponent";
+                    else // if server does not respond
+                    {
+                        // forget server and save cause
+                        ConnectionEstablisher = null;
+                        cause = "Server";
+                    }
                     MessageBox.Show(this,
-                        "Server does not respond in defined timeout. You can try restart the application",
-                        "Server error", MessageBoxButton.OK, MessageBoxImage.Error);
+                            cause + " does not respond in defined timeout. You can try restart search",
+                            cause + " error", MessageBoxButton.OK, MessageBoxImage.Error);
+
                 } // server is unavailable
                 else if (exception is ArgumentException)
                 {// server error - forget server

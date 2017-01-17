@@ -17,7 +17,7 @@ namespace BattleShip.BusinessLogic
         /// <summary>
         /// Trigger when any square status changes
         /// </summary>
-        public event EventHandler<ShotEventArgs> SquareStatusChanged;
+        public event EventHandler<Shot> SquareStatusChanged;
 
         /// <param name="shipSquares">squares of active ships of field</param>
         protected BattleField(IEnumerable<Square> shipSquares)
@@ -95,7 +95,7 @@ namespace BattleShip.BusinessLogic
             // if miss - mark and return
             if (status == SquareStatus.Miss)
             {
-                SquareStatusChanged(this, new ShotEventArgs(square, status));
+                SquareStatusChanged(this, new Shot(square, status));
                 return;
             }
 
@@ -111,7 +111,7 @@ namespace BattleShip.BusinessLogic
             if (!success)
                 throw new ArgumentException("Cannot set this status of this square");
 
-            SquareStatusChanged(this, new ShotEventArgs(square, SquareStatus.Hurt));
+            SquareStatusChanged(this, new Shot(square, SquareStatus.Hurt));
             if (status == SquareStatus.Dead)
                 MarkShipAsDead(square);
         }
@@ -170,10 +170,10 @@ namespace BattleShip.BusinessLogic
             Ship ship = FindShipBySquare(square);
             // mark dead
             foreach (Square sq in ship.InnerSquares())
-                SquareStatusChanged(this, new ShotEventArgs(sq, SquareStatus.Dead));
+                SquareStatusChanged(this, new Shot(sq, SquareStatus.Dead));
             // mark miss
             foreach (Square sq in ship.NearSquares().Where(s => this[s] != SquareStatus.Miss))
-                SquareStatusChanged(this, new ShotEventArgs(sq, SquareStatus.Miss));
+                SquareStatusChanged(this, new Shot(sq, SquareStatus.Miss));
 
             ShipsAlive--;
         }

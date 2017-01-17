@@ -8,48 +8,6 @@ using BattleShip.BusinessLogic;
 
 namespace BattleShip.Shared
 {
-    public class DataEventArgs : EventArgs
-    {
-        public byte[] Data { get; }
-
-        public int Offset { get; }
-
-        public int Count { get; }
-
-        /// <summary>
-        /// Event args with data byte array
-        /// </summary>
-        /// <param name="data">Array with data</param>
-        public DataEventArgs(byte[] data)
-        {
-            if (data == null)
-                throw new ArgumentNullException(nameof(data));
-            Data = data;
-            Offset = 0;
-            Count = data.Length;
-        }
-        /// <summary>
-        /// Event args with data byte array
-        /// </summary>
-        /// <param name="data">Array with data</param>
-        /// <param name="offset">Position where first byte of data is located</param>
-        /// <param name="count">Length of the data</param>
-        public DataEventArgs(byte[] data, int offset, int count)
-        {
-            if (data == null)
-                throw new ArgumentNullException(nameof(data));
-            if (offset < 0)
-                throw new ArgumentException(nameof(offset));
-            if (count < 0)
-                throw new ArgumentException(nameof(count));
-            if (offset + count > data.Length)
-                throw new ArgumentException("Length of data is too small for this offset and count");
-            Data = data;
-            Offset = offset;
-            Count = count;
-        }
-    }
-
     /// <summary>
     /// Event args with square
     /// </summary>
@@ -63,21 +21,6 @@ namespace BattleShip.Shared
         public SquareEventArgs(Square square, RoutedEventArgs e) : base(e.RoutedEvent, e.OriginalSource)
         {
             Square = square;
-        }
-    }
-
-    /// <summary>
-    /// Event args with square and status
-    /// </summary>
-    public class ShotEventArgs : EventArgs
-    {
-        public Square Square { get; }
-        public SquareStatus SquareStatus { get; }
-
-        public ShotEventArgs(Square square, SquareStatus squareStatus)
-        {
-            Square = square;
-            SquareStatus = squareStatus;
         }
     }
 

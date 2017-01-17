@@ -45,7 +45,7 @@ namespace BattleShip.DataLogic
         // taskcompletionsource to wait for opponent send its shot
         protected volatile TaskCompletionSource<Square> TcsShotFromEnemy = new TaskCompletionSource<Square>();
         // taskcompletionsource to wait for opponent send result of my shot
-        protected volatile TaskCompletionSource<ShotEventArgs> TcsResultOfMyShot = new TaskCompletionSource<ShotEventArgs>();
+        protected volatile TaskCompletionSource<Shot> TcsResultOfMyShot = new TaskCompletionSource<Shot>();
         // cancellationTokenSource to cancel listenting to events of Client
         protected readonly CancellationTokenSource CancelationListning = new CancellationTokenSource();
 
@@ -81,8 +81,6 @@ namespace BattleShip.DataLogic
             // stop listening for new events and raise event
             Listener.PeerDisconnectedEvent += (peer, reason, code) =>
             {
-                if (reason.ToBattleShipDisconnectReason() == BattleShipConnectionDisconnectReason.MeDisconnected)
-                    ;
                 CancelationListning.Cancel();
                 // reprt objects that uses this instance
                 if (!TcsShotFirst.TrySetException(_disposedException))
@@ -97,7 +95,7 @@ namespace BattleShip.DataLogic
                 }
                 if (!TcsResultOfMyShot.TrySetException(_disposedException))
                 {
-                    TcsResultOfMyShot = new TaskCompletionSource<ShotEventArgs>();
+                    TcsResultOfMyShot = new TaskCompletionSource<Shot>();
                     TcsResultOfMyShot.SetException(_disposedException);
                 }
                 if (!TcsWaitForEnemyReadyForNewGame.TrySetException(_disposedException))
@@ -142,12 +140,12 @@ namespace BattleShip.DataLogic
         /// <summary>
         /// Opponent sent custom message
         /// </summary>
-        public event EventHandler<DataEventArgs> MessageReceived;
+        public event EventHandler<DataContainer> MessageReceived;
 
         /// <summary>
         /// Raised when received packet that can not be succesfully interpreted
         /// </summary>
-        public event EventHandler<DataEventArgs> CorruptedPacketReceived;
+        public event EventHandler<DataContainer> CorruptedPacketReceived;
 
         /// <summary>
         /// Enemy gave up 
@@ -253,7 +251,7 @@ namespace BattleShip.DataLogic
             // wait for event of enemy's answer
             var result = TcsResultOfMyShot.Task.Result;
             // create new TcsResultOfMyShot for next usages
-            TcsResultOfMyShot = new TaskCompletionSource<ShotEventArgs>();
+            TcsResultOfMyShot = new TaskCompletionSource<Shot>();
             // check if answer square is my shot
             if (result.Square != square)
                 throw new AggregateException("Enemy reported result of invalid shot");
@@ -303,7 +301,7 @@ namespace BattleShip.DataLogic
             TcsShotFirst.SetException(gaveUpException);
             TcsShotFirst = new TaskCompletionSource<int>();
             TcsResultOfMyShot.SetException(gaveUpException);
-            TcsResultOfMyShot = new TaskCompletionSource<ShotEventArgs>();
+            TcsResultOfMyShot = new TaskCompletionSource<Shot>();
             TcsShotFromEnemy.SetException(gaveUpException);
             TcsShotFromEnemy = new TaskCompletionSource<Square>();
         }
@@ -338,7 +336,7 @@ namespace BattleShip.DataLogic
         /// Send message to enemy
         /// </summary>
         /// <param name="data">array with message to send</param>
-        public void SendMessage(DataEventArgs data)
+        public void SendMessage(DataContainer data)
         {
             if (data == null)
                 throw new ArgumentNullException(nameof(data));
@@ -368,7 +366,7 @@ namespace BattleShip.DataLogic
                         // new game starts - update all taskCompletionSources
                         TcsShotFirst = new TaskCompletionSource<int>();
                         TcsShotFromEnemy = new TaskCompletionSource<Square>();
-                        TcsResultOfMyShot = new TaskCompletionSource<ShotEventArgs>();
+                        TcsResultOfMyShot = new TaskCompletionSource<Shot>();
                         TcsWaitForEnemyReadyForNewGame.SetResult(true);
                         break;
                     // provide int from packet to task of tcsShotFirst
@@ -384,7 +382,7 @@ namespace BattleShip.DataLogic
                     // if enemy reports result of my shot, provide square and status from packet to task of tcsResultOfMyShot
                     case PacketType.ResultOfShot:
                         //set result of shot from packet
-                        TcsResultOfMyShot.TrySetResult(new ShotEventArgs(new Square(reader.GetByte(), reader.GetByte()),
+                        TcsResultOfMyShot.TrySetResult(new Shot(new Square(reader.GetByte(), reader.GetByte()),
                             (SquareStatus) reader.GetByte()));
                         break;
                     // if enemy shares its full squres
@@ -409,13 +407,13 @@ namespace BattleShip.DataLogic
                         TcsShotFirst.SetException(gaveUpException);
                         TcsShotFirst = new TaskCompletionSource<int>();
                         TcsResultOfMyShot.SetException(gaveUpException);
-                        TcsResultOfMyShot = new TaskCompletionSource<ShotEventArgs>();
+                        TcsResultOfMyShot = new TaskCompletionSource<Shot>();
                         TcsShotFromEnemy.SetException(gaveUpException);
                         TcsShotFromEnemy = new TaskCompletionSource<Square>();
                         break;
                     // if enemy sent custom message
                     case PacketType.Message:
-                        MessageReceived?.Invoke(this, new DataEventArgs(reader.Data, 1, reader.Data.Length - 1));
+                        MessageReceived?.Invoke(this, new DataContainer(reader.Data, 1, reader.Data.Length - 1));
                         break;
                     default:
                         throw new AggregateException("Corrupted message recieved");
@@ -424,7 +422,7 @@ namespace BattleShip.DataLogic
             // catch if exception is caused by not enough data to GetXXX or unknown message type
             catch (Exception e) when (e is ArgumentException || "Corrupted message recieved" == (e as AggregateException)?.Message)
             { // raise CorruptedPacketReceived event
-                CorruptedPacketReceived?.Invoke(this, new DataEventArgs(reader.Data, 0, reader.Data.Length));
+                CorruptedPacketReceived?.Invoke(this, new DataContainer(reader.Data, 0, reader.Data.Length));
             }
         }
 

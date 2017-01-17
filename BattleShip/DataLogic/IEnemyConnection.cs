@@ -32,7 +32,7 @@ namespace BattleShip.DataLogic
         /// <summary>
         /// Raised when received corrupted packet 
         /// </summary>
-         event EventHandler<DataEventArgs> CorruptedPacketReceived;
+         event EventHandler<DataContainer> CorruptedPacketReceived;
 
         /// <summary>
         /// Give up

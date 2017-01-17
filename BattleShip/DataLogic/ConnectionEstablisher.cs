@@ -144,7 +144,7 @@ namespace BattleShip.DataLogic
         /// <returns>netclient and listener connected to found opponent</returns>
         /// <exception cref="AggregateException">thrown if another opponent search progress is in use</exception>
         /// <exception cref="FormatException">thrown if server returns response in bad format</exception>
-        /// <exception cref="TimeoutException">thrown if server has not responded during timeout</exception>
+        /// <exception cref="TimeoutException">thrown if server or opponent has not responded during timeout</exception>
         /// <exception cref="ArgumentException">thrown if server from is unavailable</exception>
         /// <exception cref="OperationCanceledException">thrown if operation cancelled by user</exception>
         /// <exception cref="DirectoryNotFoundException">thrown if pre-defined relative url is unavailable</exception>
@@ -229,7 +229,7 @@ namespace BattleShip.DataLogic
         /// <returns>Netclient and listener connected to opponent</returns>
         /// <exception cref="AggregateException">thrown if another opponent search progress is in use</exception>
         /// <exception cref="FormatException">thrown if server returns response in bad format</exception>
-        /// <exception cref="TimeoutException">thrown if server has not responded during timeout</exception>
+        /// <exception cref="TimeoutException">thrown if server or opponent has not responded during timeout</exception>
         /// <exception cref="ArgumentException">thrown if server from is unavailable</exception>
         /// <exception cref="OperationCanceledException">thrown if operation cancelled by user</exception>
         /// <exception cref="DirectoryNotFoundException">thrown if pre-defined relative url is unavailable</exception>
@@ -276,7 +276,7 @@ namespace BattleShip.DataLogic
         /// <returns>Netclient and listener connected to opponent</returns>
         /// <exception cref="AggregateException">thrown if another opponent search progress is in use</exception>
         /// <exception cref="FormatException">thrown if server returns response in bad format</exception>
-        /// <exception cref="TimeoutException">thrown if server has not responded during timeout</exception>
+        /// <exception cref="TimeoutException">thrown if server or opponent has not responded during timeout</exception>
         /// <exception cref="ArgumentException">thrown if server from is unavailable</exception>
         /// <exception cref="OperationCanceledException">thrown if operation cancelled by user</exception>
         /// <exception cref="DirectoryNotFoundException">thrown if pre-defined relative url is unavailable</exception>
@@ -319,7 +319,6 @@ namespace BattleShip.DataLogic
                 ct.ThrowIfCancellationRequested();
 
                 // establish connection
-                ConnectionEstablishingState = ConnectionEstablishingState.TryingToConnectP2P;
                 return EstablishConnection(localPort, opponentIep, ct);
             }
             finally { ConnectionEstablishingState = ConnectionEstablishingState.Ready; }
@@ -359,8 +358,12 @@ namespace BattleShip.DataLogic
 
                 // loop until opponent reports its public iep
                 IPEndPoint opponentIep;
+                DateTime waitingExpiration = DateTime.Now + TimeSpan.FromSeconds(15);
                 while (true)
                 {
+                    // check waiting time
+                    if (DateTime.Now > waitingExpiration)
+                        throw new TimeoutException("Enemy reported he is ready but he is not sharing his IP");
                     // get my iep, report it to server and try get opponent's iep
                     opponentIep = ReportLobbyOwnerIEP(privatekey, myPublicIep, ct);
                     // if got opponent's iep
@@ -371,7 +374,6 @@ namespace BattleShip.DataLogic
                 }
 
                 // establish connection
-                ConnectionEstablishingState = ConnectionEstablishingState.TryingToConnectP2P;
                 return EstablishConnection(localPort, opponentIep, ct);
             }
             finally
@@ -391,17 +393,14 @@ namespace BattleShip.DataLogic
             ct.ThrowIfCancellationRequested();
             // make request to server
             var response = MakeRequest(@"/api/lobby/checkMyLobby/" + privatekey, "GET", null, ct);
-            if (response == null)
-                throw _formatException;
             // try get data from response
             try
             {
-                return (bool) response.guestReady;
+                if (response != null)
+                    return (bool) response.guestReady;
             }
-            catch (RuntimeBinderException)
-            {
-                throw _formatException;
-            }
+            catch (RuntimeBinderException) { }
+            throw _formatException;
         }
 
         // report owner iep and return guest iep or null
@@ -449,18 +448,14 @@ namespace BattleShip.DataLogic
             // report i am ready and get response
             dynamic response = MakeRequest($@"/api/lobby/reportGuestReady/?publickey={publickey}&password={password}",
                 "PUT", null, ct);
-
-            // check response format
-            if (response == null)
-                throw _formatException;
             try
-            {// check if owner has reported its iep
-                return response.ownerReportedIEP;
-            }
-            catch (RuntimeBinderException)
             {
-                throw _formatException;
+                // check if owner has reported its iep
+                if (response != null)
+                    return response.ownerReportedIEP;
             }
+            catch (RuntimeBinderException) { }
+            throw _formatException;
         }
 
         #endregion
@@ -471,6 +466,7 @@ namespace BattleShip.DataLogic
         protected NetClientAndListener EstablishConnection(int localPort, IPEndPoint enemyIep, CancellationToken ct)
         {
             ct.ThrowIfCancellationRequested();
+            ConnectionEstablishingState = ConnectionEstablishingState.TryingToConnectP2P;
             // create listener and client
             EventBasedNetListener listener = new EventBasedNetListener();
             NetClient client = new NetClient(listener, "Battleship")
@@ -482,9 +478,16 @@ namespace BattleShip.DataLogic
             // connect to client on enemyIep
             client.Connect(enemyIep.Address.ToString(), enemyIep.Port);
 
+            DateTime waitingExpiration = DateTime.Now + TimeSpan.FromSeconds(15);
             // wait for connection
             while (!client.IsConnected)
             {
+                // check connection time
+                if (DateTime.Now > waitingExpiration)
+                {
+                    client.Stop();
+                    throw new TimeoutException("Can not connect enemy");
+                }
                 Thread.Sleep(500);
                 ct.ThrowIfCancellationRequested();
             }
@@ -570,19 +573,19 @@ namespace BattleShip.DataLogic
             // timeout
             catch (WebException e) when (e.Status == WebExceptionStatus.Timeout)
             {
-                throw new TimeoutException("Server has not responded in defined timeout");
+                throw new TimeoutException("Server has not responded in defined timeout", e);
             }
 
             // server is unavailable
             catch (WebException e) when (e.Status == WebExceptionStatus.ConnectFailure)
             {
-                throw new ArgumentException("Server with url from ServerInfo.json is unavailable");
+                throw new ArgumentException("Server with defined url is unavailable", e);
             }
 
             // handle exception by request cancellation
             catch (WebException e) when (e.Status == WebExceptionStatus.RequestCanceled)
             {
-                throw new OperationCanceledException("Request cancelled by user");
+                throw new OperationCanceledException("Request cancelled by user", e);
             }
             catch (WebException e)
                 when ( // if server return notfound, predefined urls 
@@ -590,7 +593,7 @@ namespace BattleShip.DataLogic
                     e.Status == WebExceptionStatus.ProtocolError &&
                     HttpStatusCode.NotFound.Equals((e.Response as HttpWebResponse)?.StatusCode))
             {
-                throw new DirectoryNotFoundException("Server does not have predefined api. Check server version");
+                throw new DirectoryNotFoundException("Server does not have predefined api. Check server version", e);
             }
 
             catch (WebException e)
@@ -598,7 +601,7 @@ namespace BattleShip.DataLogic
                     e.Status == WebExceptionStatus.ProtocolError &&
                     HttpStatusCode.BadRequest.Equals((e.Response as HttpWebResponse)?.StatusCode))
             {
-                throw new AuthenticationException("Lobby with defined id and password not found");
+                throw new AuthenticationException("Lobby with defined id and password not found", e);
             }
         }
 

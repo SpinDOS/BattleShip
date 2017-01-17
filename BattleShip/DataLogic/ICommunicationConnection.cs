@@ -17,11 +17,11 @@ namespace BattleShip.DataLogic
         /// Send message to peer
         /// </summary>
         /// <param name="data">array with message to send</param>
-        void SendMessage(DataEventArgs data);
+        void SendMessage(DataContainer data);
 
         /// <summary>
         /// Raised on message from peer received
         /// </summary>
-        event EventHandler<DataEventArgs> MessageReceived;
+        event EventHandler<DataContainer> MessageReceived;
     }
 }

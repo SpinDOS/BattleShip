@@ -156,7 +156,7 @@ namespace BattleShip.BusinessLogic
             EnemyConnection.EnemyGaveUp += enemyGaveUp;
 
             // on getting corrupted packet - notify user and disconnect
-            EventHandler<DataEventArgs> corruptedPacketReceived = (sender, args) =>
+            EventHandler<DataContainer> corruptedPacketReceived = (sender, args) =>
             {
                 // drop connection
                 UnSubscribeConnection();
@@ -235,8 +235,8 @@ namespace BattleShip.BusinessLogic
             ICommunicationConnection communicationConnection)
         {
             // subscribe to send and receive messages
-            EventHandler<DataEventArgs> messageReceive = (sender, data) => communicationUserInterface.ShowMessage(data);
-            EventHandler<DataEventArgs> sendMessage = (sender, data) => communicationConnection.SendMessage(data);
+            EventHandler<DataContainer> messageReceive = (sender, data) => communicationUserInterface.ShowMessage(data);
+            EventHandler<DataContainer> sendMessage = (sender, data) => communicationConnection.SendMessage(data);
             communicationConnection.MessageReceived += messageReceive;
             communicationUserInterface.UserSentMessage += sendMessage;
             // Add these handlers to UnSubscribeConnection 

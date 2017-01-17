@@ -57,17 +57,21 @@ namespace BattleShip
             if (e.VsHuman)
             {
                 // try find enemy and wait hes ready
-                var connection = ConnectingWindow.Start();
+                ICommunicationConnection communicationConnection;
+                var connection = ConnectingWindow.Start(out communicationConnection);
                 // if did not find enemy
                 if (connection == null)
                     return;
 
-                // create game window with chat
-                var window = createGameWindow.Invoke(true);
+                // create game window with chat is communication is available
+                var window = createGameWindow.Invoke(communicationConnection != null);
                 // start game as pvp mode with game window with chat
                 startGame = () =>
                 {
-                    new GameLifeCircle(e.MyField, window, connection).StartPVPWithCommunication(window, connection);
+                    if (communicationConnection != null)
+                        new GameLifeCircle(e.MyField, window, connection).StartPVPWithCommunication(window, communicationConnection);
+                    else
+                        new GameLifeCircle(e.MyField, window, connection).StartPVP();
                     // if after game enemy is disconnected - notify ConnectingWindow
                     if (!connection.IsConnected)
                         ConnectingWindow.ResetConnection();

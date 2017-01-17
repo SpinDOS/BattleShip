@@ -54,9 +54,9 @@ namespace BattleShip.Shared
 
         public static bool operator ==(Ship left, Ship right)
         {
-            if (left == null)
+            if (ReferenceEquals(left, null))
                 throw new ArgumentNullException(nameof(left));
-            if (right == null)
+            if (ReferenceEquals(right, null))
                 throw new ArgumentNullException(nameof(right));
             return left.Start == right.Start && left.End == right.End;
         }

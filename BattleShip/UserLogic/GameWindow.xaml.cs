@@ -112,7 +112,7 @@ namespace BattleShip.UserLogic
                 arr[0] = (byte) MessageType.AudioMessage;
                 Array.Copy(args.Buffer, 0, arr, 1, args.BytesRecorded);
                 // send the message
-                this.UserSentMessage?.Invoke(this, new DataEventArgs(arr));
+                this.UserSentMessage?.Invoke(this, new DataContainer(arr));
             };
         }
 
@@ -340,13 +340,13 @@ namespace BattleShip.UserLogic
         /// <summary>
         /// Raised when user sends message
         /// </summary>
-        public event EventHandler<DataEventArgs> UserSentMessage;
+        public event EventHandler<DataContainer> UserSentMessage;
 
         /// <summary>
         /// Show message to user
         /// </summary>
         /// <param name="data">array with message</param>
-        public async void ShowMessage(DataEventArgs data)
+        public async void ShowMessage(DataContainer data)
         {
             // get message type
             var messageType = (MessageType) data.Data[data.Offset];
@@ -373,11 +373,11 @@ namespace BattleShip.UserLogic
                             // else - send answer and start call if need
                             if (accept)
                             {// try report accept. if success - start call
-                                if (SendMessage(new DataEventArgs(new byte[] {(byte) MessageType.CallInitialization})))
+                                if (SendMessage(new DataContainer(new byte[] {(byte) MessageType.CallInitialization})))
                                     StartCall();
                             }
                             else // report decline
-                                SendMessage(new DataEventArgs(new byte[] {(byte) MessageType.EndCallRequest}));
+                                SendMessage(new DataContainer(new byte[] {(byte) MessageType.EndCallRequest}));
 
                             break;
                         // if user is already calling and opponent accepted the call
@@ -394,7 +394,7 @@ namespace BattleShip.UserLogic
                 case MessageType.AudioMessage:
                     // if call is not in progress - do nothing
                     if (_currentCallState == CallState.InProgress)
-                        PlaySound(new DataEventArgs(data.Data, data.Offset + 1, data.Count - 1));
+                        PlaySound(new DataContainer(data.Data, data.Offset + 1, data.Count - 1));
                     break;
                 // got text message
 
@@ -460,12 +460,12 @@ namespace BattleShip.UserLogic
             byte[] arr = new byte[TextMessagesEncoding.GetByteCount(text) + 1];
             arr[0] = (byte) MessageType.TextMessage;
             TextMessagesEncoding.GetBytes(text, 0, text.Length, arr, 1);
-            SendMessage(new DataEventArgs(arr));
+            SendMessage(new DataContainer(arr));
         }
 
         // send message and handle exception if enemy disconnected
         // return if the message was sent
-        private bool SendMessage(DataEventArgs data)
+        private bool SendMessage(DataContainer data)
         {
             if (Disconnected)
                 return false;
@@ -511,7 +511,7 @@ namespace BattleShip.UserLogic
             BlockFormEndGame("You decided to quit");
             BlockChat(true);
             // notify opponent that you close form
-            SendMessage(new DataEventArgs(new byte[] {(byte) MessageType.Quit}));
+            SendMessage(new DataContainer(new byte[] {(byte) MessageType.Quit}));
             // raise event
             InterfaceForceClose?.Invoke(this, EventArgs.Empty);
         }
@@ -638,12 +638,12 @@ namespace BattleShip.UserLogic
                 // play sound
                 _soundController.PlayBeeps();
                 // send message
-                SendMessage(new DataEventArgs(new byte[] {(byte) MessageType.CallInitialization}));
+                SendMessage(new DataContainer(new byte[] {(byte) MessageType.CallInitialization}));
             }
             // if call is in calling state or in progress - send cancel or end call request and show on form
             else
             {
-                SendMessage(new DataEventArgs(new byte[] {(byte) MessageType.EndCallRequest}));
+                SendMessage(new DataContainer(new byte[] {(byte) MessageType.EndCallRequest}));
 
                 // if calling - cancel of form
                 if (_currentCallState == CallState.Calling)
@@ -744,7 +744,7 @@ namespace BattleShip.UserLogic
         }
 
         // play sound - add to waveBufer
-        private void PlaySound(DataEventArgs data) => _soundController.PlaySound(data);
+        private void PlaySound(DataContainer data) => _soundController.PlaySound(data);
 
         #endregion
     }

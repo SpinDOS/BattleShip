@@ -23,11 +23,11 @@ namespace BattleShip.BusinessLogic
         /// <summary>
         /// Trigger when i get result of my shot
         /// </summary>
-        public event EventHandler<ShotEventArgs> MyShot;
+        public event EventHandler<Shot> MyShot;
         /// <summary>
         /// Trigger when enemy shot me
         /// </summary>
-        public event EventHandler<ShotEventArgs> EnemyShot;
+        public event EventHandler<Shot> EnemyShot;
 
         /// <summary>
         /// Trigger when MyTurn initialized
@@ -77,7 +77,7 @@ namespace BattleShip.BusinessLogic
                     MyTurn = status != SquareStatus.Miss;
 
                     // call event
-                    MyShot?.Invoke(this, new ShotEventArgs(square, status)); // mark in field
+                    MyShot?.Invoke(this, new Shot(square, status)); // mark in field
 
                     // check for end game
                     if (EnemyField.ShipsAlive == 0)
@@ -100,7 +100,7 @@ namespace BattleShip.BusinessLogic
                     MyTurn = status == SquareStatus.Miss;
 
                     // call event
-                    EnemyShot?.Invoke(this, new ShotEventArgs(square, status));
+                    EnemyShot?.Invoke(this, new Shot(square, status));
 
                     // check for end game
                     if (MyField.ShipsAlive == 0)

@@ -46,7 +46,7 @@ namespace BattleShip.DataLogic
         /// <summary>
         /// Need to implement IEnemyConnection. This event is never raised
         /// </summary>
-        public event EventHandler<DataEventArgs> CorruptedPacketReceived;
+        public event EventHandler<DataContainer> CorruptedPacketReceived;
 
         #pragma warning restore
 

@@ -64,7 +64,7 @@ namespace BattleShip.UserLogic
         /// <summary>
         /// Add data for playing 
         /// </summary>
-        public void PlaySound(DataEventArgs data)
+        public void PlaySound(DataContainer data)
         {
             if (IsDisposed)
                 throw _disposedException;

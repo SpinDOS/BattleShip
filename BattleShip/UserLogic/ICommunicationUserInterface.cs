@@ -14,11 +14,11 @@ namespace BattleShip.UserLogic
         /// Show message to user
         /// </summary>
         /// <param name="data">array with data to send</param>
-        void ShowMessage(DataEventArgs data);
+        void ShowMessage(DataContainer data);
 
         /// <summary>
         /// Raise when user sends message
         /// </summary>
-        event EventHandler<DataEventArgs> UserSentMessage;
+        event EventHandler<DataContainer> UserSentMessage;
     }
 }
