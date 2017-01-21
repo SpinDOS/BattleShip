@@ -296,7 +296,7 @@ namespace BattleShip.DataLogic
                 while (!ReportGuestReady(publickey, password, ct))
                 {
                     // check owner answer with small delay
-                    Thread.Sleep(500);
+                    Task.Delay(500, ct).Wait(ct);
                 }
 
                 // get my public iep
@@ -339,7 +339,7 @@ namespace BattleShip.DataLogic
                 // wait for opponent
                 while (!CheckMyLobby_IsOpponentReady(privatekey, ct))
                 {
-                    Thread.Sleep(RequesInterval);
+                    Task.Delay(RequesInterval, ct).Wait(ct);
                 }
 
                 // get my public iep
@@ -370,7 +370,7 @@ namespace BattleShip.DataLogic
                     if (opponentIep != null)
                         break;
                     // wait a small delay
-                    Thread.Sleep(500);
+                    Task.Delay(500, ct).Wait(ct);
                 }
 
                 // establish connection
@@ -488,8 +488,7 @@ namespace BattleShip.DataLogic
                     client.Stop();
                     throw new TimeoutException("Can not connect enemy");
                 }
-                Thread.Sleep(500);
-                ct.ThrowIfCancellationRequested();
+                Task.Delay(500, ct).Wait(ct);
             }
 
             return new NetClientAndListener(client, listener);

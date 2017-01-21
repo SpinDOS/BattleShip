@@ -391,8 +391,10 @@ namespace BattleShip.UserLogic
                 // another search is in progress
                 if (exception is AggregateException)
                 {
-                    MessageBox.Show(this, "Another search is in process", "Search state error", MessageBoxButton.OK,
-                        MessageBoxImage.Error);
+                    // is the exception is not task's exception with innerException
+                    if (!(exception.InnerException is OperationCanceledException))
+                        MessageBox.Show(this, "Another search is in process", "Search state error", MessageBoxButton.OK,
+                            MessageBoxImage.Error);
                 } // server return bad formatted response
                 else if (exception is OperationCanceledException)
                 {
